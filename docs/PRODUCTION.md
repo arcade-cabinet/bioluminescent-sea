@@ -32,8 +32,14 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       creatures / predators / pirates / player / sonar / HUD all
       render, gameplay responsive. `pixi.js/unsafe-eval` imported at
       bootstrap so Capacitor's strict CSP doesn't break WebGL.
-- [ ] **PR D — Koota ECS + Yuka AI.** Parallel arrays become traits;
-      predator/pirate AI composited from Yuka steering behaviors.
+- [x] **PR D — Koota ECS integration.** Entity state lifted from
+      parallel arrays into Koota traits (`PlayerAvatar`,
+      `CreatureEntity`, `PredatorEntity`, `PirateEntity`,
+      `ParticleEntity`, `DiveRoot`). The sim stays pure; actions
+      (`advanceDiveFrame`, `recordThreatFlash`, `decayThreatFlash`)
+      are the only writers. The renderer reads via queries. Yuka-
+      composed AI behaviors land in a follow-up PR on top of this
+      boundary.
 - [ ] **PR E — Seed-driven spawning.** Every creature / predator /
       pirate placement derives from `createRng(seed)`. Landing shows
       the codename preview; `?seed=<codename>` URL support.

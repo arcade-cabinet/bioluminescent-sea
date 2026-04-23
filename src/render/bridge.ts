@@ -1,4 +1,12 @@
-import type { SceneState } from "@/sim/dive/types";
+import {
+  CreatureEntity,
+  DiveRoot,
+  ParticleEntity,
+  PirateEntity,
+  PlayerAvatar,
+  PredatorEntity,
+  type DiveWorld,
+} from "@/ecs";
 import type { CollectionBurstView } from "./layers/fx";
 import { mountBackdrop, type BackdropController } from "./layers/backdrop";
 import { mountEntities, type EntityController } from "./layers/entities";
@@ -11,11 +19,10 @@ import { createStage, type PixiStage } from "./stage";
  * The renderer bridge.
  *
  * Owns the pixi `Application`, mounts all layer controllers, and
- * exposes a single `renderFrame(scene, time, bursts, …)` entry point
- * the React layer calls from its RAF hook.
- *
- * In PR D the frame-state argument will be swapped for Koota queries.
- * The layer controllers stay unchanged.
+ * exposes `renderFrame(world, bursts, viewportScale)`. The bridge
+ * reads entities via Koota queries and hands typed arrays to the
+ * layer controllers — the ECS is the source of truth, the sim is the
+ * mutator, and the renderer is a pure consumer.
  */
 
 export interface RenderBridge {
@@ -25,10 +32,8 @@ export interface RenderBridge {
 }
 
 export interface RenderFrameInput {
-  scene: SceneState;
-  totalTime: number;
+  world: DiveWorld;
   bursts: readonly CollectionBurstView[];
-  threatFlashAlpha: number;
   viewportScale: number;
 }
 
@@ -46,19 +51,42 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   });
 
   return {
-    renderFrame({ scene, totalTime, bursts, threatFlashAlpha, viewportScale }) {
+    renderFrame({ world, bursts, viewportScale }) {
       const v = viewport();
+
+      const root = world.rootEntity.get(DiveRoot);
+      const totalTime = root?.totalTime ?? 0;
+      const threatFlashAlpha = root?.threatFlashAlpha ?? 0;
+
+      const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
+      if (!playerValue) return;
+
+      const creatures = world.creatureEntities.map((e) => {
+        const t = e.get(CreatureEntity);
+        return t?.value;
+      }).filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+      const predators = world.predatorEntities.map((e) => {
+        const t = e.get(PredatorEntity);
+        return t?.value;
+      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
+
+      const pirates = world.pirateEntities.map((e) => {
+        const t = e.get(PirateEntity);
+        return t?.value;
+      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
+
+      const particles = world.particleEntities.map((e) => {
+        const t = e.get(ParticleEntity);
+        return t?.value;
+      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
+
       backdrop.draw(v.widthPx, v.heightPx, totalTime);
-      parallax.draw(scene.particles);
-      entities.sync({
-        creatures: scene.creatures,
-        predators: scene.predators,
-        pirates: scene.pirates,
-        totalTime,
-      });
-      player.sync(scene.player, viewportScale, totalTime);
+      parallax.draw(particles);
+      entities.sync({ creatures, predators, pirates, totalTime });
+      player.sync(playerValue, viewportScale, totalTime);
       fx.sync({
-        player: scene.player,
+        player: playerValue,
         totalTime,
         bursts,
         threatFlashAlpha,
