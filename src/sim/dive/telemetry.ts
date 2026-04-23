@@ -37,7 +37,7 @@ export function getDiveTelemetry(
   return {
     beaconBearingRadians: nearestBeacon.bearingRadians,
     collectionRatio,
-    depthMeters: Math.round(2200 + collectionRatio * 850 + (1 - oxygenRatio) * 350),
+    depthMeters: computeDepthMeters(collectionRatio, oxygenRatio),
     nearestBeaconDistance: nearestBeacon.distance,
     nearestThreatDistance,
     objective: describeDiveObjective(
@@ -54,6 +54,10 @@ export function getDiveTelemetry(
   };
 }
 
+function computeDepthMeters(collectionRatio: number, oxygenRatio: number): number {
+  return Math.round(2200 + collectionRatio * 850 + (1 - oxygenRatio) * 350);
+}
+
 export function isDiveComplete(scene: SceneState): boolean {
   return scene.creatures.length === 0;
 }
@@ -64,10 +68,12 @@ export function getDiveRunSummary(
   timeLeft: number,
   durationSeconds = GAME_DURATION
 ): DiveRunSummary {
+  const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
+  const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
   return {
     beaconsRemaining: scene.creatures.length,
-    completionPercent: Math.round(((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS) * 100),
-    depthMeters: getDiveTelemetry(scene, timeLeft, durationSeconds).depthMeters,
+    completionPercent: Math.round(collectionRatio * 100),
+    depthMeters: computeDepthMeters(collectionRatio, oxygenRatio),
     durationSeconds,
     elapsedSeconds: durationSeconds - timeLeft,
     score,

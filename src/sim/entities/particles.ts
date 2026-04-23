@@ -8,10 +8,13 @@ export function createInitialParticles({ width, height }: ViewportDimensions): P
   return Array.from({ length: PARTICLE_COUNT }, (_, index) => {
     const horizontal = normalizedHash(index, 37, 127);
     const vertical = normalizedHash(index, 53, 131);
+    const drift = round(index * 0.71, 3);
 
     return {
-      drift: round(index * 0.71, 3),
-      opacity: round(0.08 + normalizedHash(index, 17, 97) * 0.22, 3),
+      drift,
+      // Seed opacity from the same sine that `advanceParticle` uses
+      // at totalTime=0, so the first post-advance frame doesn't jump.
+      opacity: round(0.1 + Math.sin(drift) * 0.1, 3),
       seed: index + 1,
       size: round(0.8 + normalizedHash(index, 29, 89) * 2.6, 2),
       speed: round(0.18 + normalizedHash(index, 31, 83) * 0.52, 3),

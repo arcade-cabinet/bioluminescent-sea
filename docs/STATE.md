@@ -48,16 +48,16 @@ swap lands in PR C.
 
 ## PR sequence status
 
-| PR | Description                          | Status     |
-| -- | ------------------------------------ | ---------- |
-| A  | Foundation scaffolding + docs tree   | in review  |
-| B  | Sim split (engine → sim/*)           | not started|
-| C  | PixiJS renderer swap                 | not started|
-| D  | Koota ECS + Yuka AI                  | not started|
-| E  | Seed-driven spawning + codename UI   | not started|
-| F  | Chunked world + biomes               | not started|
-| G  | Audio (Tone.js + Howler)             | not started|
-| H  | Content pipeline (Zod + JSON)        | not started|
+| PR | Description                          | Status       |
+| -- | ------------------------------------ | ------------ |
+| A  | Foundation scaffolding + docs tree   | merged       |
+| B  | Sim split (engine → sim/*)           | in review    |
+| C  | PixiJS renderer swap                 | not started  |
+| D  | Koota ECS + Yuka AI                  | not started  |
+| E  | Seed-driven spawning + codename UI   | not started  |
+| F  | Chunked world + biomes               | not started  |
+| G  | Audio (Tone.js + Howler)             | not started  |
+| H  | Content pipeline (Zod + JSON)        | not started  |
 
 ## Known bugs / quirks
 
