@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type Creature,
   createInitialScene,
+  createSeededScene,
   type DiveCompletionCelebration,
   type DiveRunSummary,
   type DiveTelemetry,
@@ -19,7 +20,9 @@ import {
   type SceneState,
 } from "@/sim";
 import { useGameLoop } from "@/hooks/useGameLoop";
+import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
 import { useTouchInput } from "@/hooks/useTouchInput";
+import { codenameFromSeed, dailySeed, randomSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
   createDiveWorld,
@@ -100,11 +103,13 @@ function getInitialDiveDimensions() {
 function DeepSeaGame({
   initialSnapshot,
   mode,
+  seed,
   onComplete,
   onGameOver,
 }: {
   initialSnapshot?: DeepSeaRunSnapshot | null;
   mode: SessionMode;
+  seed: number;
   onComplete: (score: number, summary: DiveRunSummary) => void;
   onGameOver: (score: number, summary: DiveRunSummary) => void;
 }) {
@@ -116,7 +121,7 @@ function DeepSeaGame({
   if (!initialSceneRef.current) {
     initialSceneRef.current = initialSnapshot
       ? cloneSceneState(initialSnapshot.scene)
-      : createInitialScene(initialDimensionsRef.current);
+      : createSeededScene(seed, initialDimensionsRef.current);
   }
 
   const initialScene = initialSceneRef.current;
@@ -562,6 +567,7 @@ function DeepSeaGame({
         threatAlert={threatAlert}
         nearestLandmarkLabel={telemetry.routeLandmarkLabel}
         nearestLandmarkDistance={telemetry.routeLandmarkDistance}
+        runCodename={codenameFromSeed(seed)}
       />
       {/* Objective banner — bottom center, single line of legible intent */}
       <div
@@ -720,6 +726,21 @@ export default function Game() {
   const [initialSnapshot, setInitialSnapshot] = useState<DeepSeaRunSnapshot | null>(null);
   const [finalScore, setFinalScore] = useState(0);
   const [finalSummary, setFinalSummary] = useState<DiveRunSummary | null>(null);
+
+  const urlSeed = useSearchParamSeed();
+  // The landing previews the *next* dive. Seed priority:
+  //   1. `?seed=<codename>` in the URL (shared trench)
+  //   2. A fresh random seed re-rolled each time the landing mounts
+  const [previewSeed, setPreviewSeed] = useState<number>(
+    () => urlSeed ?? randomSeed()
+  );
+  useEffect(() => {
+    if (urlSeed !== null) setPreviewSeed(urlSeed);
+  }, [urlSeed]);
+  // The seed used by the currently-playing dive; frozen at Begin Dive.
+  const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
+  const previewCodename = codenameFromSeed(previewSeed);
+  const todayCodename = codenameFromSeed(dailySeed());
   const fallbackSummary = getDiveRunSummary(
     { ...createInitialScene({ height: 600, width: 800 }), creatures: [] },
     finalScore,
@@ -741,12 +762,21 @@ export default function Game() {
             <StartScreen
               title="Bioluminescent Sea"
               subtitle="Sink into an abyssal trench. Trace glowing routes past landmark creatures. Surface breathing easier than when you started."
+              runPreview={{ codename: previewCodename }}
               primaryAction={{
                 label: "Begin Dive",
                 onClick: () => {
-                  setInitialSnapshot(resolveDeepSeaSnapshot());
+                  const snapshot = resolveDeepSeaSnapshot();
+                  const nextSeed = snapshot ? activeSeed : previewSeed;
+                  setActiveSeed(nextSeed);
+                  pushSeedToUrl(nextSeed);
+                  setInitialSnapshot(snapshot);
                   setGameState("playing");
                 },
+              }}
+              secondaryAction={{
+                label: `Today's Trench — ${todayCodename}`,
+                onClick: () => setPreviewSeed(dailySeed()),
               }}
             >
               <div
@@ -780,6 +810,7 @@ export default function Game() {
             <DeepSeaGame
               initialSnapshot={initialSnapshot}
               mode={sessionMode}
+              seed={activeSeed}
               onComplete={(s, summary) => {
                 setInitialSnapshot(null);
                 setFinalScore(s);
@@ -811,6 +842,7 @@ export default function Game() {
                 onClick={() => {
                   clearDeepSeaSnapshot();
                   setInitialSnapshot(null);
+                  setPreviewSeed(randomSeed());
                   setGameState("landing");
                 }}
               >
@@ -836,6 +868,7 @@ export default function Game() {
                 onClick={() => {
                   clearDeepSeaSnapshot();
                   setInitialSnapshot(null);
+                  setPreviewSeed(randomSeed());
                   setGameState("landing");
                 }}
               >

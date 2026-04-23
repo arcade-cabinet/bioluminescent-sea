@@ -11,6 +11,7 @@ interface HUDProps {
   threatAlert: boolean;
   nearestLandmarkLabel?: string;
   nearestLandmarkDistance?: number;
+  runCodename?: string;
 }
 
 const panelStyle: CSSProperties = {
@@ -82,6 +83,7 @@ export function HUD({
   threatAlert,
   nearestLandmarkLabel,
   nearestLandmarkDistance,
+  runCodename,
 }: HUDProps) {
   const lowOxygen = oxygenRatio < 0.25;
   return (
@@ -111,6 +113,30 @@ export function HUD({
         <Stat label="Depth" value={`${depthMeters}m`} tone="muted" />
         <Stat label="Charted" value={`${beacons}%`} tone="muted" />
       </div>
+
+      {/* Run codename chip — the brand identity of this specific
+          trench, placed below the landmark chip at top-right. */}
+      {runCodename && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(max(env(safe-area-inset-top), 1rem) + 2.4rem)",
+            right: "1rem",
+            padding: "0.3rem 0.65rem",
+            background: "rgba(10, 26, 46, 0.55)",
+            border: "1px solid rgba(107, 230, 193, 0.18)",
+            borderRadius: 999,
+            fontFamily: "var(--font-display)",
+            fontSize: "0.78rem",
+            letterSpacing: "0.02em",
+            color: "var(--color-fg-muted)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          {runCodename}
+        </div>
+      )}
 
       {/* Route landmark chip */}
       {nearestLandmarkLabel && (

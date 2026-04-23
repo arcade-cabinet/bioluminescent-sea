@@ -75,7 +75,7 @@ Every dive is a *place name*, not a player name. Three words
 - Second adjective: material / color / artifact
 - Noun: geography / fauna / instrument
 
-"Drowsy Ember Anglerfish" is a trench. "Glacial Hushed Caldera" is a
+"Kelpish Vellum Benthos" is a trench. "Glacial Lapis Caldera" is a
 trench. The diver is the unnamed thing; the codename is the trench.
 That's the correct emphasis.
 
