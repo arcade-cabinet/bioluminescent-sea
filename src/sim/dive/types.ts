@@ -36,6 +36,9 @@ export interface CreatureCollectionResult {
 
 export interface DiveTelemetry {
   beaconBearingRadians: number | null;
+  biomeId: "photic-gate" | "twilight-shelf" | "midnight-column" | "abyssal-trench";
+  biomeLabel: string;
+  biomeTintHex: string;
   collectionRatio: number;
   depthMeters: number;
   nearestBeaconDistance: number;

@@ -35,6 +35,12 @@ export interface RenderFrameInput {
   world: DiveWorld;
   bursts: readonly CollectionBurstView[];
   viewportScale: number;
+  /**
+   * Current biome tint (hex like `#0c3a48`). The backdrop layer uses
+   * this to tint the abyss gradient on top of the palette so biome
+   * transitions are visible without overwhelming the identity.
+   */
+  biomeTintHex?: string;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -51,7 +57,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   });
 
   return {
-    renderFrame({ world, bursts, viewportScale }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex }) {
       const v = viewport();
 
       const root = world.rootEntity.get(DiveRoot);
@@ -81,7 +87,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         return t?.value;
       }).filter((p): p is NonNullable<typeof p> => p !== undefined);
 
-      backdrop.draw(v.widthPx, v.heightPx, totalTime);
+      backdrop.draw(v.widthPx, v.heightPx, totalTime, biomeTintHex);
       parallax.draw(particles);
       entities.sync({ creatures, predators, pirates, totalTime });
       player.sync(playerValue, viewportScale, totalTime);

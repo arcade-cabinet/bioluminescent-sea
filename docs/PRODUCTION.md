@@ -48,9 +48,20 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       Dive start pushes `?seed=<codename>` to the URL so the active
       trench is shareable; URL seeds load the same codename back.
       HUD carries a codename chip.
-- [ ] **PR F — Chunked world + biomes.** Vertical scroll advances
-      through the authored biomes; content spawns in chunks below the
-      viewport and retires above. `depthMeters` becomes spatial.
+- [x] **PR F.1 — Biome surface.** `DiveTelemetry` now carries
+      `biomeId`, `biomeLabel`, `biomeTintHex` derived from
+      `biomeAtDepth(depthMeters)`. HUD gains a biome chip (color-
+      matched to the current biome tint) below the codename chip.
+      Renderer backdrop paints a 10% overlay in the biome tint so
+      depth changes are visually legible. Objective banner speaks
+      biome-specific copy when no urgent state fires. Biome palette
+      rewritten from the base-color clones to evocative shifts
+      (photic = kelp green, twilight = cool teal, midnight =
+      indigo bruise, abyssal = ember warn) so transitions read.
+- [ ] **PR F.2 — World-space coords + chunking.** Entities carry
+      `Vec3 {x, y: depthMeters, z: parallax}` in meters. Camera
+      scrolls as player descends; chunks spawn below and retire
+      above. Supersedes the "18 fixed creatures" scene model.
 - [ ] **PR G — Audio.** Tone.js ambient pad + Howler SFX. Depth- and
       biome-modulated filter. Master mute + reduced-motion respect.
 - [ ] **PR H — Content pipeline.** Biomes, creature species, and

@@ -12,6 +12,8 @@ interface HUDProps {
   nearestLandmarkLabel?: string;
   nearestLandmarkDistance?: number;
   runCodename?: string;
+  biomeLabel?: string;
+  biomeTintHex?: string;
 }
 
 const panelStyle: CSSProperties = {
@@ -84,6 +86,8 @@ export function HUD({
   nearestLandmarkLabel,
   nearestLandmarkDistance,
   runCodename,
+  biomeLabel,
+  biomeTintHex,
 }: HUDProps) {
   const lowOxygen = oxygenRatio < 0.25;
   return (
@@ -136,6 +140,36 @@ export function HUD({
         >
           {runCodename}
         </div>
+      )}
+
+      {/* Biome chip — the current depth band, updates as the dive
+          descends. Stroke color comes from the biome's tintHex so the
+          chip itself shifts palette on transition. */}
+      {biomeLabel && (
+        <motion.div
+          key={biomeLabel}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          style={{
+            position: "absolute",
+            top: "calc(max(env(safe-area-inset-top), 1rem) + 4.6rem)",
+            right: "1rem",
+            padding: "0.3rem 0.65rem",
+            background: "rgba(10, 26, 46, 0.55)",
+            border: `1px solid ${biomeTintHex ?? "#6be6c1"}55`,
+            borderRadius: 999,
+            fontFamily: "var(--font-body)",
+            fontSize: "0.65rem",
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: biomeTintHex ?? "var(--color-glow)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          {biomeLabel}
+        </motion.div>
       )}
 
       {/* Route landmark chip */}

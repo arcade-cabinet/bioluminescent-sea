@@ -444,6 +444,7 @@ function DeepSeaGame({
         world: nextWorld,
         bursts: collectionBurstsRef.current,
         viewportScale: getViewportScale(dimensions.width, dimensions.height),
+        biomeTintHex: result.telemetry.biomeTintHex,
       });
     },
     [
@@ -568,6 +569,8 @@ function DeepSeaGame({
         nearestLandmarkLabel={telemetry.routeLandmarkLabel}
         nearestLandmarkDistance={telemetry.routeLandmarkDistance}
         runCodename={codenameFromSeed(seed)}
+        biomeLabel={telemetry.biomeLabel}
+        biomeTintHex={telemetry.biomeTintHex}
       />
       {/* Objective banner — bottom center, single line of legible intent */}
       <div
