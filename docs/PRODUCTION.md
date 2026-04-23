@@ -24,10 +24,14 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       decomposed into `src/sim/dive/*` and `src/sim/entities/*`; the
       old module path is deleted outright. All 49 node tests still
       pass; no compat shims.
-- [ ] **PR C — PixiJS renderer.** Replace the hand-rolled canvas
-      renderer in `Game.tsx` with a PixiJS `Application` + layered
-      scene graph. Identical visual output; `Game.tsx` shrinks to a
-      phase orchestrator.
+- [x] **PR C — PixiJS renderer.** Hand-rolled canvas renderer
+      replaced with a PixiJS `Application` + layered scene graph
+      (far / mid / near / fx / overlay). `Game.tsx` dropped from
+      1307 → 787 LOC. Verified on desktop (1280×720) and mobile
+      portrait (390×844) in a production build: zero console errors,
+      creatures / predators / pirates / player / sonar / HUD all
+      render, gameplay responsive. `pixi.js/unsafe-eval` imported at
+      bootstrap so Capacitor's strict CSP doesn't break WebGL.
 - [ ] **PR D — Koota ECS + Yuka AI.** Parallel arrays become traits;
       predator/pirate AI composited from Yuka steering behaviors.
 - [ ] **PR E — Seed-driven spawning.** Every creature / predator /
