@@ -4,6 +4,29 @@
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
+@import "tailwindcss";
+
+/* Tailwind v4 theme — palette is carved from the same tokens that
+ * docs/DESIGN.md locks in. `bg-bg`, `bg-abyss`, `text-glow`,
+ * `border-deep`, `text-warn` etc. all resolve against these names
+ * so utility classes stay palette-aligned and typos fail loud at
+ * build time. The CSS variable block below is still the source of
+ * truth for non-Tailwind consumers (pixi tint, inline styles, canvas
+ * strokes). */
+@theme {
+  --color-bg: #050a14;
+  --color-abyss: #0a1a2e;
+  --color-deep: #0e4f55;
+  --color-glow: #6be6c1;
+  --color-fg: #d9f2ec;
+  --color-fg-muted: #8aa7a2;
+  --color-warn: #ff6b6b;
+
+  --font-display: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua",
+    Palatino, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
 
 /*
  * Fontography rationale — see docs/DESIGN.md

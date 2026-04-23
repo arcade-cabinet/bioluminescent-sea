@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/sim/*": ["src/sim/*"]
+    }
+  },
+  "include": ["src/sim/**/*"],
+  "exclude": ["src/sim/**/*.test.ts", "src/sim/**/__tests__/**"]
+}
