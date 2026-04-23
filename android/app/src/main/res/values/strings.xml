@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bioluminescent Sea</string>
+    <string name="title_activity_main">Bioluminescent Sea</string>
+    <string name="package_name">com.arcadecabinet.bioluminescentsea</string>
+    <string name="custom_url_scheme">com.arcadecabinet.bioluminescentsea</string>
+</resources>
