@@ -8,6 +8,7 @@ export default defineConfig({
     globals: false,
     include: ["src/ui/**/*.dom.test.ts", "src/ui/**/*.dom.test.tsx"],
     exclude: ["e2e/**", "node_modules/**"],
+    passWithNoTests: true,
   },
   resolve: {
     alias: {
