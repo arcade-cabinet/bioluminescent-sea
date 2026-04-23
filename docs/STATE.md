@@ -9,11 +9,13 @@ domain: context
 
 ## Current baseline
 
-Foundation scaffolding in place (PR A of the A → H foundation
-sequence). The running app still uses the original hand-rolled canvas
-renderer and the monolithic `src/engine/deepSeaSimulation.ts`; the new
-stack is wired and tested but not yet serving draw calls. See
-[PRODUCTION.md](./PRODUCTION.md) for the per-PR breakdown.
+Foundation PR A merged. PR B (sim split) in review: the monolithic
+`src/engine/deepSeaSimulation.ts` has been decomposed into
+`src/sim/dive/*` and `src/sim/entities/*` with responsibility-driven
+splits. No compatibility shims — the old path is gone and every
+consumer imports directly from `@/sim` or `@/sim/*` modules. The
+running app still uses the hand-rolled canvas renderer; the PixiJS
+swap lands in PR C.
 
 - Runtime deps installed: pixi.js 8, koota 0.6, yuka 0.7, seedrandom,
   tone 15, howler, gsap, zod, tailwindcss v4, framer-motion (kept).

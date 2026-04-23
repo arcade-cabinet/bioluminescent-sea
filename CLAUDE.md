@@ -111,7 +111,9 @@ Body font: Inter (HUD + body).
 
 The foundation PR sequence (A → H) is tracked in
 [docs/PRODUCTION.md](./docs/PRODUCTION.md). PR A landed the docs tree,
-libraries, directory skeleton, and seeded RNG. PRs B–H swap in the
-real implementation of each layer in order. Until PR B lands, the
-running app still runs on the original `src/engine/deepSeaSimulation.ts`
-and `src/ui/Game.tsx`.
+libraries, directory skeleton, and seeded RNG. PR B split the sim
+into responsibility-scoped modules under `src/sim/`. PRs C–H swap in
+the real implementation of the remaining layers in order.
+
+**No compat shims.** When a module moves, every caller moves with it
+in the same PR. `@/engine/*` is gone; use `@/sim` or `@/sim/*`.

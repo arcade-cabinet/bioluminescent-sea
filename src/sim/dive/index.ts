@@ -1,10 +1,33 @@
 /**
  * Dive lifecycle — the top-level engine API.
  *
- * `createDive(seed, config)` produces an initial `DiveState`.
- * `advanceDive(state, input, dt)` is the pure step function.
- * Telemetry, objectives, and completion all derive from `DiveState`.
+ * Public surface: types, constants, mode tuning, scene advance,
+ * collection mechanics, telemetry, objective copy, impact resolution.
  *
- * Replaces `src/engine/deepSeaSimulation.ts` in PR B.
+ * PRs E + F add `createDive(seed, config)` / `advanceDive(state, …)`
+ * as the seeded, chunked replacement for the current viewport-scoped
+ * `createInitialScene` / `advanceScene`. Both APIs coexist during
+ * the transition.
  */
-export {};
+
+export * from "./types";
+export { GAME_DURATION, MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
+export { getDiveDurationSeconds, getDiveModeTuning } from "./mode";
+export { advanceScene, createInitialScene } from "./advance";
+export {
+  calculateMultiplier,
+  collectCreatures,
+  findNearestBeaconVector,
+  findNearestThreatDistance,
+  hasPredatorCollision,
+} from "./collection";
+export {
+  ROUTE_LANDMARKS,
+  getDiveCompletionCelebration,
+  getDiveRouteLandmark,
+  getDiveRunSummary,
+  getDiveTelemetry,
+  isDiveComplete,
+} from "./telemetry";
+export { describeDiveObjective, getPressureLabel } from "./objectives";
+export { resolveDiveThreatImpact } from "./impact";

@@ -20,9 +20,10 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       tree, directory skeleton, tsconfig split, Tailwind v4 wired,
       seeded RNG + codename module with tests. No behavior change in
       the running app.
-- [ ] **PR B — Sim split.** Move `src/engine/deepSeaSimulation.ts`
-      into `src/sim/dive/*`, `src/sim/entities/*`. Pure refactor; all
-      existing tests migrate with their code; no new features.
+- [x] **PR B — Sim split.** `src/engine/deepSeaSimulation.ts`
+      decomposed into `src/sim/dive/*` and `src/sim/entities/*`; the
+      old module path is deleted outright. All 49 node tests still
+      pass; no compat shims.
 - [ ] **PR C — PixiJS renderer.** Replace the hand-rolled canvas
       renderer in `Game.tsx` with a PixiJS `Application` + layered
       scene graph. Identical visual output; `Game.tsx` shrinks to a
@@ -92,3 +93,35 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       requires one more UI beat between warn and ascent.
 - [ ] Sound identity — DESIGN.md has no audio block. Add one before
       PR G.
+
+## Production polish — player journey audit
+
+Run once foundation PRs (A → H) merge. Do not ship 1.0 without these:
+
+- [ ] Every POC-era string, placeholder blurb, filler headline, or
+      "lorem/ipsum"-energy copy replaced with voice-aligned content.
+- [ ] Every POC visual (typographic-only cards, generic gradient
+      backdrops, untextured silhouettes) replaced with production art
+      unique to Bioluminescent Sea — no generic-AI aesthetic leakage.
+- [ ] Cold 60-second playthrough passes for a first-time player: avatar
+      identifiable, first meaningful object identifiable, goal
+      communicated, loop makes sense, feedback on every action.
+- [ ] Deployed to GitHub Pages. Zero console errors on the live URL
+      across desktop (1280×720) and mobile portrait (390×844).
+- [ ] All review feedback on every PR in the foundation sequence
+      addressed; no open comments when 1.0 is tagged.
+
+## Next games (autopilot continuation)
+
+After Bioluminescent Sea is production-polished and deployed, the same
+foundation + player-journey + identity + content pass applies, in
+order, to the sibling POC extractions:
+
+- [ ] `../cosmic-gardener` — same A → H style foundation, tight
+      game-loop audit, production copy + visuals, GitHub Pages deploy.
+- [ ] `../enchanted-forest` — same treatment.
+
+Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
+The foundation stack (PixiJS / Koota / Yuka / seedrandom / Tone.js /
+Howler / Tailwind v4 / Zod) is the common template; per-game choices
+diverge at the design/content layer.
