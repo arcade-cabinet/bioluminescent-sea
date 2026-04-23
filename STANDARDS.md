@@ -7,66 +7,134 @@ domain: quality
 
 # Bioluminescent Sea — Standards
 
+Non-negotiable constraints. Testing strategy lives in
+[docs/TESTING.md](./docs/TESTING.md); architecture conventions live in
+[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
 ## Code quality
 
 ### File length
 
-Soft limit 300 LOC per file. Hard exceptions:
+**Contextual — there is no universal LOC cap.** Decompose by
+responsibility: a file should do one thing and a reader should be able
+to hold it in their head. A 400-line pure data table or a
+single-responsibility renderer is fine; a 250-line file that secretly
+owns three subsystems is not. The `src/sim/` split boundary
+(rng / world / entities / dive / ai) is a responsibility boundary, not
+a line-count boundary — it holds even if one submodule is compact.
 
-- `src/ui/Game.tsx` — orchestrator. Currently ~1200 LOC because it
-  carries the canvas-rendering library inline. Acceptable while the
-  draw functions remain pure helpers, but if this file grows past
-  1500 LOC the draw helpers should move to `src/render/*.ts` as pure
-  `(ctx, ...) => void` functions with their own tests.
-- `src/engine/deepSeaSimulation.ts` — the deterministic simulation.
-  Acceptable to stay at ~900 LOC; split by system (creature, predator,
-  pirate, player) if it grows past 1200.
+Hooks and CI may warn on large files but must never block.
 
 ### TypeScript
 
-- Strict mode via `tsconfig.app.json`.
+- Strict mode across `tsconfig.app.json`, `tsconfig.sim.json`,
+  `tsconfig.node.json`.
 - `verbatimModuleSyntax: true` — use `import type` for type-only
   imports.
-- No `any`. Prefer discriminated unions.
-- Explicit return types on exported functions.
+- No `any`. No untyped function parameters. Explicit return types on
+  exported functions.
+- Discriminated unions preferred over `T | null` where the distinction
+  carries semantic weight.
+- `src/sim/*` compiles and tests under `tsconfig.sim.json` without React,
+  DOM, pixi, Koota, or audio imports. The simulation is portable.
 
 ### Linting and formatting
 
-- Biome 2.4. `pnpm lint` = `biome lint .`.
-- No ESLint, no Prettier, no stylelint.
-- Do NOT introduce Tailwind — identity lives in CSS vars + inline styles.
+- **Biome** only. `pnpm lint` runs Biome. No ESLint / Prettier /
+  stylelint configs — they will conflict.
+
+### Randomness
+
+**Any direct `Math.random()` call in `src/` is blocked by CI.** Use
+`createRng(seed)` from `@/sim/rng`. Seeds flow from `randomSeed()` on
+new runs, `dailySeed()` for the shared daily trench, or
+`seedFromCodename()` for replay/shared URLs.
 
 ### Dependencies
 
-- Weekly dependabot, minor + patch grouped.
+- pnpm only. `package-lock.json` and `yarn.lock` are deleted on sight.
+- Pin runtime deps to the caret range that matches `package.json`
+  today; dependabot weekly, minor+patch grouped.
 - Capacitor is pinned by major; don't auto-bump.
-- react / react-dom share version, bump together.
-- `@fontsource/*` versioned separately; safe to bump minor.
+- react / react-dom share version; bump together.
+- `@fontsource/*` minor bumps are safe.
 
-## Player-journey gate (non-negotiable)
+## Runtime stack
 
-A PR may not merge if any of the below fail on desktop (1280×720) OR
-mobile-portrait (390×844) viewports.
+| Layer          | Library                                    |
+| -------------- | ------------------------------------------ |
+| UI             | React 19                                   |
+| Rendering      | PixiJS 8 (WebGL with canvas fallback)      |
+| ECS            | Koota                                      |
+| AI             | Yuka (steering + state machines)           |
+| PRNG           | seedrandom via `@/sim/rng`                 |
+| Audio — ambient| Tone.js (synthesized, depth/biome-driven)  |
+| Audio — SFX    | Howler                                     |
+| Animation (UI) | framer-motion (overlays), GSAP (transitions)|
+| Styling        | Tailwind v4 + CSS custom properties        |
+| Validation     | Zod (authored JSON content)                |
+| Mobile         | Capacitor 8                                |
+| Test           | Vitest (node + jsdom + chromium), Playwright|
+| Lint           | Biome                                      |
 
-1. Cold load: DOM ready and first-render canvas frame paints in under
-   2 seconds from navigation start.
-2. Start screen shows title, one-sentence subtitle tagline, primary
-   CTA, and the mode selector. All text readable; no layout shift.
-3. Clicking "Begin Dive" transitions to gameplay within 600ms, no
+No substitutions without a documented decision in
+[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
+## Git conventions
+
+### Commit messages
+
+Conventional Commits — always:
+
+```
+feat:      new user-facing feature
+fix:       bug fix
+refactor:  internal restructure (no behavior change)
+test:      test additions or changes
+chore:     tooling, config, housekeeping
+docs:      documentation only
+perf:      performance improvement
+ci:        CI/CD workflow changes
+build:     build system changes
+```
+
+Scope is optional but encouraged: `feat(sim):`, `fix(render):`,
+`test(e2e):`.
+
+### Branch policy
+
+- Feature branches off `main`. PR to `main`. Squash merge.
+- Branch prefix: `feat/`, `fix/`, `chore/`, `docs/`, `test/`, `refactor/`.
+- No direct pushes to `main`.
+- After every squash-merge, run `bash .claude/scripts/sync-main.sh .`
+  to clean up local main + orphaned feature branch.
+
+## Player-journey gate
+
+A PR may not merge if any of the below fails on desktop (1280×720) OR
+mobile-portrait (390×844):
+
+1. Cold load: DOM ready and first-render frame paints under 2s from
+   navigation start.
+2. Start screen shows title, one-sentence tagline, primary CTA, and
+   the run codename preview. All text readable; no layout shift.
+3. Clicking *Begin Dive* transitions to gameplay within 600ms, no
    console errors.
 4. Within 15 seconds of gameplay a cold player can identify: their
-   sub (center of scene with headlamp cone + sonar pulse), at least
-   one glowing creature, and one status readout that updates in real
-   time (Score, Oxygen, Chain, Depth, or Charted%).
-5. The bottom objective banner updates as gameplay state changes.
+   submersible, at least one glowing creature, and one HUD readout
+   that updates in real time.
+5. The objective banner updates as gameplay state changes.
 6. No console errors throughout the run.
-7. Game-over screen shows title + summary + "Dive Again" CTA, and
-   clicking CTA returns to the start screen within 600ms.
+7. Game-over / completion screen shows title + summary + restart CTA,
+   and clicking CTA returns to the start screen within 600ms.
 
 ## Brand
 
-- Title: "Bioluminescent Sea"
-- Tagline: "Sink into an abyssal trench. Trace glowing routes past landmark creatures. Surface breathing easier than when you started."
-- Palette and fonts: see [`CLAUDE.md`](./CLAUDE.md) palette block.
-- Icon: a single glowing jellyfish silhouette over abyssal navy. TODO
-  (tracked in `docs/STATE.md`).
+- Title: **Bioluminescent Sea**
+- Tagline: *"Sink into an abyssal trench. Trace glowing routes past
+  landmark creatures. Surface breathing easier than when you started."*
+- Palette and fonts: see `src/theme/global.css` (`@theme` block) and
+  [docs/DESIGN.md](./docs/DESIGN.md).
+- The run codename (adjective-adjective-noun) is a first-class brand
+  surface; it appears on the landing, in the HUD, on the game-over
+  screen, and in the share URL.

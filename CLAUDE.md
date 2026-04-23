@@ -6,46 +6,64 @@ status: current
 
 # Bioluminescent Sea — Agent Instructions
 
-## What This Is
+## What this is
 
-A meditative canvas-rendered ocean-dive explorer. The player pilots a
-small submersible through a deep-sea column. Every beat is one of:
+A meditative ocean-dive explorer. The player pilots a submersible
+downward through a trench broken into four named biomes; every beat is
+one of:
 
-- move toward a labeled landmark (see the top-right chip),
-- collect a bioluminescent creature (score + chain multiplier),
-- avoid a predator silhouette or a pirate sub's lantern cone (hull shock
-  penalty reduces oxygen),
+- move toward a labeled landmark (shown in the top-right chip),
+- collect a bioluminescent creature (score + chain multiplier +
+  oxygen bonus),
+- avoid a predator or a pirate's lantern cone (hull shock reduces
+  oxygen),
 - read the bottom objective banner, which is dynamic and tells the
   player what the trench wants them to do right now.
 
-Oxygen is the timer. Running out ends the dive.
+Oxygen is the timer. Reaching the Living Map at ~3200m completes the
+dive; running out of oxygen before then surfaces the sub with a
+partial chart.
 
-## Critical Rules
+## Critical rules
 
-1. **Canvas is the source of truth.** All creatures, backdrop elements,
-   player sub, sonar pings, predator shadows, route beacon are drawn
-   to `<canvas>` in `src/ui/Game.tsx` via pure 2d context functions.
-   React only owns phase (landing / playing / gameover / complete) and
-   HUD overlays. Do not invent WebGL or R3F here.
-2. **The engine is deterministic.** `src/engine/deepSeaSimulation.ts`
-   is pure TypeScript and must stay testable without the DOM. Perlin
-   noise is seeded; state advances via `advanceScene(state, dt)`.
-3. **No Tailwind, no CSS-in-JS runtime, no shadcn.** CSS custom
-   properties in `src/theme/global.css` + inline styles in components.
-   This is a deliberate design choice to keep the identity forward and
-   avoid generic-AI default aesthetics.
-4. **Biome, not ESLint.** `pnpm lint` runs Biome.
-5. **pnpm only.** Do not create `package-lock.json` or `yarn.lock`.
-6. **Player journey is the deliverable.** A cold player must understand
-   the goal within 15 seconds of landing. If that breaks, fix it before
-   anything else.
+1. **3D world, 2D canvas.** The engine reasons in world-meters with
+   `(x, y, z)` coordinates (`y` depth downward, `z` parallax layer).
+   The renderer projects to 2D canvas via a camera. See
+   [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) § "3D world, 2D
+   canvas."
+2. **PixiJS is the renderer.** Never re-introduce raw `ctx.*` drawing
+   outside of `src/render/*`. The React layer never touches pixi
+   sprites.
+3. **Koota owns entity state.** Traits live in `src/ecs/traits.ts`.
+   The sim produces plain data; the ECS lifts it into traits; the
+   renderer and audio read traits through queries; the UI writes via
+   `src/ecs/actions.ts`. No layer bypasses the others.
+4. **The sim is pure.** `src/sim/*` compiles under `tsconfig.sim.json`
+   without React, DOM, pixi, Koota, or audio imports. If you need
+   something from one of those, you're in the wrong file.
+5. **Seeded determinism always.** Any randomness comes from
+   `createRng(seed)` in `@/sim/rng`. Direct `Math.random()` calls are
+   a CI blocker.
+6. **Biome, not ESLint.** `pnpm lint` runs Biome.
+7. **pnpm only.** Do not create `package-lock.json` or `yarn.lock`.
+8. **Player journey is the deliverable.** A cold player must
+   understand the goal within 15 seconds of landing. If that breaks,
+   fix it before anything else. See
+   [STANDARDS.md](./STANDARDS.md) § Player-journey gate.
+
+## Stack
+
+See [STANDARDS.md](./STANDARDS.md) § Runtime stack for the full table.
+Short version: React 19 + PixiJS 8 + Koota + Yuka + seedrandom +
+Tone.js + Howler + Tailwind v4 + Zod + Capacitor 8 + Vitest +
+Playwright + Biome.
 
 ## Commands
 
 ```bash
 pnpm dev                 # Vite dev server
 pnpm build               # tsc + vite build
-pnpm typecheck           # tsc -b --pretty false
+pnpm typecheck           # tsc -b --pretty false (app + node + sim)
 pnpm lint                # Biome
 pnpm test                # test:node + test:dom
 pnpm test:browser        # real Chromium via @vitest/browser-playwright
@@ -55,26 +73,26 @@ pnpm cap:open:android    # open android studio
 pnpm cap:run:android     # pnpm cap:sync && cap run android
 ```
 
-## Project Structure
+## Project structure
 
-- `src/engine/` — pure TypeScript simulation (`deepSeaSimulation.ts`,
-  `.test.ts`). No DOM, no React.
-- `src/lib/` — Perlin noise, session-mode tuning, runtime-pause
-  coordinator, small utilities.
-- `src/hooks/` — React hooks that bridge engine state to rAF
-  (`useGameLoop.ts`) and touch input (`useTouchInput.ts`).
-- `src/theme/` — palette tokens (`tokens.ts`) and global CSS
-  (`global.css`) with font imports.
-- `src/ui/Game.tsx` — the orchestrator; owns phase, canvas rendering,
-  HUD composition, save-slot persistence.
-- `src/ui/shell/` — identity-forward chrome: `GameViewport`,
-  `StartScreen`, `GameOverScreen`, `OverlayButton`.
-- `src/ui/hud/HUD.tsx` — in-game stat row + landmark chip + objective
-  banner + threat flashes.
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full tree.
+Short version:
 
-## Design palette (locked-in)
+- `src/sim/` — pure engine (rng, world, entities, dive, ai). No DOM.
+- `src/ecs/` — Koota traits, actions, hooks.
+- `src/render/` — PixiJS scene graph.
+- `src/audio/` — Tone.js ambient + Howler SFX.
+- `src/ui/` — React (shell + HUD + dive app). No canvas or sim code.
+- `src/platform/` — Capacitor bridges.
+- `src/data/` — Zod schemas + compiled content importers.
+- `config/raw/` — authored JSON (biomes, creatures, landmarks).
+- `docs/` — ARCHITECTURE, DESIGN, TESTING, DEPLOYMENT, RULES, LORE,
+  RELEASE, PRODUCTION, VISUAL_REVIEW, STATE, superpowers/, plans/,
+  screenshots/.
 
-See `docs/DESIGN.md` for rationale.
+## Design palette (locked)
+
+See [docs/DESIGN.md](./docs/DESIGN.md) for rationale.
 
 ```
 --color-bg:        #050a14   near-black navy (background, safe area)
@@ -86,5 +104,14 @@ See `docs/DESIGN.md` for rationale.
 --color-warn:      #ff6b6b   warn red (low oxygen, threats)
 ```
 
-Display font: Cormorant Garamond (serif, liquid terminals, titles only).
-Body font: Inter (sans-serif, high x-height, HUD + body).
+Display font: Cormorant Garamond (titles and summary only).
+Body font: Inter (HUD + body).
+
+## Foundation status
+
+The foundation PR sequence (A → H) is tracked in
+[docs/PRODUCTION.md](./docs/PRODUCTION.md). PR A landed the docs tree,
+libraries, directory skeleton, and seeded RNG. PRs B–H swap in the
+real implementation of each layer in order. Until PR B lands, the
+running app still runs on the original `src/engine/deepSeaSimulation.ts`
+and `src/ui/Game.tsx`.

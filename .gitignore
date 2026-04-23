@@ -30,3 +30,6 @@ ios/App/App.xcworkspace/xcuserdata/
 .env
 .env.local
 .claude/state/
+
+# TypeScript composite build cache
+*.tsbuildinfo

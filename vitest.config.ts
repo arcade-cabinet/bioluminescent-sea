@@ -9,6 +9,9 @@ export default defineConfig({
     include: [
       "src/engine/**/*.test.ts",
       "src/lib/**/*.test.ts",
+      "src/sim/**/*.test.ts",
+      "src/ecs/**/*.test.ts",
+      "src/data/**/*.test.ts",
     ],
     exclude: ["e2e/**", "node_modules/**"],
   },
