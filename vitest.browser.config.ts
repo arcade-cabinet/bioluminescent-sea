@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     include: ["src/**/*.browser.test.ts", "src/**/*.browser.test.tsx"],
     exclude: ["node_modules/**", "e2e/**"],
+    passWithNoTests: true,
     browser: {
       enabled: true,
       headless: true,
