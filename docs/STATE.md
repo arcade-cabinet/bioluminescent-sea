@@ -9,13 +9,16 @@ domain: context
 
 ## Current baseline
 
-Foundation PR A merged. PR B (sim split) in review: the monolithic
-`src/engine/deepSeaSimulation.ts` has been decomposed into
-`src/sim/dive/*` and `src/sim/entities/*` with responsibility-driven
-splits. No compatibility shims — the old path is gone and every
-consumer imports directly from `@/sim` or `@/sim/*` modules. The
-running app still uses the hand-rolled canvas renderer; the PixiJS
-swap lands in PR C.
+Foundation PR A merged. PR B (sim split) open. PR C (PixiJS renderer)
+open: the hand-rolled canvas renderer has been replaced with a pixi
+`Application` + layered scene graph under `src/render/`. `Game.tsx`
+dropped from 1307 → 787 LOC; every draw helper moved into a
+dedicated layer module (backdrop / parallax / entities / player / fx).
+Verified on desktop 1280×720 and mobile portrait 390×844 in a
+production build: zero console errors, full visual parity plus real
+WebGL filters (no longer canvas 2d). `pixi.js/unsafe-eval` imported
+at `src/main.tsx` so Capacitor's strict CSP doesn't trip the shader
+compiler.
 
 - Runtime deps installed: pixi.js 8, koota 0.6, yuka 0.7, seedrandom,
   tone 15, howler, gsap, zod, tailwindcss v4, framer-motion (kept).
@@ -52,7 +55,7 @@ swap lands in PR C.
 | -- | ------------------------------------ | ------------ |
 | A  | Foundation scaffolding + docs tree   | merged       |
 | B  | Sim split (engine → sim/*)           | in review    |
-| C  | PixiJS renderer swap                 | not started  |
+| C  | PixiJS renderer swap                 | in review    |
 | D  | Koota ECS + Yuka AI                  | not started  |
 | E  | Seed-driven spawning + codename UI   | not started  |
 | F  | Chunked world + biomes               | not started  |
