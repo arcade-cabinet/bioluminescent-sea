@@ -1,0 +1,32 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+.vite/
+
+# Vitest
+test-results/
+playwright-report/
+
+# Capacitor
+android/build/
+android/.gradle/
+android/local.properties
+android/app/build/
+android/app/release/
+android/app/debug/
+ios/build/
+ios/App/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local overrides
+.env
+.env.local
+.claude/state/
