@@ -50,6 +50,16 @@ Hooks and CI may warn on large files but must never block.
 new runs, `dailySeed()` for the shared daily trench, or
 `seedFromCodename()` for replay/shared URLs.
 
+### Refactors, not shims
+
+When a module moves or a responsibility splits, **every caller moves
+with it in the same PR**. No compat shims, no deprecated re-exports,
+no `// kept for backwards compatibility` files. The tax of a rename
+is paid in full the moment it happens; nothing stays "temporarily
+exported from the old path." Over the course of a project's life,
+shims accrete into a second codebase that silently owns the
+redirects — we prevent that by never starting.
+
 ### Dependencies
 
 - pnpm only. `package-lock.json` and `yarn.lock` are deleted on sight.

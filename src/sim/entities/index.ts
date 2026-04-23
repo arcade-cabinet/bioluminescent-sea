@@ -1,10 +1,27 @@
 /**
- * Pure entity factories — no React, no DOM, no pixi.
+ * Pure entity factories + advance functions — no React, no DOM, no pixi.
  *
- * Every factory here takes an `Rng` and world-space parameters and
- * returns plain data. Placement, count, and per-instance variation
- * are all derived from the seeded RNG; nothing reads `Math.random`.
+ * Each entity type owns one file: types live in types.ts; spawn +
+ * advance live together in the type-specific module (creatures.ts,
+ * predators.ts, pirates.ts, particles.ts, player.ts).
  *
- * Filled in by PR E (seed-driven spawning) and PR F (chunked content).
+ * PRs E + F replace the hardcoded `CREATURE_ANCHORS` table with
+ * seed-driven chunked spawning. The advance functions stay intact.
  */
-export {};
+
+export * from "./types";
+export {
+  CREATURE_ANCHORS,
+  TOTAL_BEACONS,
+  advanceCreature,
+  createInitialCreatures,
+} from "./creatures";
+export { advancePredator, createInitialPredators } from "./predators";
+export { advancePirate, createInitialPirates } from "./pirates";
+export {
+  PARTICLE_COUNT,
+  advanceParticle,
+  createInitialParticles,
+  getDeterministicWrapX,
+} from "./particles";
+export { advancePlayer, createInitialPlayer } from "./player";

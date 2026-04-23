@@ -24,7 +24,7 @@ import {
   type Predator,
   resolveDiveThreatImpact,
   TOTAL_BEACONS,
-} from "./deepSeaSimulation";
+} from "@/sim";
 
 const desktop = { width: 1280, height: 720 };
 

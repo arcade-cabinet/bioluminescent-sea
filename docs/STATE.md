@@ -9,11 +9,13 @@ domain: context
 
 ## Current baseline
 
-Foundation scaffolding in place (PR A of the A → H foundation
-sequence). The running app still uses the original hand-rolled canvas
-renderer and the monolithic `src/engine/deepSeaSimulation.ts`; the new
-stack is wired and tested but not yet serving draw calls. See
-[PRODUCTION.md](./PRODUCTION.md) for the per-PR breakdown.
+Foundation PR A merged. PR B (sim split) in review: the monolithic
+`src/engine/deepSeaSimulation.ts` has been decomposed into
+`src/sim/dive/*` and `src/sim/entities/*` with responsibility-driven
+splits. No compatibility shims — the old path is gone and every
+consumer imports directly from `@/sim` or `@/sim/*` modules. The
+running app still uses the hand-rolled canvas renderer; the PixiJS
+swap lands in PR C.
 
 - Runtime deps installed: pixi.js 8, koota 0.6, yuka 0.7, seedrandom,
   tone 15, howler, gsap, zod, tailwindcss v4, framer-motion (kept).
@@ -46,16 +48,16 @@ stack is wired and tested but not yet serving draw calls. See
 
 ## PR sequence status
 
-| PR | Description                          | Status     |
-| -- | ------------------------------------ | ---------- |
-| A  | Foundation scaffolding + docs tree   | in review  |
-| B  | Sim split (engine → sim/*)           | not started|
-| C  | PixiJS renderer swap                 | not started|
-| D  | Koota ECS + Yuka AI                  | not started|
-| E  | Seed-driven spawning + codename UI   | not started|
-| F  | Chunked world + biomes               | not started|
-| G  | Audio (Tone.js + Howler)             | not started|
-| H  | Content pipeline (Zod + JSON)        | not started|
+| PR | Description                          | Status       |
+| -- | ------------------------------------ | ------------ |
+| A  | Foundation scaffolding + docs tree   | merged       |
+| B  | Sim split (engine → sim/*)           | in review    |
+| C  | PixiJS renderer swap                 | not started  |
+| D  | Koota ECS + Yuka AI                  | not started  |
+| E  | Seed-driven spawning + codename UI   | not started  |
+| F  | Chunked world + biomes               | not started  |
+| G  | Audio (Tone.js + Howler)             | not started  |
+| H  | Content pipeline (Zod + JSON)        | not started  |
 
 ## Known bugs / quirks
 

@@ -18,10 +18,10 @@ import {
   type Predator,
   resolveDiveThreatImpact,
   type SceneState,
-} from "@/engine/deepSeaSimulation";
+} from "@/sim";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useTouchInput } from "@/hooks/useTouchInput";
-import type { SessionMode } from "@/lib/sessionMode";
+import type { SessionMode } from "@/sim/_shared/sessionMode";
 import { HUD } from "@/ui/hud/HUD";
 import { GameOverScreen, GameViewport, OverlayButton, StartScreen } from "@/ui/shell";
 
