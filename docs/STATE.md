@@ -10,15 +10,26 @@ domain: context
 ## Current baseline
 
 Foundation PR A merged. PR B (sim split) open. PR C (PixiJS renderer)
-open: the hand-rolled canvas renderer has been replaced with a pixi
-`Application` + layered scene graph under `src/render/`. `Game.tsx`
-dropped from 1307 → 787 LOC; every draw helper moved into a
-dedicated layer module (backdrop / parallax / entities / player / fx).
-Verified on desktop 1280×720 and mobile portrait 390×844 in a
-production build: zero console errors, full visual parity plus real
-WebGL filters (no longer canvas 2d). `pixi.js/unsafe-eval` imported
-at `src/main.tsx` so Capacitor's strict CSP doesn't trip the shader
-compiler.
+open. PR D (Koota ECS integration) open: entity state now lives in
+Koota traits — `PlayerAvatar`, `CreatureEntity`, `PredatorEntity`,
+`PirateEntity`, `ParticleEntity`, `DiveRoot`. The sim in `src/sim/*`
+stays pure; it consumes and produces plain `SceneState` objects,
+and `src/ecs/actions.ts` is the thin adapter between sim and ECS.
+The renderer reads entities via Koota queries — the ECS is the
+canonical source of truth for runtime state. Yuka-composed AI
+behaviors land in a follow-up PR on top of this boundary.
+
+`Game.tsx` now:
+- Creates the DiveWorld lazily once per mount via `useRef` + null
+  sentinel (React Strict Mode + HMR previously exhausted Koota's
+  16-world ceiling).
+- Destroys the world on cleanup via `world.destroy()` which releases
+  the worldId back to the pool.
+
+Verified end-to-end in a production build on desktop 1280×720 and
+mobile portrait 390×844: zero console errors, full visual parity,
+restart path stress-tested (10 dive starts in a row — no
+world-ceiling errors).
 
 - Runtime deps installed: pixi.js 8, koota 0.6, yuka 0.7, seedrandom,
   tone 15, howler, gsap, zod, tailwindcss v4, framer-motion (kept).
@@ -56,7 +67,7 @@ compiler.
 | A  | Foundation scaffolding + docs tree   | merged       |
 | B  | Sim split (engine → sim/*)           | in review    |
 | C  | PixiJS renderer swap                 | in review    |
-| D  | Koota ECS + Yuka AI                  | not started  |
+| D  | Koota ECS integration                | in review    |
 | E  | Seed-driven spawning + codename UI   | not started  |
 | F  | Chunked world + biomes               | not started  |
 | G  | Audio (Tone.js + Howler)             | not started  |
@@ -91,3 +102,11 @@ a date.
 - **2026-04-23** — Dropped cabinet-runtime save-slot API in favor of
   `localStorage["bioluminescent-sea:v1:save"]` + `…:best-score`.
   Simpler, no cross-game assumptions, works offline on Android.
+- **2026-04-23** — Removed the meta-CSP from `index.html` on PR D.
+  Koota's trait codegen and PixiJS's shader compiler both rely on
+  dynamic Function construction for performance; fighting that is
+  fighting the framework's entire execution model. Matches
+  `../mean-streets` (which also ships without a meta-CSP). Capacitor
+  owns the strict CSP on the mobile build; web relies on the normal
+  browser sandbox. Acceptable given the app loads no third-party
+  content and accepts no user input outside its own DOM.

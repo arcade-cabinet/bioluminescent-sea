@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  advanceScene,
   type Creature,
   createInitialScene,
   type DiveCompletionCelebration,
@@ -21,6 +20,14 @@ import {
 } from "@/sim";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useTouchInput } from "@/hooks/useTouchInput";
+import {
+  advanceDiveFrame,
+  createDiveWorld,
+  decayThreatFlash,
+  destroyDiveWorld,
+  recordThreatFlash,
+  type DiveWorld,
+} from "@/ecs";
 import { createRenderBridge, type RenderBridge } from "@/render";
 import type { SessionMode } from "@/sim/_shared/sessionMode";
 import { HUD } from "@/ui/hud/HUD";
@@ -125,6 +132,15 @@ function DeepSeaGame({
       initialSnapshot?.telemetry ?? getDiveTelemetry(initialScene, durationSeconds, durationSeconds)
   );
 
+  // Lazy one-shot world creation: useRef evaluates its arg on every
+  // render, which exhausts Koota's 16-world ceiling under StrictMode +
+  // HMR. Guarding with a ref sentinel means the world is constructed
+  // exactly once per mounted component, destroyed in the cleanup.
+  const worldRef = useRef<DiveWorld | null>(null);
+  if (worldRef.current === null) {
+    worldRef.current = createDiveWorld(initialScene);
+  }
+
   const playerRef = useRef<Player>(initialScene.player);
   const creaturesRef = useRef<Creature[]>(initialScene.creatures);
   const predatorsRef = useRef<Predator[]>(initialScene.predators);
@@ -138,7 +154,19 @@ function DeepSeaGame({
   const lastImpactTimeRef = useRef(Number.NEGATIVE_INFINITY);
   const timeModifierRef = useRef(0);
   const bridgeRef = useRef<RenderBridge | null>(null);
-  const impactFlashAlphaRef = useRef(0);
+
+  // Tear the ECS world down when the component unmounts so re-mounts
+  // (dive restart, HMR, StrictMode double-invoke) start from a fresh
+  // world. The null-init sentinel plus this cleanup keeps the Koota
+  // world ceiling from filling up.
+  useEffect(() => {
+    return () => {
+      if (worldRef.current) {
+        destroyDiveWorld(worldRef.current);
+        worldRef.current = null;
+      }
+    };
+  }, []);
 
   const input = useTouchInput(containerRef);
 
@@ -302,24 +330,26 @@ function DeepSeaGame({
         }
       }
 
-      const result = advanceScene(
-        {
-          creatures: creaturesRef.current,
-          particles: particlesRef.current,
-          pirates: piratesRef.current,
-          player: playerRef.current,
-          predators: predatorsRef.current,
-        },
+      const currentWorld = worldRef.current;
+      if (!currentWorld) return;
+
+      const { world: nextWorld, result } = advanceDiveFrame({
+        world: currentWorld,
         input,
         dimensions,
-        effectiveTotalTime,
         deltaTime,
-        lastCollectTimeRef.current,
-        multiplierRef.current,
-        newTimeLeft,
-        mode
-      );
+        totalTime: effectiveTotalTime,
+        timeLeft: newTimeLeft,
+        mode,
+        lastCollectTime: lastCollectTimeRef.current,
+        multiplier: multiplierRef.current,
+      });
+      worldRef.current = nextWorld;
 
+      // Mirror scene state onto the entity refs used by the snapshot,
+      // telemetry, and game-over paths. When PR E + F land, these
+      // callers will read directly from ECS traits and the mirror
+      // disappears.
       playerRef.current = result.scene.player;
       creaturesRef.current = result.scene.creatures;
       predatorsRef.current = result.scene.predators;
@@ -386,7 +416,7 @@ function DeepSeaGame({
 
         if (impact.type !== "none") {
           lastImpactTimeRef.current = effectiveTotalTime;
-          impactFlashAlphaRef.current = 1;
+          recordThreatFlash(currentWorld);
         }
 
         if (impact.type === "oxygen-penalty") {
@@ -403,16 +433,11 @@ function DeepSeaGame({
 
       // Decay the threat-flash alpha independently of impact events so
       // the fade is smooth at any frame rate.
-      impactFlashAlphaRef.current = Math.max(
-        0,
-        impactFlashAlphaRef.current - deltaTime * 3
-      );
+      decayThreatFlash(nextWorld, deltaTime);
 
       bridgeRef.current?.renderFrame({
-        scene: result.scene,
-        totalTime: effectiveTotalTime,
+        world: nextWorld,
         bursts: collectionBurstsRef.current,
-        threatFlashAlpha: impactFlashAlphaRef.current,
         viewportScale: getViewportScale(dimensions.width, dimensions.height),
       });
     },
