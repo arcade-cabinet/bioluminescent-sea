@@ -22,6 +22,7 @@ import {
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useTouchInput } from "@/hooks/useTouchInput";
 import type { SessionMode } from "@/lib/sessionMode";
+import { HUD } from "@/ui/hud/HUD";
 import { GameOverScreen, GameViewport, OverlayButton, StartScreen } from "@/ui/shell";
 
 const DIVE_SAVE_KEY = "bioluminescent-sea:v1:save";
@@ -599,12 +600,6 @@ function shouldUpdateTelemetry(current: DiveTelemetry, next: DiveTelemetry) {
   );
 }
 
-function formatThreatDistance(distance: number) {
-  if (!Number.isFinite(distance)) return "--";
-
-  return `${Math.round(distance)}m`;
-}
-
 function getInitialDiveDimensions() {
   if (typeof window === "undefined") return { height: 600, width: 800 };
 
@@ -919,7 +914,6 @@ function DeepSeaGame({
 
   useGameLoop(gameLoop, !isGameOver);
   const threatAlert = telemetry.nearestThreatDistance < 180;
-  const landmarkAngle = telemetry.routeLandmarkBearingRadians ?? -Math.PI / 5;
 
   return (
     <div
@@ -959,10 +953,28 @@ function DeepSeaGame({
         {oxygenPulse && (
           <motion.div
             key={oxygenPulse.id}
-            className="pointer-events-none absolute left-1/2 top-[5.35rem] z-20 -translate-x-1/2 rounded-md border border-cyan-200/30 bg-cyan-950/80 px-4 py-2 text-center font-black uppercase text-cyan-100 shadow-2xl shadow-cyan-400/20 backdrop-blur sm:top-20"
             initial={{ opacity: 0, y: -10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            style={{
+              position: "absolute",
+              top: "6rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "0.5rem 1rem",
+              background: "rgba(14, 79, 85, 0.85)",
+              border: "1px solid var(--color-glow)",
+              borderRadius: 8,
+              color: "var(--color-glow)",
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              pointerEvents: "none",
+              zIndex: 20,
+              boxShadow: "0 0 18px rgba(107, 230, 193, 0.35)",
+            }}
           >
             Oxygen +{oxygenPulse.bonusSeconds}s
           </motion.div>
@@ -970,103 +982,75 @@ function DeepSeaGame({
         {impactPulse && (
           <motion.div
             key={impactPulse.id}
-            className="pointer-events-none absolute left-1/2 top-[8.35rem] z-20 -translate-x-1/2 rounded-md border border-red-200/35 bg-red-950/80 px-4 py-2 text-center font-black uppercase text-red-100 shadow-2xl shadow-red-500/25 backdrop-blur sm:top-32"
             initial={{ opacity: 0, y: -10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            style={{
+              position: "absolute",
+              top: "9rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "0.5rem 1rem",
+              background: "rgba(80, 18, 18, 0.85)",
+              border: "1px solid var(--color-warn)",
+              borderRadius: 8,
+              color: "var(--color-warn)",
+              fontFamily: "var(--font-body)",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              pointerEvents: "none",
+              zIndex: 20,
+              boxShadow: "0 0 18px rgba(255, 107, 107, 0.35)",
+            }}
           >
-            Hull shock -{impactPulse.penaltySeconds}s
+            Hull Shock −{impactPulse.penaltySeconds}s
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="pointer-events-none absolute inset-x-3 top-3 grid grid-cols-3 gap-2 sm:inset-x-auto sm:left-4 sm:flex sm:gap-3">
-        <div className="min-w-0 rounded-md border border-cyan-200/15 bg-slate-950/58 p-2.5 shadow-2xl shadow-cyan-950/30 backdrop-blur-md sm:min-w-28 sm:p-3">
-          <div className="mb-1 truncate font-semibold text-[0.62rem] uppercase tracking-widest text-cyan-300">
-            Score
-          </div>
-          <div className="truncate font-black text-xl leading-none text-white sm:text-2xl">
-            {score}
-          </div>
-        </div>
-        <div className="min-w-0 rounded-md border border-cyan-200/15 bg-slate-950/58 p-2.5 shadow-2xl shadow-cyan-950/30 backdrop-blur-md sm:min-w-28 sm:p-3">
-          <div className="mb-1 truncate font-semibold text-[0.62rem] uppercase tracking-widest text-cyan-300">
-            Time
-          </div>
-          <div className="truncate font-black text-xl leading-none text-white sm:text-2xl">
-            {timeLeft}s
-          </div>
-        </div>
-        <div className="min-w-0 rounded-md border border-violet-200/15 bg-slate-950/58 p-2.5 shadow-2xl shadow-violet-950/30 backdrop-blur-md sm:min-w-28 sm:p-3">
-          <div className="mb-1 truncate font-semibold text-[0.62rem] uppercase tracking-widest text-violet-300">
-            Chain
-          </div>
-          <div className="truncate font-black text-xl leading-none text-white sm:text-2xl">
-            x{multiplier}
-          </div>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-3 bottom-3 sm:inset-x-4">
-        <div className="mx-auto grid max-w-5xl gap-2 rounded-md border border-cyan-100/15 bg-slate-950/60 p-3 shadow-2xl shadow-cyan-950/30 backdrop-blur-md sm:grid-cols-[1.35fr_0.9fr_0.85fr_0.75fr] sm:items-end">
-          <div className="min-w-0">
-            <div className="mb-1 font-semibold text-[0.62rem] uppercase tracking-widest text-cyan-300">
-              Dive Plan
-            </div>
-            <div className="text-balance text-sm font-semibold leading-snug text-white sm:text-base">
-              {telemetry.objective}
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="mb-1 flex items-center justify-between gap-3 font-semibold text-[0.62rem] uppercase tracking-widest text-cyan-300">
-              <span>Oxygen</span>
-              <span>{Math.round(telemetry.oxygenRatio * 100)}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-cyan-950/80">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-teal-200 to-amber-200"
-                style={{ width: `${Math.round(telemetry.oxygenRatio * 100)}%` }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-1 sm:text-sm">
-            <div className="min-w-0">
-              <div className="font-semibold uppercase tracking-widest text-slate-400">Depth</div>
-              <div className="truncate font-bold text-white">{telemetry.depthMeters}m</div>
-            </div>
-            <div className="min-w-0">
-              <div className="font-semibold uppercase tracking-widest text-slate-400">Threat</div>
-              <div className="truncate font-bold text-white">
-                {formatThreatDistance(telemetry.nearestThreatDistance)}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="font-semibold uppercase tracking-widest text-slate-400">Beacon</div>
-              <div className="truncate font-bold text-cyan-100">
-                {formatThreatDistance(telemetry.nearestBeaconDistance)}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <div className="font-semibold uppercase tracking-widest text-slate-400">Pressure</div>
-              <div className="truncate font-bold text-amber-200">{telemetry.pressureLabel}</div>
-            </div>
-          </div>
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-md border border-cyan-200/10 bg-cyan-950/22 p-2 text-xs sm:text-sm">
-            <div
-              aria-hidden="true"
-              className="grid h-10 w-10 place-items-center rounded-full border border-cyan-200/30 bg-cyan-900/35"
-            >
-              <div
-                className="h-4 w-1 rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(165,243,252,0.8)]"
-                style={{ transform: `rotate(${landmarkAngle + Math.PI / 2}rad)` }}
-              />
-            </div>
-            <div className="min-w-0">
-              <div className="font-semibold uppercase tracking-widest text-slate-400">Route</div>
-              <div className="truncate font-bold text-cyan-100">{telemetry.routeLandmarkLabel}</div>
-              <div className="truncate text-[0.68rem] font-semibold text-amber-200">
-                {formatThreatDistance(telemetry.routeLandmarkDistance)}
-              </div>
-            </div>
-          </div>
+      <HUD
+        score={score}
+        timeLeft={timeLeft}
+        multiplier={multiplier}
+        depthMeters={telemetry.depthMeters}
+        beacons={Math.round(telemetry.collectionRatio * 100)}
+        oxygenRatio={telemetry.oxygenRatio}
+        threatAlert={threatAlert}
+        nearestLandmarkLabel={telemetry.routeLandmarkLabel}
+        nearestLandmarkDistance={telemetry.routeLandmarkDistance}
+      />
+      {/* Objective banner — bottom center, single line of legible intent */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "max(env(safe-area-inset-bottom), 1rem)",
+          left: "1rem",
+          right: "1rem",
+          pointerEvents: "none",
+          zIndex: 10,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            padding: "0.6rem 1.1rem",
+            background: "rgba(10, 26, 46, 0.75)",
+            border: "1px solid rgba(107, 230, 193, 0.22)",
+            borderRadius: 999,
+            fontFamily: "var(--font-body)",
+            fontSize: "0.85rem",
+            fontWeight: 500,
+            color: "var(--color-fg)",
+            textAlign: "center",
+            maxWidth: "60ch",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            boxShadow: "0 4px 18px rgba(5, 10, 20, 0.45)",
+          }}
+        >
+          {telemetry.objective}
         </div>
       </div>
     </div>
