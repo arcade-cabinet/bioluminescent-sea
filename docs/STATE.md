@@ -69,7 +69,8 @@ world-ceiling errors).
 | C  | PixiJS renderer swap                 | in review    |
 | D  | Koota ECS integration                | in review    |
 | E  | Seed-driven spawning + codename UI   | in review    |
-| F  | Chunked world + biomes               | not started  |
+| F.1| Biome surface (HUD chip + tint)      | in review    |
+| F.2| World coords + chunking              | not started  |
 | G  | Audio (Tone.js + Howler)             | not started  |
 | H  | Content pipeline (Zod + JSON)        | not started  |
 

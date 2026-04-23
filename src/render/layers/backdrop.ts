@@ -11,7 +11,7 @@ import { Container, Graphics } from "pixi.js";
  */
 
 export interface BackdropController {
-  draw(widthPx: number, heightPx: number, totalTime: number): void;
+  draw(widthPx: number, heightPx: number, totalTime: number, biomeTintHex?: string): void;
   destroy(): void;
 }
 
@@ -33,10 +33,16 @@ const STOPS: readonly Stop[] = [
 
 export function mountBackdrop(parent: Container): BackdropController {
   const gradient = new Graphics();
+  const biomeTint = new Graphics();
   const ridges = new Graphics();
-  parent.addChild(gradient, ridges);
+  parent.addChild(gradient, biomeTint, ridges);
 
-  const draw = (widthPx: number, heightPx: number, totalTime: number) => {
+  const draw = (
+    widthPx: number,
+    heightPx: number,
+    totalTime: number,
+    biomeTintHex?: string
+  ) => {
     gradient.clear();
     // Build a vertical band gradient by stacking GRADIENT_STEPS rects
     // and interpolating colors. pixi v8 has no native gradient fill.
@@ -50,6 +56,16 @@ export function mountBackdrop(parent: Container): BackdropController {
       });
     }
 
+    biomeTint.clear();
+    if (biomeTintHex) {
+      const hex = biomeTintHex.startsWith("#") ? biomeTintHex.slice(1) : biomeTintHex;
+      const color = Number.parseInt(hex, 16);
+      // 10% overlay — strong enough to read as a shift, weak enough to
+      // keep the identity palette intact. A full viewport rect with
+      // low alpha is cheaper than modulating every gradient stop.
+      biomeTint.rect(0, 0, widthPx, heightPx).fill({ color, alpha: 0.1 });
+    }
+
     ridges.clear();
     drawRidge(ridges, widthPx, heightPx, totalTime, 0.55, 0x081826, 0.35);
     drawRidge(ridges, widthPx, heightPx, totalTime * 0.7 + 120, 0.72, 0x061018, 0.55);
@@ -60,6 +76,7 @@ export function mountBackdrop(parent: Container): BackdropController {
     draw,
     destroy() {
       gradient.destroy();
+      biomeTint.destroy();
       ridges.destroy();
     },
   };
