@@ -20,12 +20,19 @@ import type {
   ViewportDimensions,
 } from "./types";
 
-export function createInitialScene(dimensions: ViewportDimensions): SceneState {
+import type { SubUpgrades } from "@/sim/meta/upgrades";
+
+export function createInitialScene(dimensions: ViewportDimensions, upgrades?: SubUpgrades): SceneState {
+  const player = createInitialPlayer(dimensions);
+  if (upgrades) {
+    player.speedScale = 1 + (upgrades.motor * 0.15); // +15% per level
+    player.lampScale = 1 + (upgrades.lamp * 0.20); // +20% per level
+  }
   return {
     creatures: createInitialCreatures(dimensions),
     particles: createInitialParticles(dimensions),
     pirates: createInitialPirates(dimensions),
-    player: createInitialPlayer(dimensions),
+    player,
     predators: createInitialPredators(dimensions),
     depthTravelMeters: 0,
   };

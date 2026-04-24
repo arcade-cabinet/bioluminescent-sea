@@ -62,6 +62,8 @@ export interface Player {
   targetY: number;
   angle: number;
   glowIntensity: number;
+  speedScale: number;
+  lampScale: number;
 }
 
 export const CREATURE_TYPES: CreatureType[] = ["jellyfish", "plankton", "fish"];

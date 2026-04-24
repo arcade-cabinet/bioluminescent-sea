@@ -29,6 +29,7 @@ export function spawnSeededPlayer(
   // is the camera's reference point, not a scene-random element.
   const x = width * 0.5;
   const y = height * 0.54;
+
   return {
     angle: -Math.PI / 18,
     glowIntensity: 1,
@@ -36,6 +37,8 @@ export function spawnSeededPlayer(
     targetY: y,
     x,
     y,
+    speedScale: 1,
+    lampScale: 1,
   };
 }
 

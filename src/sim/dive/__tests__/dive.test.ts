@@ -342,6 +342,8 @@ function createPlayer(position: { x: number; y: number }): Player {
     targetY: position.y,
     x: position.x,
     y: position.y,
+    speedScale: 1,
+    lampScale: 1,
   };
 }
 

@@ -105,16 +105,18 @@ function DeepSeaGame({
   initialSnapshot,
   mode,
   seed,
+  upgrades,
   onComplete,
   onGameOver,
 }: {
   initialSnapshot?: DeepSeaRunSnapshot | null;
   mode: SessionMode;
   seed: number;
+  upgrades: SubUpgrades;
   onComplete: (score: number, summary: DiveRunSummary) => void;
   onGameOver: (score: number, summary: DiveRunSummary) => void;
 }) {
-  const durationSeconds = getDiveDurationSeconds(mode);
+  const durationSeconds = getDiveDurationSeconds(mode, upgrades);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialDimensionsRef = useRef(getInitialDiveDimensions());
@@ -122,7 +124,7 @@ function DeepSeaGame({
   if (!initialSceneRef.current) {
     initialSceneRef.current = initialSnapshot
       ? cloneSceneState(initialSnapshot.scene)
-      : createSeededScene(seed, initialDimensionsRef.current);
+      : createSeededScene(seed, initialDimensionsRef.current, upgrades);
   }
 
   const initialScene = initialSceneRef.current;
@@ -783,14 +785,21 @@ function isSceneSnapshot(scene: unknown): scene is SceneState {
   );
 }
 
+import type { SubUpgrades } from "@/sim/meta/upgrades";
+import { useMetaProgression } from "@/hooks/useMetaProgression";
+import { DrydockScreen } from "./shell/DrydockScreen";
+
 function cloneSceneState(scene: SceneState): SceneState {
   return JSON.parse(JSON.stringify(scene)) as SceneState;
 }
 
 export default function Game() {
-  const [gameState, setGameState] = useState<"landing" | "customization" | "playing" | "gameover" | "complete">(
+  const [gameState, setGameState] = useState<"landing" | "customization" | "drydock" | "playing" | "gameover" | "complete">(
     "landing"
   );
+  
+  const { currency, upgrades, addCurrency, buyUpgrade } = useMetaProgression();
+  
   const [sessionMode, setSessionMode] = useState<SessionMode>("standard");
   const [initialSnapshot, setInitialSnapshot] = useState<DeepSeaRunSnapshot | null>(null);
   const [finalScore, setFinalScore] = useState(0);
@@ -816,7 +825,6 @@ export default function Game() {
   // The seed used by the currently-playing dive; frozen at Begin Dive.
   const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
   const previewCodename = codenameFromSeed(previewSeed);
-  const todayCodename = codenameFromSeed(dailySeed());
   const fallbackSummary = getDiveRunSummary(
     { ...createInitialScene({ height: 600, width: 800 }), creatures: [] },
     finalScore,
@@ -850,10 +858,9 @@ export default function Game() {
                 },
               }}
               secondaryAction={{
-                label: `Today's Trench — ${todayCodename}`,
+                label: `Upgrades`,
                 onClick: () => {
-                  setPreviewSeed(dailySeed());
-                  setGameState("customization");
+                  setGameState("drydock");
                 },
               }}
             >
@@ -877,6 +884,15 @@ export default function Game() {
               </div>
             </StartScreen>
           </motion.div>
+        )}
+        {gameState === "drydock" && (
+          <DrydockScreen
+            key="drydock"
+            currency={currency}
+            upgrades={upgrades}
+            onBuy={buyUpgrade}
+            onBack={() => setGameState("landing")}
+          />
         )}
         {gameState === "customization" && (
           <motion.div
@@ -959,6 +975,7 @@ export default function Game() {
               initialSnapshot={initialSnapshot}
               mode={sessionMode}
               seed={activeSeed}
+              upgrades={upgrades}
               onComplete={(s, summary) => {
                 setInitialSnapshot(null);
                 setFinalScore(s);
@@ -969,6 +986,7 @@ export default function Game() {
                 setInitialSnapshot(null);
                 setFinalScore(s);
                 setFinalSummary(summary);
+                addCurrency(s); // Add score to currency!
                 setGameState("gameover");
               }}
             />
