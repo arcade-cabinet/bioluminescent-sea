@@ -1,6 +1,6 @@
-import { EntityManager, Time, SeekBehavior } from "yuka";
-import type { Player, Predator, Pirate } from "@/sim/entities/types";
-import { GameVehicle, WanderBehavior, WrapPlayBandBehavior } from "./steering";
+import { EntityManager, Time, AlignmentBehavior, CohesionBehavior, SeparationBehavior } from "yuka";
+import type { Player, Predator, Pirate, Creature } from "@/sim/entities/types";
+import { GameVehicle, WanderBehavior, WrapPlayBandBehavior, StalkAndDashBehavior } from "./steering";
 import type { ViewportDimensions } from "@/sim/dive/types";
 
 export class AIManager {
@@ -9,11 +9,17 @@ export class AIManager {
   private playerVehicle: GameVehicle;
   private vehicleMap: Map<string, GameVehicle>;
   private viewportWidth: number;
+  private flockingBehaviors: Map<string, {
+    alignment: AlignmentBehavior;
+    cohesion: CohesionBehavior;
+    separation: SeparationBehavior;
+  }>;
 
   constructor(viewport: ViewportDimensions) {
     this.entityManager = new EntityManager();
     this.time = new Time();
     this.vehicleMap = new Map();
+    this.flockingBehaviors = new Map();
     this.viewportWidth = viewport.width;
     
     this.playerVehicle = new GameVehicle("player");
@@ -30,11 +36,12 @@ export class AIManager {
       let vehicle = this.vehicleMap.get(p.id);
       if (!vehicle) {
         vehicle = new GameVehicle(p.id);
-        vehicle.position.set(p.x, p.y, 0); // Initialize position!
-        vehicle.maxSpeed = p.speed * 60;
+        vehicle.position.set(p.x, p.y, 0);
+        const baseSpeed = p.speed * 60;
+        vehicle.maxSpeed = baseSpeed;
         
-        const seek = new SeekBehavior(this.playerVehicle.position);
-        vehicle.steering.add(seek);
+        const stalk = new StalkAndDashBehavior(this.playerVehicle.position, baseSpeed);
+        vehicle.steering.add(stalk);
         
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
         vehicle.steering.add(wrap);
@@ -50,10 +57,10 @@ export class AIManager {
       let vehicle = this.vehicleMap.get(p.id);
       if (!vehicle) {
         vehicle = new GameVehicle(p.id);
-        vehicle.position.set(p.x, p.y, 0); // Initialize position!
+        vehicle.position.set(p.x, p.y, 0);
         vehicle.maxSpeed = p.speed * 60;
         
-        const wander = new WanderBehavior();
+        const wander = new WanderBehavior(p.noiseOffset);
         vehicle.steering.add(wander);
         
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
@@ -65,8 +72,49 @@ export class AIManager {
     }
   }
 
+  syncCreatures(creatures: Creature[]) {
+    const flockers = creatures.filter(c => c.type !== "plankton");
+    
+    for (const type of ["fish", "jellyfish"]) {
+      if (!this.flockingBehaviors.has(type)) {
+        this.flockingBehaviors.set(type, {
+          alignment: new AlignmentBehavior(),
+          cohesion: new CohesionBehavior(),
+          separation: new SeparationBehavior()
+        });
+      }
+    }
+
+    for (const c of flockers) {
+      let vehicle = this.vehicleMap.get(c.id);
+      if (!vehicle) {
+        vehicle = new GameVehicle(c.id);
+        vehicle.position.set(c.x, c.y, 0);
+        vehicle.maxSpeed = c.speed * 60;
+        
+        const behaviors = this.flockingBehaviors.get(c.type)!;
+        vehicle.steering.add(behaviors.alignment);
+        vehicle.steering.add(behaviors.cohesion);
+        vehicle.steering.add(behaviors.separation);
+        
+        const wrap = new WrapPlayBandBehavior(this.viewportWidth);
+        vehicle.steering.add(wrap);
+        
+        this.entityManager.add(vehicle);
+        this.vehicleMap.set(c.id, vehicle);
+      }
+    }
+    
+    const activeIds = new Set(creatures.map(c => c.id));
+    for (const [id, vehicle] of this.vehicleMap.entries()) {
+      if (id !== "player" && !activeIds.has(id) && id.startsWith("beacon-")) {
+        this.entityManager.remove(vehicle);
+        this.vehicleMap.delete(id);
+      }
+    }
+  }
+
   update(deltaTime: number) {
-    this.time.update();
     this.entityManager.update(deltaTime);
   }
 
@@ -91,6 +139,19 @@ export class AIManager {
       x: vehicle.position.x,
       y: vehicle.position.y,
       angle: Math.atan2(vehicle.velocity.y, vehicle.velocity.x),
+    };
+  }
+
+  readCreature(c: Creature): Creature {
+    if (c.type === "plankton") return c;
+    
+    const vehicle = this.vehicleMap.get(c.id);
+    if (!vehicle) return c;
+    
+    return {
+      ...c,
+      x: vehicle.position.x,
+      y: vehicle.position.y,
     };
   }
 }

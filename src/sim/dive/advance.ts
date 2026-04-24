@@ -59,11 +59,17 @@ export function advanceScene(
   aiManager.updatePlayer(player);
   aiManager.syncPredators(scene.predators);
   aiManager.syncPirates(scene.pirates);
+  aiManager.syncCreatures(scene.creatures);
   aiManager.update(deltaTime);
 
-  const creatures = scene.creatures.map((creature) =>
-    advanceCreature(creature, dimensions, totalTime, deltaTime)
-  );
+  const creatures = scene.creatures.map((creature) => {
+    // Basic perlin drift and pulsing
+    const base = advanceCreature(creature, dimensions, totalTime, deltaTime);
+    // Overlay AI flocking (updates x, y only)
+    const flocking = aiManager!.readCreature(base);
+    // Keep it in bounds visually using wrap, though the steering behavior also wraps it
+    return { ...base, x: flocking.x, y: flocking.y };
+  });
   
   const predators = scene.predators.map((p) => {
     const updated = aiManager!.readPredator(p);

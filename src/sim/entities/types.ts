@@ -47,6 +47,7 @@ export interface Pirate {
 export interface Particle {
   x: number;
   y: number;
+  zDepth: number; // 0 = mid, >0 = deep (slower), <0 = foreground (faster, blurry)
   size: number;
   opacity: number;
   speed: number;

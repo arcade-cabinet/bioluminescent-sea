@@ -2,22 +2,48 @@ import { getFrameScale, normalizedHash, round } from "@/sim/_shared/math";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import type { Particle } from "./types";
 
-export const PARTICLE_COUNT = 130;
+export const PARTICLE_COUNT = 250;
 
 export function createInitialParticles({ width, height }: ViewportDimensions): Particle[] {
   return Array.from({ length: PARTICLE_COUNT }, (_, index) => {
     const horizontal = normalizedHash(index, 37, 127);
     const vertical = normalizedHash(index, 53, 131);
     const drift = round(index * 0.71, 3);
+    
+    // Assign zDepth based on index mod
+    const layerType = index % 10;
+    let zDepth = 0;
+    let baseSize = 1;
+    let baseSpeed = 0.2;
+    let baseOpacity = 0.1;
+    
+    if (layerType < 5) {
+      // Background (most numerous)
+      zDepth = 1.0;
+      baseSize = 0.5;
+      baseSpeed = 0.1;
+      baseOpacity = 0.05;
+    } else if (layerType < 8) {
+      // Midground
+      zDepth = 0.0;
+      baseSize = 1.5;
+      baseSpeed = 0.3;
+      baseOpacity = 0.12;
+    } else {
+      // Foreground (huge, fast, sparse)
+      zDepth = -1.2;
+      baseSize = 4.5;
+      baseSpeed = 0.8;
+      baseOpacity = 0.03;
+    }
 
     return {
       drift,
-      // Seed opacity from the same sine that `advanceParticle` uses
-      // at totalTime=0, so the first post-advance frame doesn't jump.
-      opacity: round(0.1 + Math.sin(drift) * 0.1, 3),
+      opacity: round(baseOpacity + Math.sin(drift) * 0.05, 3),
       seed: index + 1,
-      size: round(0.8 + normalizedHash(index, 29, 89) * 2.6, 2),
-      speed: round(0.18 + normalizedHash(index, 31, 83) * 0.52, 3),
+      size: round(baseSize + normalizedHash(index, 29, 89) * baseSize, 2),
+      speed: round(baseSpeed + normalizedHash(index, 31, 83) * baseSpeed * 0.5, 3),
+      zDepth,
       x: round(horizontal * width, 2),
       y: round(vertical * height, 2),
     };

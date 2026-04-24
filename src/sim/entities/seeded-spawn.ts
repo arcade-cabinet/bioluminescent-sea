@@ -117,14 +117,39 @@ export function spawnSeededParticles(
 ): Particle[] {
   return Array.from({ length: SEEDED_PARTICLE_COUNT }, (_, index) => {
     const drift = round(rng.range(0, 100), 3);
+
+    const layerType = index % 10;
+    let zDepth = 0;
+    let baseSize = 1;
+    let baseSpeed = 0.2;
+    let baseOpacity = 0.1;
+
+    if (layerType < 5) {
+      zDepth = 1.0;
+      baseSize = 0.5;
+      baseSpeed = 0.1;
+      baseOpacity = 0.05;
+    } else if (layerType < 8) {
+      zDepth = 0.0;
+      baseSize = 1.5;
+      baseSpeed = 0.3;
+      baseOpacity = 0.12;
+    } else {
+      zDepth = -1.2;
+      baseSize = 4.5;
+      baseSpeed = 0.8;
+      baseOpacity = 0.03;
+    }
+
     return {
       drift,
-      opacity: round(0.1 + Math.sin(drift) * 0.1, 3),
-      seed: index + 1,
-      size: round(rng.range(0.8, 3.4), 2),
-      speed: round(rng.range(0.18, 0.7), 3),
-      x: round(rng.range(0, width), 2),
-      y: round(rng.range(0, height), 2),
+      opacity: round(baseOpacity + Math.sin(drift) * 0.1, 3),
+      seed: rng.int(1, 100000),
+      size: round(baseSize + rng.next() * baseSize, 2),
+      speed: round(baseSpeed + rng.next() * baseSpeed * 0.5, 3),
+      zDepth,
+      x: round(rng.next() * width, 2),
+      y: round(rng.next() * height, 2),
     };
   });
 }

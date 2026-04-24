@@ -40,7 +40,7 @@ describe("deep sea simulation", () => {
 
     expect(scene).toEqual(again);
     expect(scene.creatures).toHaveLength(TOTAL_BEACONS);
-    expect(scene.particles).toHaveLength(130);
+    expect(scene.particles).toHaveLength(250);
     expect(scene.predators.map((predator) => predator.id)).toEqual(["angler-left", "eel-right"]);
     expect(scene.pirates.map((pirate) => pirate.id)).toEqual([
       "lantern-skiff-port",
@@ -180,6 +180,7 @@ describe("deep sea simulation", () => {
       seed: 7,
       size: 2,
       speed: 4,
+      zDepth: 0,
       x: 20,
       y: -4,
     };

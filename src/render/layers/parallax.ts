@@ -40,28 +40,42 @@ export interface ParallaxDrawArgs {
 const DEPTH_SCROLL_FACTOR = 0.35;
 
 export function mountParallax(parent: Container): ParallaxController {
-  const g = new Graphics();
-  parent.addChild(g);
+  const gBackground = new Graphics();
+  const gMidground = new Graphics();
+  const gForeground = new Graphics();
+  
+  parent.addChild(gBackground, gMidground, gForeground);
 
   return {
     draw({ particles, heightPx, depthMeters = 0, pxPerMeter = 1 }) {
-      g.clear();
-      // depthMeters is world-space; multiply by pxPerMeter so the
-      // parallax shift lives in the same coordinate system as p.y.
+      gBackground.clear();
+      gMidground.clear();
+      gForeground.clear();
+
       const shift = depthMeters * pxPerMeter * DEPTH_SCROLL_FACTOR;
       const h = Math.max(heightPx, 1);
+      
       for (const p of particles) {
-        // Wrap in [0, h) so particles keep filling the column as
-        // the sub descends instead of draining off the top.
-        const y = ((p.y - shift) % h + h) % h;
-        g.circle(p.x, y, p.size).fill({
-          color: 0xd9f2ec,
+        // Adjust the shift based on zDepth
+        // zDepth > 0 (background) shifts slower.
+        // zDepth < 0 (foreground) shifts faster.
+        const layerShift = shift / (1 + p.zDepth);
+        const y = ((p.y - layerShift) % h + h) % h;
+        
+        let targetG = gMidground;
+        if (p.zDepth > 0) targetG = gBackground;
+        if (p.zDepth < 0) targetG = gForeground;
+
+        targetG.circle(p.x, y, p.size).fill({
+          color: p.zDepth < 0 ? 0xffffff : 0xd9f2ec,
           alpha: p.opacity,
         });
       }
     },
     destroy() {
-      g.destroy();
+      gBackground.destroy();
+      gMidground.destroy();
+      gForeground.destroy();
     },
   };
 }
