@@ -56,4 +56,11 @@ export const ParticleEntity = trait(
 export const DiveRoot = trait({
   totalTime: 0,
   threatFlashAlpha: 0,
+  /**
+   * Cumulative descent in world-meters mirror of
+   * `SceneState.depthTravelMeters`. The sim advances it every frame;
+   * the ECS lifts it here so queries (audio filter, renderer camera)
+   * can read scene-wide depth without walking back to the sim.
+   */
+  depthTravelMeters: 0,
 });

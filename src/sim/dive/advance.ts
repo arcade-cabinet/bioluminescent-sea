@@ -11,7 +11,7 @@ import {
   createInitialPredators,
 } from "@/sim/entities";
 import { collectCreatures, hasPredatorCollision } from "./collection";
-import { GAME_DURATION } from "./constants";
+import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { getDiveModeTuning } from "./mode";
 import { getDiveTelemetry } from "./telemetry";
 import type {
@@ -28,6 +28,7 @@ export function createInitialScene(dimensions: ViewportDimensions): SceneState {
     pirates: createInitialPirates(dimensions),
     player: createInitialPlayer(dimensions),
     predators: createInitialPredators(dimensions),
+    depthTravelMeters: 0,
   };
 }
 
@@ -64,12 +65,21 @@ export function advanceScene(
     multiplier,
     tuning.collectionOxygenScale
   );
-  const nextScene = {
+  // Passive descent: the sub sinks through the column at a fixed rate.
+  // Clamped at the trench floor so `depthTravelMeters` can't overshoot
+  // the content window when a dive runs long on bonus oxygen.
+  const nextDepthTravelMeters = Math.min(
+    TRENCH_FLOOR_METERS,
+    scene.depthTravelMeters + deltaTime * DESCENT_SPEED_METERS_PER_SECOND
+  );
+
+  const nextScene: SceneState = {
     creatures: collection.creatures,
     particles,
     pirates,
     player,
     predators,
+    depthTravelMeters: nextDepthTravelMeters,
   };
 
   return {

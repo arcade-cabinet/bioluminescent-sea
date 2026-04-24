@@ -34,7 +34,12 @@ export function getDiveTelemetry(
   const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
   const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
   const routeLandmark = getDiveRouteLandmark(collectionRatio, nearestBeacon);
-  const depthMeters = computeDepthMeters(collectionRatio, oxygenRatio);
+  // Depth is now the sim's real world-Y (meters descended through the
+  // column). The earlier computeDepthMeters(collectionRatio,
+  // oxygenRatio) was a POC-era stand-in from when depth was a
+  // bookkeeping derivation rather than a physical state. Groundwork
+  // for PR F.2 chunking.
+  const depthMeters = Math.round(scene.depthTravelMeters);
   const biome = biomeAtDepth(depthMeters);
 
   return {
@@ -61,10 +66,6 @@ export function getDiveTelemetry(
   };
 }
 
-function computeDepthMeters(collectionRatio: number, oxygenRatio: number): number {
-  return Math.round(2200 + collectionRatio * 850 + (1 - oxygenRatio) * 350);
-}
-
 export function isDiveComplete(scene: SceneState): boolean {
   return scene.creatures.length === 0;
 }
@@ -76,11 +77,10 @@ export function getDiveRunSummary(
   durationSeconds = GAME_DURATION
 ): DiveRunSummary {
   const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
-  const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
   return {
     beaconsRemaining: scene.creatures.length,
     completionPercent: Math.round(collectionRatio * 100),
-    depthMeters: computeDepthMeters(collectionRatio, oxygenRatio),
+    depthMeters: Math.round(scene.depthTravelMeters),
     durationSeconds,
     elapsedSeconds: durationSeconds - timeLeft,
     score,

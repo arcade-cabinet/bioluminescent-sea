@@ -163,6 +163,11 @@ function DeepSeaGame({
   const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
   const previousBiomeRef = useRef<string | null>(null);
   const previousLowOxRef = useRef(false);
+  // Mirror of scene.depthTravelMeters — the sub's current world-Y.
+  // The game loop owns advancing it via the sim; telemetry + summary
+  // literal-rebuilds in this component read from here so every scene
+  // snapshot we hand to the sim carries the current depth.
+  const depthTravelMetersRef = useRef(initialSnapshot?.scene.depthTravelMeters ?? 0);
 
   // Tear the ECS world down when the component unmounts so re-mounts
   // (dive restart, HMR, StrictMode double-invoke) start from a fresh
@@ -257,6 +262,7 @@ function DeepSeaGame({
           pirates: piratesRef.current,
           player: playerRef.current,
           predators: predatorsRef.current,
+          depthTravelMeters: depthTravelMetersRef.current,
         },
         timeLeft,
         durationSeconds
@@ -275,6 +281,7 @@ function DeepSeaGame({
         pirates: piratesRef.current,
         player: playerRef.current,
         predators: predatorsRef.current,
+        depthTravelMeters: depthTravelMetersRef.current,
       }),
       score: scoreRef.current,
       telemetry,
@@ -343,6 +350,7 @@ function DeepSeaGame({
             pirates: piratesRef.current,
             player: playerRef.current,
             predators: predatorsRef.current,
+            depthTravelMeters: depthTravelMetersRef.current,
           },
           scoreRef.current,
           timeLeftForSummary,
@@ -382,6 +390,7 @@ function DeepSeaGame({
       predatorsRef.current = result.scene.predators;
       piratesRef.current = result.scene.pirates;
       particlesRef.current = result.scene.particles;
+      depthTravelMetersRef.current = result.scene.depthTravelMeters;
 
       if (result.collection.collected.length > 0) {
         void playSfx("collect");

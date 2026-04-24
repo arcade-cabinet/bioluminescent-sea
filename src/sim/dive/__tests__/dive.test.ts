@@ -212,11 +212,57 @@ describe("deep sea simulation", () => {
     expect(result.telemetry.objective).toContain("Predator");
   });
 
+  test("advanceScene drives depthTravelMeters forward every frame", () => {
+    const scene = createInitialScene(desktop);
+    expect(scene.depthTravelMeters).toBe(0);
+
+    // 60 frames at 1/60s delta = 1 second real-time. Descent speed is
+    // 6 m/s so after 1 second we should be at ~6 meters deeper.
+    let current = scene;
+    for (let f = 0; f < 60; f++) {
+      const result = advanceScene(
+        current,
+        { isActive: false, x: 0, y: 0 },
+        desktop,
+        f * (1 / 60),
+        1 / 60,
+        0,
+        1,
+        GAME_DURATION
+      );
+      current = result.scene;
+    }
+    expect(current.depthTravelMeters).toBeCloseTo(6, 1);
+  });
+
+  test("advanceScene clamps depthTravelMeters at the trench floor", () => {
+    const scene = { ...createInitialScene(desktop), depthTravelMeters: 3199 };
+    // One big frame that would overshoot the floor.
+    const result = advanceScene(
+      scene,
+      { isActive: false, x: 0, y: 0 },
+      desktop,
+      0,
+      5,
+      0,
+      1,
+      GAME_DURATION
+    );
+    expect(result.scene.depthTravelMeters).toBeLessThanOrEqual(3200);
+  });
+
   test("describes oxygen, depth, and collection telemetry", () => {
     const scene = createInitialScene(desktop);
-    const telemetry = getDiveTelemetry({ ...scene, creatures: scene.creatures.slice(0, 3) }, 10);
+    // depthTravelMeters is now a real sim state — set it explicitly so
+    // we're asserting depth + biome from a known descent distance.
+    const nearFloor = {
+      ...scene,
+      creatures: scene.creatures.slice(0, 3),
+      depthTravelMeters: 2900,
+    };
+    const telemetry = getDiveTelemetry(nearFloor, 10);
     const cozyTelemetry = getDiveTelemetry(
-      { ...scene, creatures: scene.creatures.slice(0, 3) },
+      nearFloor,
       10,
       getDiveDurationSeconds("cozy")
     );
