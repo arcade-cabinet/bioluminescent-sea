@@ -183,7 +183,7 @@ per chunk index); landmark ordering; and the run codename.
 
 Replays, bug reports, daily shared trenches, and share URLs all use
 the same `seed <-> codename` bijection. Running a build with
-`?seed=drowsy-ember-anglerfish` yields identical frames to anyone
+`?seed=kelpish-vellum-benthos` yields identical frames to anyone
 else who loaded that URL at the same commit.
 
 ## Dependency map

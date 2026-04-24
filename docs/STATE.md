@@ -68,7 +68,7 @@ world-ceiling errors).
 | B  | Sim split (engine → sim/*)           | in review    |
 | C  | PixiJS renderer swap                 | in review    |
 | D  | Koota ECS integration                | in review    |
-| E  | Seed-driven spawning + codename UI   | not started  |
+| E  | Seed-driven spawning + codename UI   | in review    |
 | F  | Chunked world + biomes               | not started  |
 | G  | Audio (Tone.js + Howler)             | not started  |
 | H  | Content pipeline (Zod + JSON)        | not started  |

@@ -40,9 +40,14 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       are the only writers. The renderer reads via queries. Yuka-
       composed AI behaviors land in a follow-up PR on top of this
       boundary.
-- [ ] **PR E — Seed-driven spawning.** Every creature / predator /
-      pirate placement derives from `createRng(seed)`. Landing shows
-      the codename preview; `?seed=<codename>` URL support.
+- [x] **PR E — Seed-driven spawning + codename UI.** Every creature,
+      predator, pirate, and particle placement derives from
+      `createRng(seed)` via `createSeededScene`. Landing shows the
+      codename preview ("Your Next Trench") in Cormorant Garamond;
+      Today's Trench secondary CTA swaps to the daily shared seed.
+      Dive start pushes `?seed=<codename>` to the URL so the active
+      trench is shareable; URL seeds load the same codename back.
+      HUD carries a codename chip.
 - [ ] **PR F — Chunked world + biomes.** Vertical scroll advances
       through the authored biomes; content spawns in chunks below the
       viewport and retires above. `depthMeters` becomes spatial.

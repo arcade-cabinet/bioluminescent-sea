@@ -14,6 +14,7 @@ export * from "./types";
 export { GAME_DURATION, MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
 export { getDiveDurationSeconds, getDiveModeTuning } from "./mode";
 export { advanceScene, createInitialScene } from "./advance";
+export { createSeededScene } from "./seeded";
 export {
   calculateMultiplier,
   collectCreatures,

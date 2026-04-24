@@ -24,7 +24,7 @@ Stored in `docs/screenshots/` and committed to git. Two viewports:
 | abyssal-trench  | `abyssal-trench.desktop.png`       | `abyssal-trench.mobile.png`       |
 | game-over       | `game-over.desktop.png`            | `game-over.mobile.png`            |
 
-All captured against the seed `drowsy-ember-anglerfish` for
+All captured against the seed `kelpish-vellum-benthos` for
 reproducibility.
 
 ## Regression pipeline
