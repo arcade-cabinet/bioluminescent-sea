@@ -1,6 +1,7 @@
 import { normalizeSessionMode, type SessionMode } from "@/sim/_shared/sessionMode";
 import { GAME_DURATION } from "./constants";
 import type { DiveModeTuning } from "./types";
+import type { SubUpgrades } from "@/sim/meta/upgrades";
 
 const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
   challenge: {
@@ -50,10 +51,17 @@ const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
   },
 };
 
-export function getDiveModeTuning(mode: string | null | undefined): DiveModeTuning {
-  return DIVE_MODE_TUNING[normalizeSessionMode(mode)];
+export function getDiveModeTuning(mode: string | null | undefined, upgrades?: SubUpgrades): DiveModeTuning {
+  const base = DIVE_MODE_TUNING[normalizeSessionMode(mode)];
+  if (!upgrades) return base;
+  
+  return {
+    ...base,
+    durationSeconds: base.durationSeconds + (upgrades.battery * 60), // +60s per level
+    impactOxygenPenaltySeconds: Math.max(0, base.impactOxygenPenaltySeconds - (upgrades.hull * 10)), // -10s per level
+  };
 }
 
-export function getDiveDurationSeconds(mode: string | null | undefined): number {
-  return getDiveModeTuning(mode).durationSeconds;
+export function getDiveDurationSeconds(mode: string | null | undefined, upgrades?: SubUpgrades): number {
+  return getDiveModeTuning(mode, upgrades).durationSeconds;
 }

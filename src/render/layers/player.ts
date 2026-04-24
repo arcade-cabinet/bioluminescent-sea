@@ -48,8 +48,8 @@ export function mountPlayer(parent: Container): PlayerController {
       lamp.position.set(player.x, player.y);
       lamp.rotation = player.angle;
       // Lamp cone fans forward (+x) of the sub.
-      const coneLen = 180 * s;
-      const coneSpread = 80 * s;
+      const coneLen = 180 * s * player.lampScale;
+      const coneSpread = 80 * s * player.lampScale;
       lamp.moveTo(16 * s, 0);
       lamp.lineTo(coneLen, -coneSpread);
       lamp.lineTo(coneLen, coneSpread);

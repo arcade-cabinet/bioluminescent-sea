@@ -15,6 +15,8 @@ export function createInitialPlayer({ width, height }: ViewportDimensions): Play
     targetY: y,
     x,
     y,
+    speedScale: 1,
+    lampScale: 1,
   };
 }
 
@@ -46,9 +48,10 @@ export function advancePlayer(
     };
   }
 
-  const speed = Math.min(distance * 0.08, 8) * frameScale;
+  const speed = Math.min(distance * 0.08, 8 * player.speedScale) * frameScale * player.speedScale;
 
   return {
+    ...player,
     angle: Math.atan2(dy, dx),
     glowIntensity: round(0.72 + Math.sin(totalTime * 3) * 0.26, 3),
     targetX,
