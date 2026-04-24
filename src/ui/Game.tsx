@@ -157,7 +157,12 @@ function DeepSeaGame({
   const multiplierRef = useRef(initialSnapshot?.multiplier ?? 1);
   const scoreRef = useRef(initialSnapshot?.score ?? 0);
   const elapsedOffsetRef = useRef(durationSeconds - (initialSnapshot?.timeLeft ?? durationSeconds));
-  const lastImpactTimeRef = useRef(Number.NEGATIVE_INFINITY);
+  // Initialize to 0 (dive start) rather than -Infinity so the first
+  // tuning.impactGraceSeconds of the run is graceful — a first-time
+  // player who spawns near a predator cone doesn't eat a hull shock
+  // before they've moved. -Infinity would produce a subtraction of
+  // +Infinity in resolveDiveThreatImpact, defeating the grace window.
+  const lastImpactTimeRef = useRef(0);
   const timeModifierRef = useRef(0);
   const bridgeRef = useRef<RenderBridge | null>(null);
   const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
