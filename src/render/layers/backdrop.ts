@@ -11,8 +11,22 @@ import { Container, Graphics } from "pixi.js";
  */
 
 export interface BackdropController {
-  draw(widthPx: number, heightPx: number, totalTime: number, biomeTintHex?: string): void;
+  draw(args: BackdropDrawArgs): void;
   destroy(): void;
+}
+
+export interface BackdropDrawArgs {
+  widthPx: number;
+  heightPx: number;
+  totalTime: number;
+  biomeTintHex?: string;
+  /**
+   * Current cumulative descent in world-meters. The backdrop ridges
+   * parallax vertically against this so the player sees the column
+   * passing even before entities carry real world-Y. Optional — pass
+   * 0 (or omit) to hold the pre-F.4 behavior.
+   */
+  depthMeters?: number;
 }
 
 const GRADIENT_STEPS = 8;
@@ -37,12 +51,13 @@ export function mountBackdrop(parent: Container): BackdropController {
   const ridges = new Graphics();
   parent.addChild(gradient, biomeTint, ridges);
 
-  const draw = (
-    widthPx: number,
-    heightPx: number,
-    totalTime: number,
-    biomeTintHex?: string
-  ) => {
+  const draw = ({
+    widthPx,
+    heightPx,
+    totalTime,
+    biomeTintHex,
+    depthMeters = 0,
+  }: BackdropDrawArgs) => {
     gradient.clear();
     // Build a vertical band gradient by stacking GRADIENT_STEPS rects
     // and interpolating colors. pixi v8 has no native gradient fill.
@@ -67,9 +82,16 @@ export function mountBackdrop(parent: Container): BackdropController {
     }
 
     ridges.clear();
-    drawRidge(ridges, widthPx, heightPx, totalTime, 0.55, 0x081826, 0.35);
-    drawRidge(ridges, widthPx, heightPx, totalTime * 0.7 + 120, 0.72, 0x061018, 0.55);
-    drawRidge(ridges, widthPx, heightPx, totalTime * 0.5 + 260, 0.92, 0x03080f, 0.85);
+    // Depth parallax: each ridge shifts vertically by a fraction of
+    // the descent. Near ridges scroll more than far ridges — the
+    // classic parallax cue — so the player reads "we're descending"
+    // even without real entity-space camera scroll yet.
+    const nearShift = depthMeters * 0.08;
+    const midShift = depthMeters * 0.04;
+    const farShift = depthMeters * 0.015;
+    drawRidge(ridges, widthPx, heightPx, totalTime, 0.55, 0x081826, 0.35, farShift);
+    drawRidge(ridges, widthPx, heightPx, totalTime * 0.7 + 120, 0.72, 0x061018, 0.55, midShift);
+    drawRidge(ridges, widthPx, heightPx, totalTime * 0.5 + 260, 0.92, 0x03080f, 0.85, nearShift);
   };
 
   return {
@@ -114,10 +136,15 @@ function drawRidge(
   phase: number,
   bandCenter: number,
   colorHex: number,
-  alpha: number
+  alpha: number,
+  depthShiftPx = 0,
 ): void {
   const segments = 28;
-  const centerY = heightPx * bandCenter;
+  // Depth parallax — each ridge shifts down by its own factor of the
+  // cumulative descent. Clamp to half the viewport so the ridge
+  // doesn't drop below the bottom edge and leave dead sky above.
+  const clampedShift = Math.max(-heightPx * 0.25, Math.min(heightPx * 0.5, depthShiftPx));
+  const centerY = heightPx * bandCenter + clampedShift;
   const amplitude = heightPx * 0.06;
 
   g.moveTo(0, heightPx);
