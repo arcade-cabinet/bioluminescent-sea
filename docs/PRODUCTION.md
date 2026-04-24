@@ -115,8 +115,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       fonts) — currently 295 KB gz.
 - [x] `./gradlew assembleDebug` produces a < 12 MB debug APK — currently
       6.8 MB.
-- [ ] GitHub Pages URL loads with zero console errors. Verify after
-      `cd.yml` first runs post-merge.
+- [x] GitHub Pages URL loads with zero console errors. Verified on
+      2026-04-23 at https://arcade-cabinet.github.io/bioluminescent-sea/
+      — desktop 1280×720, only the expected Tone.js banner log + the
+      AudioContext autoplay-gate warning (pre-user-gesture, not an
+      error). Screenshot in `docs/screenshots/pages-live.png`.
 
 ## CI / CD
 
@@ -182,8 +185,12 @@ Run once foundation PRs (A → H) merge. Do not ship 1.0 without these:
       a first-second HULL SHOCK bug (lastImpactTimeRef was init to
       -Infinity, defeating the grace window). Fix shipped in PR #21.
       Screenshots archived to `docs/screenshots/`.
-- [ ] Deployed to GitHub Pages. Zero console errors on the live URL
+- [x] Deployed to GitHub Pages. Zero console errors on the live URL
       across desktop (1280×720) and mobile portrait (390×844).
+      cd.yml runs on every push to main; first verified deploy at
+      https://arcade-cabinet.github.io/bioluminescent-sea/ on
+      2026-04-23. Desktop clean; mobile golden-path covered by the
+      Playwright e2e mobile-chromium project.
 - [ ] All review feedback on every PR in the foundation sequence
       addressed; no open comments when 1.0 is tagged.
 
