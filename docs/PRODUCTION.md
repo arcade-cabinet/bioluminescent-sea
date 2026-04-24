@@ -87,12 +87,34 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       also deferred. The sim side of F.3 is fully landed; see **PR
       F.4** for the renderer cut-over.
 - [ ] **PR F.4 — Renderer camera-scroll + chunk lifecycle.**
-      Game.tsx swaps from `createSeededScene` to
-      `createChunkedScene`. Renderer projects entity positions
-      through a scrolling camera reading `scene.depthTravelMeters`.
-      Chunks below the bottom edge retire; chunks above the top
-      edge spawn in. Completes the "18 fixed creatures" → chunked
-      trench migration.
+      Landing as a sequence of focused sub-PRs so each increment
+      stays reviewable and visibly correct:
+      - [x] **F.4a — Camera module.** `src/render/camera.ts` owns
+            world→screen projection with `scrollMeters`,
+            `pxPerMeter`, and `project(world)`. Tests lock in
+            behavior across viewport resize, scroll, and
+            near/far z-layer scaling (#41, #47).
+      - [x] **F.4b — Bridge owns a live camera.** `renderBridge.camera`
+            is synced to `scene.depthTravelMeters` every frame;
+            layers can read it even if none consume yet (#48).
+      - [x] **F.4c — Backdrop parallaxes with descent.** Three
+            ridges shift by depth-scaled fractions of the
+            camera's scroll — first visible consumer of the live
+            signal (#49).
+      - [x] **F.4d — Parallax snow wraps with descent.** Marine
+            snow drifts upward past the viewport and wraps
+            modulo the viewport height, with the shift converted
+            to pixels via `camera.pxPerMeter` (#51).
+      - [ ] **F.4e — Entities layer world-Y cut-over.** Creatures,
+            predators, and pirates gain a world-Y and project
+            through `camera.project()`. Game.tsx swaps from
+            `createSeededScene` to `createChunkedScene` at the
+            same seam.
+      - [ ] **F.4f — Chunk lifecycle.** `chunksInWindow` feeds
+            the spawn/retire loop so chunks below the bottom
+            edge drain and chunks above the top edge spawn.
+            Completes the "18 fixed creatures" → chunked trench
+            migration.
 - [x] **PR G — Audio.** Tone.js ambient pad with per-biome chord
       voicings (lydian open fifth → sus4 → minor 9th → dissonant
       minor 2nd). Low-pass filter cutoff tracks depth so the column
