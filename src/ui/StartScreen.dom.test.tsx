@@ -16,7 +16,7 @@ describe("StartScreen", () => {
     expect(screen.getByRole("heading", { name: /bioluminescent sea/i })).toBeTruthy();
     expect(screen.getByText(/sink into an abyssal trench/i)).toBeTruthy();
     expect(screen.getByText(/collect bioluminescence/i)).toBeTruthy();
-    expect(screen.getByText(/read the bottom banner/i)).toBeTruthy();
+    expect(screen.getByText(/listen to the deep/i)).toBeTruthy();
     expect(screen.getByText(/surface before oxygen ends/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: /begin dive/i })).toBeTruthy();
   });

@@ -129,7 +129,7 @@ export function StartScreen({
       >
         {[
           { icon: "◉", text: "Collect bioluminescence" },
-          { icon: "⟡", text: "Read the bottom banner" },
+          { icon: "⟡", text: "Listen to the deep" },
           { icon: "⇡", text: "Surface before oxygen ends" },
         ].map((verb) => (
           <div

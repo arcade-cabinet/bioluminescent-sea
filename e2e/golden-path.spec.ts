@@ -16,7 +16,7 @@ test.describe("Bioluminescent Sea — golden path", () => {
 
     // Verb teaser chips — the three-beat pre-teach of the loop.
     await expect(page.getByText(/collect bioluminescence/i)).toBeVisible();
-    await expect(page.getByText(/read the bottom banner/i)).toBeVisible();
+    await expect(page.getByText(/listen to the deep/i)).toBeVisible();
     await expect(page.getByText(/surface before oxygen ends/i)).toBeVisible();
 
     expect(errors, `console errors on landing:\n${errors.join("\n")}`).toEqual([]);
