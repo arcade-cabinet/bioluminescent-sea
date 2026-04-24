@@ -17,10 +17,14 @@
 
     <title>Bioluminescent Sea</title>
 
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:;"
-    />
+    <!--
+      No meta-CSP here. Koota generates trait accessors dynamically
+      for performance; PixiJS's default shader compiler does the same
+      (the `pixi.js/unsafe-eval` import in main.tsx handles that
+      side). Capacitor owns the strict CSP on mobile; the web build
+      relies on the usual browser sandbox. Matches sibling
+      mean-streets for consistency.
+    -->
   </head>
   <body>
     <div id="root"></div>

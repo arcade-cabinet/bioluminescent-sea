@@ -1,5 +1,11 @@
 import { trait } from "koota";
-import type { Vec3 } from "@/sim/world";
+import type {
+  Creature,
+  Particle,
+  Pirate,
+  Player,
+  Predator,
+} from "@/sim/entities/types";
 
 /**
  * Koota traits — the world schema.
@@ -9,25 +15,45 @@ import type { Vec3 } from "@/sim/world";
  * traits, and the renderer in src/render/* reads from traits through
  * queries. Sim never imports Koota; UI never writes traits directly.
  *
- * Populated by PR D.
+ * Entity categories (each is a row in the ECS world):
+ *   - 1 player entity (PlayerAvatar + BeaconGlow + Position)
+ *   - N beacon entities (CreatureKind + Position + BeaconGlow +
+ *     Collectible + OxygenBonus)
+ *   - N threat entities (ThreatKind + Position + ThreatDetection)
+ *   - N particle entities (ParticleDrift + Position)
+ *
+ * For PR D we lift the existing sim payload types directly into the
+ * traits. PR F swaps positions to Vec3 world-meters when the camera
+ * + chunking lands.
  */
 
-export const Position = trait(() => ({ x: 0, y: 0, z: 0 }) as Vec3);
-export const Velocity = trait(() => ({ x: 0, y: 0, z: 0 }) as Vec3);
-export const Glow = trait({ intensity: 0, color: "#6be6c1" });
-export const Collider = trait({ radiusMeters: 0 });
+export const PlayerAvatar = trait(
+  () => ({ value: null as unknown as Player })
+);
 
-export const Beacon = trait({
-  species: "jellyfish" as "jellyfish" | "plankton" | "fish",
-  scoreValue: 0,
-  oxygenBonusSeconds: 0,
+export const CreatureEntity = trait(
+  () => ({ value: null as unknown as Creature })
+);
+
+export const PredatorEntity = trait(
+  () => ({ value: null as unknown as Predator })
+);
+
+export const PirateEntity = trait(
+  () => ({ value: null as unknown as Pirate })
+);
+
+export const ParticleEntity = trait(
+  () => ({ value: null as unknown as Particle })
+);
+
+/**
+ * DiveRoot holds scene-wide runtime state that doesn't belong on a
+ * specific entity: the elapsed simulation time, the current
+ * CollectionBurst list, the latest telemetry snapshot, etc. Exactly
+ * one DiveRoot entity exists per world.
+ */
+export const DiveRoot = trait({
+  totalTime: 0,
+  threatFlashAlpha: 0,
 });
-
-export const Threat = trait({
-  kind: "predator" as "predator" | "pirate",
-  detectionRadiusMeters: 0,
-  lanternPhase: 0,
-});
-
-export const ChunkMember = trait({ chunkIndex: -1 });
-export const Player = trait({ headlampAngleRadians: 0, sonarPhase: 0 });
