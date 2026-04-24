@@ -8,6 +8,7 @@ import {
   getDiveRunSummary,
   type SessionMode,
 } from "@/sim";
+import type { PlayerInputProvider } from "@/sim/ai";
 import { dailySeed } from "@/sim/rng";
 import { useMetaProgression } from "@/hooks/useMetaProgression";
 import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
@@ -28,13 +29,34 @@ import { SeedPickerOverlay } from "./SeedPickerOverlay";
 
 type GameState = "landing" | "drydock" | "playing" | "gameover" | "complete";
 
-export default function Game() {
-  const [gameState, setGameState] = useState<GameState>("landing");
+export interface GameProps {
+  /**
+   * Test seam: a `PlayerInputProvider` (typically a `GoapInputProvider`)
+   * that replaces touch input inside the dive runtime. Production
+   * callers omit this. When provided, browser tests can drive the dive
+   * deterministically with a GOAP profile.
+   */
+  inputProvider?: PlayerInputProvider;
+  /**
+   * Test seam: when set, the game starts directly in the dive with this
+   * mode + a deterministic seed, skipping the landing + seed picker.
+   * Useful for per-mode browser tests.
+   */
+  autoStartMode?: SessionMode;
+}
+
+export default function Game(props: GameProps = {}) {
+  const { inputProvider, autoStartMode } = props;
+  const [gameState, setGameState] = useState<GameState>(
+    autoStartMode ? "playing" : "landing",
+  );
   const [pickerMode, setPickerMode] = useState<SessionMode | null>(null);
 
   const { currency, upgrades, addCurrency, buyUpgrade } = useMetaProgression();
 
-  const [sessionMode, setSessionMode] = useState<SessionMode>("descent");
+  const [sessionMode, setSessionMode] = useState<SessionMode>(
+    autoStartMode ?? "descent",
+  );
   const [initialSnapshot, setInitialSnapshot] = useState<DeepSeaRunSnapshot | null>(null);
   const [finalScore, setFinalScore] = useState(0);
   const [finalSummary, setFinalSummary] = useState<DiveRunSummary | null>(null);
@@ -116,6 +138,7 @@ export default function Game() {
               mode={sessionMode}
               seed={activeSeed}
               upgrades={upgrades}
+              inputProvider={inputProvider}
               onComplete={(s, summary) => {
                 setInitialSnapshot(null);
                 setFinalScore(s);

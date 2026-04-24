@@ -7,6 +7,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "content:compile": "node scripts/compile-content.mjs",
+    "icons:android": "node scripts/svg-to-mipmaps.mjs",
     "sim:sweep": "TSX_TSCONFIG_PATH=./tsconfig.app.json tsx scripts/sim-sweep.ts",
     "predev": "pnpm run content:compile",
     "prebuild": "pnpm run content:compile",
@@ -81,6 +82,7 @@
     "@vitest/browser": "^4.1.4",
     "@vitest/browser-playwright": "^4.1.4",
     "jsdom": "^29.0.2",
+    "sharp": "^0.34.5",
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
     "vite": "^8.0.9",

@@ -18,7 +18,8 @@ import {
   type SessionMode,
 } from "@/sim";
 import { useGameLoop } from "@/hooks/useGameLoop";
-import { useTouchInput } from "@/hooks/useTouchInput";
+import { useResolvedInput } from "@/hooks/useResolvedInput";
+import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
 import { createAmbient, disposeSfx, playSfx } from "@/audio";
 import { codenameFromSeed } from "@/sim/rng";
 import {
@@ -92,6 +93,13 @@ interface DiveScreenProps {
   upgrades: SubUpgrades;
   onComplete: (score: number, summary: DiveRunSummary) => void;
   onGameOver: (score: number, summary: DiveRunSummary) => void;
+  /**
+   * Test seam: a `PlayerInputProvider` (typically a `GoapInputProvider`)
+   * that replaces touch input. When present, the dive loop ticks the
+   * provider every animation frame instead of reading pointer events.
+   * Production callers leave this undefined and get touch input.
+   */
+  inputProvider?: PlayerInputProvider;
 }
 
 export function DiveScreen({
@@ -101,6 +109,7 @@ export function DiveScreen({
   upgrades,
   onComplete,
   onGameOver,
+  inputProvider,
 }: DiveScreenProps) {
   const durationSeconds = getDiveDurationSeconds(mode, upgrades);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -180,7 +189,22 @@ export function DiveScreen({
     };
   }, []);
 
-  const input = useTouchInput(containerRef);
+  // Build an observation source the GOAP brain can read each frame.
+  // The same per-frame snapshot the dive loop builds — keeps the bot's
+  // view of the world consistent with the sim's.
+  const observationRef = useRef<PlayerSubObservation>({
+    scene: initialScene,
+    dimensions,
+    totalTime: 0,
+    deltaTime: 1 / 60,
+    timeLeft,
+  });
+  const getObservation = useRef(() => observationRef.current).current;
+  const input = useResolvedInput(
+    containerRef,
+    inputProvider,
+    inputProvider ? getObservation : undefined,
+  );
 
   useEffect(() => {
     let disposed = false;
@@ -361,6 +385,20 @@ export function DiveScreen({
       anomaliesRef.current = result.scene.anomalies;
       creaturesRef.current = result.scene.creatures;
       predatorsRef.current = result.scene.predators;
+
+      // Refresh the bot's observation after each sim step. The
+      // useResolvedInput RAF reads `observationRef.current` to compute
+      // the next DiveInput; keeping the snapshot here in lockstep with
+      // the sim's scene means the bot sees what the sim just produced.
+      if (inputProvider) {
+        observationRef.current = {
+          scene: result.scene,
+          dimensions,
+          totalTime: effectiveTotalTime,
+          deltaTime,
+          timeLeft: newTimeLeft,
+        };
+      }
       piratesRef.current = result.scene.pirates;
       particlesRef.current = result.scene.particles;
       depthTravelMetersRef.current = result.scene.depthTravelMeters;
@@ -476,6 +514,7 @@ export function DiveScreen({
       mode,
       showOxygenPulse,
       showImpactPulse,
+      inputProvider,
     ],
   );
 
