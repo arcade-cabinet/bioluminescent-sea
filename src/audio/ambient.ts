@@ -1,0 +1,103 @@
+import * as Tone from "tone";
+import type { BiomeId } from "@/sim/world";
+import { isMuted, onMuteChange } from "./mixer";
+
+/**
+ * Tone.js ambient pad — synthesized per-biome pad with a low-pass
+ * filter whose cutoff drifts with depth. No audio asset files; the
+ * synth is built from primitives so the bundle stays small and the
+ * mood is legible even on cold start.
+ *
+ * Voicings:
+ *   photic-gate     — lydian open fifth (airy, surface warmth)
+ *   twilight-shelf  — suspended fourth (unresolved)
+ *   midnight-column — minor ninth (bruise, deep color)
+ *   abyssal-trench  — minor second cluster (dissonant warn)
+ *
+ * Cutoff modulation: `depthMeters` → filter frequency, shallower
+ * means brighter. At 3200m the cutoff sits around 400 Hz.
+ */
+
+interface AmbientController {
+  start(): Promise<void>;
+  setBiome(biome: BiomeId): void;
+  setDepthMeters(m: number): void;
+  stop(): void;
+}
+
+const BIOME_VOICINGS: Record<BiomeId, readonly string[]> = {
+  "photic-gate": ["A3", "E4", "B4", "F#5"],
+  "twilight-shelf": ["A3", "D4", "E4", "A4"],
+  "midnight-column": ["A2", "E3", "C4", "B4"],
+  "abyssal-trench": ["A2", "Bb2", "E3", "F3"],
+};
+
+export function createAmbient(): AmbientController {
+  let started = false;
+  let filter: Tone.Filter | null = null;
+  let reverb: Tone.Reverb | null = null;
+  let synth: Tone.PolySynth<Tone.AMSynth> | null = null;
+  let currentBiome: BiomeId = "photic-gate";
+  let unsubMute: (() => void) | null = null;
+
+  const scheduleChord = (time?: number) => {
+    if (!synth || isMuted()) return;
+    const voicing = BIOME_VOICINGS[currentBiome];
+    synth.triggerAttackRelease(Array.from(voicing), "2n", time);
+    Tone.getTransport().scheduleOnce(scheduleChord, "+4n");
+  };
+
+  return {
+    async start() {
+      if (started) return;
+      // Tone.js requires a user-gesture before starting on most browsers.
+      // This is called from the Begin Dive click.
+      await Tone.start();
+
+      filter = new Tone.Filter({ frequency: 1200, type: "lowpass", Q: 1.2 });
+      reverb = new Tone.Reverb({ decay: 4, wet: 0.45 });
+      synth = new Tone.PolySynth(Tone.AMSynth, {
+        harmonicity: 1.5,
+        envelope: { attack: 1.5, decay: 0.3, sustain: 0.7, release: 3 },
+        modulationEnvelope: { attack: 0.8, decay: 0.2, sustain: 0.4, release: 2 },
+        volume: -18,
+      });
+      synth.chain(filter, reverb, Tone.getDestination());
+
+      unsubMute = onMuteChange((muted) => {
+        if (muted) Tone.getDestination().mute = true;
+        else Tone.getDestination().mute = false;
+      });
+      Tone.getDestination().mute = isMuted();
+
+      Tone.getTransport().bpm.value = 54;
+      Tone.getTransport().start();
+      started = true;
+      scheduleChord();
+    },
+    setBiome(biome) {
+      currentBiome = biome;
+    },
+    setDepthMeters(m) {
+      if (!filter) return;
+      // 0 m → 2400 Hz, 3600 m → 320 Hz. Clamped.
+      const clamped = Math.max(0, Math.min(3600, m));
+      const cutoff = 2400 - (clamped / 3600) * 2080;
+      filter.frequency.rampTo(cutoff, 0.5);
+    },
+    stop() {
+      if (!started) return;
+      Tone.getTransport().stop();
+      Tone.getTransport().cancel();
+      synth?.releaseAll();
+      synth?.dispose();
+      filter?.dispose();
+      reverb?.dispose();
+      synth = null;
+      filter = null;
+      reverb = null;
+      unsubMute?.();
+      started = false;
+    },
+  };
+}

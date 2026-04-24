@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { isMuted, onMuteChange, toggleMuted } from "@/audio";
 
 interface HUDProps {
   score: number;
@@ -241,6 +242,41 @@ export function HUD({
           }}
         />
       )}
+
+      <MuteButton />
     </>
+  );
+}
+
+function MuteButton() {
+  const [muted, setMuted] = useState<boolean>(() => isMuted());
+  useEffect(() => onMuteChange(setMuted), []);
+  return (
+    <button
+      type="button"
+      aria-label={muted ? "Unmute audio" : "Mute audio"}
+      onClick={() => setMuted(toggleMuted())}
+      style={{
+        position: "absolute",
+        bottom: "max(env(safe-area-inset-bottom), 1rem)",
+        left: "1rem",
+        width: 36,
+        height: 36,
+        borderRadius: 999,
+        background: "rgba(10, 26, 46, 0.72)",
+        border: "1px solid rgba(107, 230, 193, 0.25)",
+        color: muted ? "var(--color-fg-muted)" : "var(--color-glow)",
+        fontSize: "1rem",
+        fontFamily: "var(--font-body)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "auto",
+        zIndex: 10,
+        cursor: "pointer",
+      }}
+    >
+      {muted ? "🔇" : "🔊"}
+    </button>
   );
 }

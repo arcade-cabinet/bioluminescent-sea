@@ -22,6 +22,7 @@ import {
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
 import { useTouchInput } from "@/hooks/useTouchInput";
+import { createAmbient, playSfx } from "@/audio";
 import { codenameFromSeed, dailySeed, randomSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
@@ -159,6 +160,9 @@ function DeepSeaGame({
   const lastImpactTimeRef = useRef(Number.NEGATIVE_INFINITY);
   const timeModifierRef = useRef(0);
   const bridgeRef = useRef<RenderBridge | null>(null);
+  const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
+  const previousBiomeRef = useRef<string | null>(null);
+  const previousLowOxRef = useRef(false);
 
   // Tear the ECS world down when the component unmounts so re-mounts
   // (dive restart, HMR, StrictMode double-invoke) start from a fresh
@@ -170,6 +174,24 @@ function DeepSeaGame({
         destroyDiveWorld(worldRef.current);
         worldRef.current = null;
       }
+    };
+  }, []);
+
+  // Start the ambient pad on mount; tear it down on unmount. A mount
+  // is a single dive — when the player surfaces (game-over/complete),
+  // DeepSeaGame unmounts and the pad stops. Dive Again remounts.
+  useEffect(() => {
+    const ambient = createAmbient();
+    ambientRef.current = ambient;
+    ambient.start().catch((err) => {
+      // Browser needs a user gesture; if start() fires before the
+      // Begin Dive click (e.g. HMR with a stale click budget), surface
+      // the error but don't crash.
+      console.warn("[audio] ambient start deferred:", err);
+    });
+    return () => {
+      ambient.stop();
+      ambientRef.current = null;
     };
   }, []);
 
@@ -362,6 +384,7 @@ function DeepSeaGame({
       particlesRef.current = result.scene.particles;
 
       if (result.collection.collected.length > 0) {
+        void playSfx("collect");
         collectionBurstsRef.current.push(
           ...result.collection.collected.map((creature) => ({
             color: creature.glowColor,
@@ -398,6 +421,7 @@ function DeepSeaGame({
 
       if (isDiveComplete(result.scene)) {
         setIsGameOver(true);
+        void playSfx("dive-complete");
         onComplete(
           scoreRef.current,
           getDiveRunSummary(result.scene, scoreRef.current, newTimeLeft, durationSeconds)
@@ -409,6 +433,23 @@ function DeepSeaGame({
         if (!shouldUpdateTelemetry(current, result.telemetry)) return current;
         return result.telemetry;
       });
+
+      // Audio reactions — ambient modulation + SFX for threshold
+      // crossings. Checked every frame but guarded by the `previous*`
+      // refs so we only fire on transition.
+      ambientRef.current?.setBiome(result.telemetry.biomeId);
+      ambientRef.current?.setDepthMeters(result.telemetry.depthMeters);
+      if (previousBiomeRef.current !== result.telemetry.biomeId) {
+        if (previousBiomeRef.current !== null) {
+          void playSfx("biome-transition");
+        }
+        previousBiomeRef.current = result.telemetry.biomeId;
+      }
+      const lowOx = result.telemetry.oxygenRatio < 0.25;
+      if (lowOx && !previousLowOxRef.current) {
+        void playSfx("oxygen-warn");
+      }
+      previousLowOxRef.current = lowOx;
 
       if (result.collidedWithPredator) {
         const impact = resolveDiveThreatImpact({
@@ -422,6 +463,7 @@ function DeepSeaGame({
         if (impact.type !== "none") {
           lastImpactTimeRef.current = effectiveTotalTime;
           recordThreatFlash(currentWorld);
+          void playSfx("impact");
         }
 
         if (impact.type === "oxygen-penalty") {
