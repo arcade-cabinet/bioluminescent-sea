@@ -4,9 +4,10 @@ coverage/
 .DS_Store
 .vite/
 
-# Vitest
+# Vitest / Playwright
 test-results/
 playwright-report/
+.playwright-mcp/
 
 # Capacitor
 android/build/

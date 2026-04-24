@@ -57,10 +57,12 @@ function Stat({
   label,
   value,
   tone,
+  testId,
 }: {
   label: string;
   value: ReactNode;
   tone?: "glow" | "warn" | "muted";
+  testId: string;
 }) {
   const toneColor =
     tone === "warn"
@@ -69,7 +71,10 @@ function Stat({
         ? "var(--color-fg-muted)"
         : "var(--color-glow)";
   return (
-    <div style={{ ...panelStyle, borderColor: `${toneColor}30` }}>
+    <div
+      data-testid={`hud-stat-${testId}`}
+      style={{ ...panelStyle, borderColor: `${toneColor}30` }}
+    >
       <div style={{ ...labelStyle, color: toneColor }}>{label}</div>
       <div style={valueStyle}>{value}</div>
     </div>
@@ -129,15 +134,16 @@ export function HUD({
           flexWrap: "wrap",
         }}
       >
-        <Stat label="Score" value={score} />
+        <Stat label="Score" value={score} testId="score" />
         <Stat
           label={critical ? "Oxygen — Critical" : lowOxygen ? "Oxygen — Low" : "Oxygen"}
           value={`${Math.max(0, timeLeft).toFixed(0)}s`}
           tone={lowOxygen ? "warn" : undefined}
+          testId="oxygen"
         />
-        <Stat label="Chain" value={`×${multiplier}`} />
-        <Stat label="Depth" value={`${depthMeters}m`} tone="muted" />
-        <Stat label="Charted" value={`${beacons}%`} tone="muted" />
+        <Stat label="Chain" value={`×${multiplier}`} testId="chain" />
+        <Stat label="Depth" value={`${depthMeters}m`} tone="muted" testId="depth" />
+        <Stat label="Charted" value={`${beacons}%`} tone="muted" testId="charted" />
       </div>
 
       {/* Run codename chip — the brand identity of this specific
@@ -170,6 +176,7 @@ export function HUD({
       {biomeLabel && (
         <motion.div
           key={biomeLabel}
+          data-testid="hud-biome-chip"
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -197,6 +204,7 @@ export function HUD({
       {/* Route landmark chip */}
       {nearestLandmarkLabel && (
         <motion.div
+          data-testid="hud-landmark-chip"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
