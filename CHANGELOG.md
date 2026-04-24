@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.1...v0.2.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **ts:** drop globalThis qualifier on crypto for TS 6 compat ([#29](https://github.com/arcade-cabinet/bioluminescent-sea/issues/29)) ([2bb03d2](https://github.com/arcade-cabinet/bioluminescent-sea/commit/2bb03d2bd3270c5b4b28d91df260cd3dec8ad9d9))
+
+
+### Documentation
+
+* **production:** close POC-sweep + review-feedback boxes ([#31](https://github.com/arcade-cabinet/bioluminescent-sea/issues/31)) ([974b1ae](https://github.com/arcade-cabinet/bioluminescent-sea/commit/974b1ae3796b0234748161011aafdcd340bf3fb1))
+* **production:** Pages live; check off deploy + console-errors boxes ([#28](https://github.com/arcade-cabinet/bioluminescent-sea/issues/28)) ([e5941b5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e5941b5cfdcbb0e10d34761c3892ea9fe93ddd79))
+
 ## [0.2.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.0...v0.2.1) (2026-04-24)
 
 
