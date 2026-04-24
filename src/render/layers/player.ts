@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { AdvancedBloomFilter } from "pixi-filters";
 import type { Player } from "@/sim/entities/types";
 
 /**
@@ -6,6 +7,12 @@ import type { Player } from "@/sim/entities/types";
  *
  * Two Graphics: the lamp cone (under the hull) and the hull itself
  * (over the cone). Glow intensity drives the lamp alpha breathing.
+ *
+ * An `AdvancedBloomFilter` is applied to the player's sub-container so
+ * the lamp cone + mint strokes read as emissive — the player's position
+ * has to pop out of the fluidic backdrop or the eye loses the subject.
+ * Tuned conservatively so the bloom supports the silhouette rather than
+ * smearing it.
  */
 
 export interface PlayerController {
@@ -14,10 +21,23 @@ export interface PlayerController {
 }
 
 export function mountPlayer(parent: Container): PlayerController {
+  const subContainer = new Container();
+  subContainer.label = "player:sub";
+  subContainer.filters = [
+    new AdvancedBloomFilter({
+      threshold: 0.45,
+      bloomScale: 0.85,
+      brightness: 1,
+      blur: 4,
+      quality: 4,
+    }),
+  ];
+
   const trail = new Graphics();
   const lamp = new Graphics();
   const hull = new Graphics();
-  parent.addChild(trail, lamp, hull);
+  subContainer.addChild(trail, lamp, hull);
+  parent.addChild(subContainer);
 
   const trailPositions: { x: number; y: number; time: number }[] = [];
 
@@ -101,8 +121,7 @@ export function mountPlayer(parent: Container): PlayerController {
       hull.fill({ color: 0x0a3740, alpha: 1 });
     },
     destroy() {
-      lamp.destroy();
-      hull.destroy();
+      subContainer.destroy({ children: true });
     },
   };
 }

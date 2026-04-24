@@ -16,6 +16,7 @@ import { mountEntities, type EntityController } from "./layers/entities";
 import { mountFx, type FxController } from "./layers/fx";
 import { mountParallax, type ParallaxController } from "./layers/parallax";
 import { mountPlayer, type PlayerController } from "./layers/player";
+import { mountWater, type WaterController } from "./layers/water";
 import { createStage, type PixiStage } from "./stage";
 
 /**
@@ -56,6 +57,7 @@ export interface RenderFrameInput {
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
   const stage: PixiStage = await createStage(canvas);
   const backdrop: BackdropController = mountBackdrop(stage.layers.far);
+  const water: WaterController = mountWater(stage.layers.water);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
   const entities: EntityController = mountEntities(stage.layers.near);
   const player: PlayerController = mountPlayer(stage.layers.near);
@@ -127,6 +129,13 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         biomeTintHex,
         depthMeters: root?.depthTravelMeters ?? 0,
       });
+      water.draw({
+        widthPx: v.widthPx,
+        heightPx: v.heightPx,
+        totalTime,
+        depthMeters: root?.depthTravelMeters ?? 0,
+        biomeTintHex,
+      });
       parallax.draw({
         particles,
         heightPx: v.heightPx,
@@ -155,12 +164,14 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
     },
     resize(widthPx, heightPx) {
       stage.resize(widthPx, heightPx);
+      water.resize(widthPx, heightPx);
     },
     destroy() {
       fx.destroy();
       player.destroy();
       entities.destroy();
       parallax.destroy();
+      water.destroy();
       backdrop.destroy();
       stage.destroy();
     },

@@ -481,6 +481,14 @@ export function DiveScreen({
 
   useGameLoop(gameLoop, !isGameOver);
   const threatAlert = telemetry.nearestThreatDistance < 180;
+  // Low-oxygen warning vignette: below 25% oxygen the viewport breathes
+  // a warn-red halo, strength climbing as oxygen falls further. Purely
+  // a visual beat — the sim's oxygen logic is unaffected.
+  const oxygenWarnStrength = telemetry.oxygenRatio < 0.25
+    ? Math.min(1, (0.25 - telemetry.oxygenRatio) / 0.2)
+    : 0;
+  const oxygenPulsePhase =
+    oxygenWarnStrength > 0 ? 0.55 + 0.45 * Math.sin(Date.now() / 420) : 0;
 
   return (
     <div
@@ -504,6 +512,21 @@ export function DiveScreen({
           opacity: threatAlert ? 1 : 0.72,
         }}
       />
+      {oxygenWarnStrength > 0 && (
+        <div
+          aria-hidden="true"
+          data-testid="oxygen-warn-vignette"
+          className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(circle at 50% 52%, transparent ${
+              62 - oxygenWarnStrength * 18
+            }%, rgba(255, 107, 107, ${
+              0.15 + oxygenWarnStrength * 0.35 * oxygenPulsePhase
+            }) 100%)`,
+            opacity: 0.6 + oxygenWarnStrength * 0.4,
+          }}
+        />
+      )}
       <AnimatePresence>
         {oxygenPulse && (
           <motion.div
