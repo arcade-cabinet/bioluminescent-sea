@@ -156,9 +156,12 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Triage queue (open now)
 
-- [ ] Merge or close dependabot PRs #3–#7 (major-version bumps — each
-      needs a compatibility check). PR #2 (actions group) is blocked
-      by missing `workflow` OAuth scope; user must run
+- [x] Merge or close dependabot PRs #3–#7 — all five major bumps
+      landed: #3 jsdom 27→29, #4 @types/node 22→25, #5
+      @vitejs/plugin-react 5→6, #6 typescript 5.9→6.0 (required
+      baseUrl removal + crypto global fix + WebWorker lib in
+      tsconfig.sim), #7 framer-motion 11→12. PR #2 (actions group)
+      still blocked by missing `workflow` OAuth scope; user must run
       `gh auth refresh -s workflow`.
 - [x] Merge release-please 0.2.0 (PR #1) after foundation PRs land.
 - [ ] Seed the `.release-please-manifest.json` if 1.0 cut requires
@@ -231,13 +234,12 @@ order, to the sibling POC extractions:
       Remaining A → H work (engine rename, plumb RNG through engine,
       identity-forward landing, Tone.js audio, content pipeline,
       identity icons, production deploy) tracked in that repo.
-- [ ] `../enchanted-forest` — foundation kicked off 2026-04-24:
-      `docs/PRODUCTION.md` seeded (arcade-cabinet/enchanted-forest PR
-      #8). A → H sequence tailored to its rune-cadence gameplay and
-      already-in-place Tone.js stack: engine split → seeded
-      determinism → identity-forward landing → audio consolidation
-      → content pipeline → identity icons → production deploy.
-      Remaining work tracked in that repo.
+- [ ] `../enchanted-forest` — foundation in progress (2026-04-24):
+      `docs/PRODUCTION.md` merged (arcade-cabinet/enchanted-forest PR
+      #8). Seeded-RNG scaffold opened (PR #9): seedrandom dependency
+      + `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/`,
+      matching the shape used here. Remaining A → H work tracked in
+      that repo.
 
 Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
 The **rendering/physics layer is per-game** — bioluminescent-sea uses
