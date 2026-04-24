@@ -223,11 +223,25 @@ After Bioluminescent Sea is production-polished and deployed, the same
 foundation + player-journey + identity + content pass applies, in
 order, to the sibling POC extractions:
 
-- [ ] `../cosmic-gardener` — same A → H style foundation, tight
-      game-loop audit, production copy + visuals, GitHub Pages deploy.
-- [ ] `../enchanted-forest` — same treatment.
+- [ ] `../cosmic-gardener` — foundation kicked off 2026-04-24:
+      `docs/PRODUCTION.md` seeded (arcade-cabinet/cosmic-gardener PR
+      #9). A → H sequence tailored to its DOM-particle stack:
+      engine split → seeded determinism → identity-forward landing →
+      Tone.js audio → content pipeline → identity icons → production
+      deploy. Remaining work tracked in that repo.
+- [ ] `../enchanted-forest` — foundation kicked off 2026-04-24:
+      `docs/PRODUCTION.md` seeded (arcade-cabinet/enchanted-forest PR
+      #8). A → H sequence tailored to its rune-cadence gameplay and
+      already-in-place Tone.js stack: engine split → seeded
+      determinism → identity-forward landing → audio consolidation
+      → content pipeline → identity icons → production deploy.
+      Remaining work tracked in that repo.
 
 Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
-The foundation stack (PixiJS / Koota / Yuka / seedrandom / Tone.js /
-Howler / Tailwind v4 / Zod) is the common template; per-game choices
-diverge at the design/content layer.
+The **rendering/physics layer is per-game** — bioluminescent-sea uses
+PixiJS + Koota + Yuka; cosmic-gardener uses a DOM-particle stack;
+enchanted-forest uses a mix of DOM SVG + Tone.js-driven rune UI.
+The **shared foundation tooling** (seedrandom, Tone.js, Zod, Biome,
+Vitest, Playwright, Capacitor, release-please) is the common template;
+per-game choices diverge at the rendering architecture and the
+design/content layer.
