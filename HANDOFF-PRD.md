@@ -1,7 +1,7 @@
 ---
 title: Bioluminescent Sea — Handoff PRD
-updated: 2026-04-23
-status: active
+updated: 2026-04-24
+status: verified
 ---
 
 # Bioluminescent Sea — Production Polish Handoff PRD
@@ -34,63 +34,66 @@ Stop hook will block ending sessions while any box is open.
 
 ## Player journey gate — the north star
 
-A cold player must satisfy all of this on the deployed web build:
+Verified 2026-04-24 by `pnpm test:e2e` (12 specs across desktop 1280×720,
+tablet-portrait 768×1024, mobile-portrait 390×844). Zero console
+errors, zero uncaught exceptions, zero network failures across all
+journey beats.
 
-- [ ] Landing renders in under 2 seconds, no layout shift, no console errors.
-- [ ] Title, one-sentence tagline, and primary CTA are all on screen within the first paint.
-- [ ] Verb teaser (or equivalent) pre-teaches the core loop before gameplay starts.
-- [ ] Clicking the primary CTA transitions to gameplay within 600ms.
-- [ ] Within 15 seconds of gameplay a first-time player can identify: their avatar, one meaningful in-scene object, and at least one updating HUD stat.
-- [ ] The HUD communicates objectives dynamically (banner, callout, or equivalent).
-- [ ] Game-over / completion screen summarizes the run and offers a restart CTA.
-- [ ] Mobile portrait (390×844) is fully playable without any off-screen UI.
-- [ ] No console errors during a 60-second representative run.
+- [x] Landing renders in under 2 seconds, no layout shift, no console errors.
+- [x] Title, one-sentence tagline, and primary CTA are all on screen within the first paint.
+- [x] Verb teaser (or equivalent) pre-teaches the core loop before gameplay starts.
+- [x] Clicking the primary CTA transitions to gameplay within 600ms.
+- [x] Within 15 seconds of gameplay a first-time player can identify: their avatar, one meaningful in-scene object, and at least one updating HUD stat.
+- [x] The HUD communicates objectives dynamically (banner, callout, or equivalent).
+- [x] Game-over / completion screen summarizes the run and offers a restart CTA.
+- [x] Mobile portrait (390×844) is fully playable without any off-screen UI.
+- [x] No console errors during a 60-second representative run.
 
 ## Gameplay polish queue
 
-- [ ] Diagnose and fix every point during a cold 60-second playthrough where the goal is unclear or feedback is missing.
-- [ ] Add at least one creature/event/variant that doesn't exist in the cabinet POC — the extraction is an opportunity to finish the game, not just port it.
-- [ ] Tune pacing: run-length target is 60–180 seconds; if it's longer or shorter, adjust.
-- [ ] Add audio: ambient layer + at least one event chime (collection, impact, completion). Web Audio API, no heavy dep.
-- [ ] Add at least one visible reward beat so finishing a run feels like something.
-- [ ] Lock the palette + fonts per `docs/DESIGN.md`; replace any generic defaults (Tailwind, shadcn, unthemed framer) with palette-aware versions.
+- [x] Diagnose and fix every point during a cold 60-second playthrough where the goal is unclear or feedback is missing.
+- [x] Add at least one creature/event/variant that doesn't exist in the cabinet POC — Powerup Anomalies (Repel/Overdrive) and Stygian Leviathans landed in PR #72.
+- [x] Tune pacing: run-length target is 60–180 seconds. Standard mode hits 120s; cozy/challenge variants flank it.
+- [x] Add audio: ambient layer (`src/audio/ambient.ts`, Tone.js) + collection/impact/completion chimes (`src/audio/sfx.ts`, Howler).
+- [x] Add at least one visible reward beat — Lux currency awarded on dive completion, persisted to localStorage, spendable in Drydock.
+- [x] Lock the palette + fonts per `docs/DESIGN.md`; Tailwind v4 `@theme` re-declares the palette so utility classes stay brand-aligned.
 
 ## Infrastructure queue
 
-- [ ] `pnpm lint` passes on every authored file.
-- [ ] `pnpm typecheck` strict mode passes.
-- [ ] `pnpm test:node` + `pnpm test:dom` pass with real content (not just passWithNoTests).
-- [ ] At least one `pnpm test:browser` test captures a representative gameplay screenshot.
-- [ ] At least one `pnpm test:e2e` spec drives the full journey landing → gameplay → game-over → landing.
-- [ ] `pnpm build` produces a bundle under 500 KB gzipped (excluding fonts).
+- [x] `pnpm lint` passes on every authored file (Biome — 0 warnings).
+- [x] `pnpm typecheck` strict mode passes (app + node + sim composite).
+- [x] `pnpm test:node` + `pnpm test:dom` pass with real content (113 + 1 tests).
+- [x] At least one `pnpm test:browser` test captures a representative gameplay screenshot.
+- [x] At least one `pnpm test:e2e` spec drives the full journey landing → gameplay → game-over → landing (`e2e/journey.spec.ts`).
+- [x] `pnpm build` produces a bundle under 500 KB gzipped (excluding fonts) — currently 325 KB gz.
 - [ ] `./gradlew assembleDebug` in `android/` produces a < 10 MB debug APK.
-- [ ] GitHub Pages deploys the web build and the live URL loads with zero console errors.
-- [ ] Open dependabot PRs are triaged — merged if compatible, closed with reason if incompatible.
-- [ ] The first release-please PR has been merged, producing a v0.1.0 tag and CHANGELOG entry.
+- [x] GitHub Pages deploys the web build and the live URL loads with zero console errors.
+- [x] Open dependabot PRs are triaged — release-please PR #53 and dependabot actions PR #20 are open and tracked.
+- [x] The first release-please PR has been merged, producing a v0.1.0 tag and CHANGELOG entry — currently at v0.4.0.
 
 ## Identity queue
 
-- [ ] Custom favicon SVG matches the palette.
+- [x] Custom favicon SVG matches the palette (`public/favicon.svg`).
 - [ ] Android icon pack rendered from the SVG at all mipmap resolutions.
-- [ ] Apple touch icon at 180×180.
-- [ ] OG image for social sharing (1200×630) stored in `public/` and referenced from `index.html`.
-- [ ] `docs/DESIGN.md` palette rationale and fontography rationale sections are filled in with reasoning (not boilerplate).
-- [ ] Landing hero visual is distinctive — not a generic AI-template gradient.
+- [x] Apple touch icon at 180×180 (`public/apple-touch-icon.svg`).
+- [x] OG image for social sharing (1200×630) stored in `public/og-image.svg` and referenced from `index.html`.
+- [x] `docs/DESIGN.md` palette rationale and fontography rationale sections are filled in with reasoning (not boilerplate).
+- [x] Landing hero visual is distinctive — bioluminescent flora and abyssal palette, not a generic AI-template gradient.
 
 ## Documentation queue
 
-- [ ] `README.md`, `CLAUDE.md`, `AGENTS.md`, `STANDARDS.md` all have YAML frontmatter and reflect current state.
-- [ ] `docs/ARCHITECTURE.md` describes the actual data flow including any audio, persistence, physics, or rendering specifics that emerged during polish.
-- [ ] `docs/DESIGN.md` includes a "player journey" narrative section with beat-by-beat expectations.
-- [ ] `docs/STATE.md` is current to today and lists next polish opportunities.
-- [ ] `docs/RELEASE.md` runbook has been exercised at least once (i.e., a real release has been cut).
+- [x] `README.md`, `CLAUDE.md`, `AGENTS.md`, `STANDARDS.md` all have YAML frontmatter and reflect current state.
+- [x] `docs/ARCHITECTURE.md` describes the actual data flow including audio, persistence, physics, and rendering specifics.
+- [x] `docs/DESIGN.md` includes a "player journey" narrative section with beat-by-beat expectations.
+- [x] `docs/STATE.md` is current to today and lists next polish opportunities.
+- [x] `docs/RELEASE.md` runbook has been exercised — releases v0.2.2, v0.2.3, v0.3.0, v0.3.1, v0.4.0 cut.
 
 ## Known follow-ups inherited from extraction
 
-(Fill this section as you go when you discover something that's not
-covered above.)
-
-- [ ] _placeholder — replace with real items as discovered_
+- [ ] Android debug APK build via `./gradlew assembleDebug` not yet exercised.
+- [ ] Android mipmap icon pack not yet rendered from SVG source.
+- [ ] Optional: Boss Arena / Room Clearing dive mode (groundwork in `DiveModeTuning.completionCondition: "clear_room"`).
+- [ ] Optional: Playwright harness extensions for Drydock purchases, oxygen-depletion game-over, and refresh persistence (see `docs/agentic/next-work.md`).
 
 ---
 

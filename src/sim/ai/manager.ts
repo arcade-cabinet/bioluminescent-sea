@@ -92,10 +92,12 @@ export class AIManager {
         vehicle.position.set(c.x, c.y, 0);
         vehicle.maxSpeed = c.speed * 60;
         
-        const behaviors = this.flockingBehaviors.get(c.type)!;
-        vehicle.steering.add(behaviors.alignment);
-        vehicle.steering.add(behaviors.cohesion);
-        vehicle.steering.add(behaviors.separation);
+        const behaviors = this.flockingBehaviors.get(c.type);
+        if (behaviors) {
+          vehicle.steering.add(behaviors.alignment);
+          vehicle.steering.add(behaviors.cohesion);
+          vehicle.steering.add(behaviors.separation);
+        }
         
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
         vehicle.steering.add(wrap);

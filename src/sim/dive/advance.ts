@@ -57,31 +57,29 @@ export function advanceScene(
   if (!aiManager) {
     aiManager = new AIManager(dimensions);
   }
+  const ai = aiManager;
 
   const player = advancePlayer(scene.player, input, dimensions, totalTime, deltaTime);
-  
-  aiManager.updatePlayer(player);
-  aiManager.syncPredators(scene.predators);
-  aiManager.syncPirates(scene.pirates);
-  aiManager.syncCreatures(scene.creatures);
-  aiManager.update(deltaTime);
+
+  ai.updatePlayer(player);
+  ai.syncPredators(scene.predators);
+  ai.syncPirates(scene.pirates);
+  ai.syncCreatures(scene.creatures);
+  ai.update(deltaTime);
 
   const creatures = scene.creatures.map((creature) => {
-    // Basic perlin drift and pulsing
     const base = advanceCreature(creature, dimensions, totalTime, deltaTime);
-    // Overlay AI flocking (updates x, y only)
-    const flocking = aiManager!.readCreature(base);
-    // Keep it in bounds visually using wrap, though the steering behavior also wraps it
+    const flocking = ai.readCreature(base);
     return { ...base, x: flocking.x, y: flocking.y };
   });
-  
+
   const predators = scene.predators.map((p) => {
-    const updated = aiManager!.readPredator(p);
+    const updated = ai.readPredator(p);
     return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
   });
-  
+
   const pirates = scene.pirates.map((p) => {
-    const updated = aiManager!.readPirate(p);
+    const updated = ai.readPirate(p);
     return { ...updated, y: Math.max(50, Math.min(updated.y, dimensions.height - 50)), lanternPhase: p.lanternPhase + deltaTime * 5 };
   });
   
