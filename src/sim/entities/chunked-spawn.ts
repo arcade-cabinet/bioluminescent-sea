@@ -1,6 +1,7 @@
 import { CHUNK_HEIGHT_METERS } from "@/sim/chunk";
 import { createRng } from "@/sim/rng";
 import { clamp, round } from "@/sim/_shared/math";
+import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
 import { biomeById } from "@/sim/world/biomes";
 import type { Chunk } from "@/sim/world/types";
 import type { ViewportDimensions } from "@/sim/dive/types";
@@ -55,7 +56,11 @@ export function spawnCreaturesForChunk(
     // this with camera projection once chunk-scroll lands; today it
     // keeps the game playable while the sim is still pixel-bound.
     const chunkLocalY = (worldYMeters - chunk.yTopMeters) / CHUNK_HEIGHT_METERS;
-    const xNorm = rng.range(0.06, 0.94);
+    // Spawn across the full lateral play band so descending through
+    // a chunk can reveal creatures the player only finds by drifting
+    // sideways. The PRNG's range call remains seeded from the chunk
+    // so the population is deterministic across reloads.
+    const xNorm = rng.range(0.04, 0.96);
     const yNorm = 0.1 + chunkLocalY * 0.8;
 
     return {
@@ -70,7 +75,7 @@ export function spawnCreaturesForChunk(
       speed: round(rng.range(0.18, 0.55), 3),
       type,
       worldYMeters,
-      x: round(xNorm * width, 2),
+      x: round(playBandMinX(width) + xNorm * playBandWidth(width), 2),
       y: round(yNorm * height, 2),
     };
   });

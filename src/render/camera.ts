@@ -27,9 +27,18 @@ export interface CameraViewport {
 export interface Camera {
   viewport: CameraViewport;
   scrollMeters: number;
+  /**
+   * Lateral scroll in pixels. The sim lives on a wider-than-viewport
+   * play band (see `sim/_shared/playBand`); this value is the world-x
+   * of the viewport's left edge. Renderers subtract it from entity x
+   * before drawing so moving laterally reveals content that was off
+   * the viewport a moment ago.
+   */
+  scrollXPx: number;
   pxPerMeter: number;
   setViewport(w: number, h: number): void;
   setScrollMeters(m: number): void;
+  setScrollXPx(px: number): void;
   project(world: Vec3): { x: number; y: number; scale: number };
 }
 
@@ -37,6 +46,7 @@ export function createCamera(initial: CameraViewport): Camera {
   const state = {
     viewport: { ...initial },
     scrollMeters: 0,
+    scrollXPx: 0,
     pxPerMeter: 1,
   };
 
@@ -50,6 +60,9 @@ export function createCamera(initial: CameraViewport): Camera {
     get scrollMeters() {
       return state.scrollMeters;
     },
+    get scrollXPx() {
+      return state.scrollXPx;
+    },
     get pxPerMeter() {
       return state.pxPerMeter;
     },
@@ -58,6 +71,9 @@ export function createCamera(initial: CameraViewport): Camera {
     },
     setScrollMeters(m) {
       state.scrollMeters = m;
+    },
+    setScrollXPx(px) {
+      state.scrollXPx = px;
     },
     project(world) {
       const cx = state.viewport.widthPx * 0.5;

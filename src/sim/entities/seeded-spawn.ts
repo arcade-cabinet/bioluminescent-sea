@@ -1,5 +1,6 @@
 import type { Rng } from "@/sim/rng";
 import { clamp, round } from "@/sim/_shared/math";
+import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import { CREATURE_COLORS, type Creature, type CreatureType } from "./types";
 import type { Particle, Pirate, Player, Predator } from "./types";

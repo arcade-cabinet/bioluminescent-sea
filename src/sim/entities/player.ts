@@ -1,4 +1,5 @@
 import { clamp, getFrameScale, round } from "@/sim/_shared/math";
+import { clampToPlayBand } from "@/sim/_shared/playBand";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import type { Player } from "./types";
 import type { DiveInput } from "@/sim/dive/types";
@@ -24,7 +25,12 @@ export function advancePlayer(
   totalTime: number,
   deltaTime: number
 ): Player {
-  const targetX = input.isActive ? clamp(input.x, 0, width) : player.targetX;
+  // Input comes in as pixel-x already offset by the camera scroll
+  // (DeepSeaGame applies the scroll delta before the sim tick), so
+  // here we clamp to the full lateral play band — the viewport is no
+  // longer the world. Y stays viewport-clamped: descent owns the
+  // vertical axis, player input is horizontal + pitch.
+  const targetX = input.isActive ? clampToPlayBand(input.x, width) : player.targetX;
   const targetY = input.isActive ? clamp(input.y, 0, height) : player.targetY;
   const dx = targetX - player.x;
   const dy = targetY - player.y;
@@ -47,7 +53,7 @@ export function advancePlayer(
     glowIntensity: round(0.72 + Math.sin(totalTime * 3) * 0.26, 3),
     targetX,
     targetY,
-    x: clamp(player.x + (dx / distance) * speed, 0, width),
+    x: clampToPlayBand(player.x + (dx / distance) * speed, width),
     y: clamp(player.y + (dy / distance) * speed, 0, height),
   };
 }
