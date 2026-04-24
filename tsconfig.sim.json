@@ -15,9 +15,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@/sim/*": ["src/sim/*"]
+      "@/sim/*": ["./src/sim/*"]
     }
   },
   "include": ["src/sim/**/*", "config/compiled/**/*"],
