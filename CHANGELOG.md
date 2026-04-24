@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.0...v0.2.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **dive:** initial spawn-grace window works on first impact ([#21](https://github.com/arcade-cabinet/bioluminescent-sea/issues/21)) ([bc50dca](https://github.com/arcade-cabinet/bioluminescent-sea/commit/bc50dca2d25f1ae2e44945965d5a02f1bb97e5b4))
+* **hud:** move critical-oxygen banner to bottom-center ([#27](https://github.com/arcade-cabinet/bioluminescent-sea/issues/27)) ([dc10471](https://github.com/arcade-cabinet/bioluminescent-sea/commit/dc1047186f882e168f88148034d1cfe76f142bc1))
+
+
+### Documentation
+
+* **production:** check off release 0.2.0 + 60s audit, note triage blockers ([#22](https://github.com/arcade-cabinet/bioluminescent-sea/issues/22)) ([f29270b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f29270b3fa5ff37bcc86fef9c965f6ca5e76e707))
+* **production:** PR F.2 groundwork landed; split F.3 (chunking) ([#25](https://github.com/arcade-cabinet/bioluminescent-sea/issues/25)) ([126e227](https://github.com/arcade-cabinet/bioluminescent-sea/commit/126e227657a98398e59e08fa80c1514f93f3ce5c))
+
 ## [0.2.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.1.0...v0.2.0) (2026-04-24)
 
 
