@@ -13,6 +13,15 @@ export interface Creature {
   noiseOffsetY: number;
   speed: number;
   pulsePhase: number;
+  /**
+   * World-space depth of the creature in meters. Populated by the
+   * chunk-aware `createChunkedScene` factory; omitted by the legacy
+   * `createSeededScene` path (18 fixed creatures in a single
+   * viewport). Renderer F.4e will project through
+   * `camera.project({ x, y: worldYMeters, z })` when present and
+   * fall back to the screen-space `y` otherwise.
+   */
+  worldYMeters?: number;
 }
 
 export interface Predator {

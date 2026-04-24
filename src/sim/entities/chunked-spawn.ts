@@ -69,6 +69,7 @@ export function spawnCreaturesForChunk(
       size: round(clamp(minDimension * sizeScale, 14, 36), 2),
       speed: round(rng.range(0.18, 0.55), 3),
       type,
+      worldYMeters,
       x: round(xNorm * width, 2),
       y: round(yNorm * height, 2),
     };

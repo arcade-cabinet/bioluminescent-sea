@@ -42,15 +42,33 @@ describe("spawnCreaturesForChunk", () => {
     expect(densest.length).toBeGreaterThan(sparsest.length);
   });
 
-  it("places creatures inside the chunk's depth band via worldYMeters is implicit in screen coords", () => {
+  it("places creatures inside the chunk's depth band via worldYMeters", () => {
     const chunk = chunkAt(4, 42);
     const creatures = spawnCreaturesForChunk(chunk, viewport);
-    // All creatures' y should fall inside the viewport (they're
-    // placed with normalized chunk-local y + 0.1..0.9 viewport mapping).
+    // All creatures' worldYMeters should fall inside the chunk's
+    // vertical band (inset by the 0.12..0.88 normalized spread used
+    // in the spawner).
+    for (const c of creatures) {
+      expect(c.worldYMeters).toBeDefined();
+      const worldY = c.worldYMeters as number;
+      expect(worldY).toBeGreaterThanOrEqual(chunk.yTopMeters);
+      expect(worldY).toBeLessThanOrEqual(chunk.yBottomMeters);
+    }
+    // Screen-space y should still fall inside the viewport.
     for (const c of creatures) {
       expect(c.y).toBeGreaterThanOrEqual(viewport.height * 0.1);
       expect(c.y).toBeLessThanOrEqual(viewport.height * 0.9);
     }
+  });
+
+  it("worldYMeters matches the chunk index (different chunks get different depth bands)", () => {
+    const shallow = spawnCreaturesForChunk(chunkAt(1, 42), viewport);
+    const deep = spawnCreaturesForChunk(chunkAt(10, 42), viewport);
+    // Every shallow creature must sit above every deep creature in
+    // world-space, regardless of how their screen-y compares.
+    const maxShallow = Math.max(...shallow.map((c) => c.worldYMeters ?? 0));
+    const minDeep = Math.min(...deep.map((c) => c.worldYMeters ?? 0));
+    expect(maxShallow).toBeLessThan(minDeep);
   });
 
   it("produces at least 1 creature even for the sparsest biome", () => {
