@@ -34,7 +34,11 @@ describe("createDiveWorld", () => {
   });
 
   it("writeSceneToWorld retires entities when the scene shrinks", () => {
-    const scene = createInitialScene(viewport);
+    const base = createInitialScene(viewport);
+    const scene = {
+      ...base,
+      creatures: Array.from({ length: 10 }, (_, i) => ({ id: `c-${i}`, type: "fish" as const, x: 0, y: 0, size: 10, color: "#fff", glowColor: "#fff", glowIntensity: 1, noiseOffsetX: 0, noiseOffsetY: 0, pulsePhase: 0, speed: 1 })),
+    };
     const w = createDiveWorld(scene);
     const shorter = {
       ...scene,
@@ -54,7 +58,11 @@ describe("advanceDiveFrame", () => {
   });
 
   it("produces the same result as calling advanceScene directly", () => {
-    const scene = createInitialScene(viewport);
+    const base = createInitialScene(viewport);
+    const scene = {
+      ...base,
+      creatures: Array.from({ length: 2 }, (_, i) => ({ id: `c-${i}`, type: "fish" as const, x: 0, y: 0, size: 10, color: "#fff", glowColor: "#fff", glowIntensity: 1, noiseOffsetX: 0, noiseOffsetY: 0, pulsePhase: 0, speed: 1 })),
+    };
     const world = createDiveWorld(scene);
 
     const { result } = advanceDiveFrame({

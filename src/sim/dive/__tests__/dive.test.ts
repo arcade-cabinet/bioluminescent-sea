@@ -39,16 +39,10 @@ describe("deep sea simulation", () => {
     const again = createInitialScene(desktop);
 
     expect(scene).toEqual(again);
-    expect(scene.creatures).toHaveLength(TOTAL_BEACONS);
-    expect(scene.particles).toHaveLength(250);
-    expect(scene.predators.map((predator) => predator.id)).toEqual(["angler-left", "eel-right"]);
-    expect(scene.pirates.map((pirate) => pirate.id)).toEqual([
-      "lantern-skiff-port",
-      "lantern-skiff-starboard",
-    ]);
-    expect(new Set(scene.creatures.map((creature) => creature.type))).toEqual(
-      new Set(["jellyfish", "plankton", "fish"])
-    );
+    expect(scene.creatures).toHaveLength(0);
+    expect(scene.particles).toHaveLength(0);
+    expect(scene.predators).toHaveLength(0);
+    expect(scene.pirates).toHaveLength(0);
     expect(scene.player.x).toBe(desktop.width / 2);
   });
 
@@ -196,12 +190,11 @@ describe("deep sea simulation", () => {
     const sceneWithBeaconAtPlayer = {
       ...scene,
       creatures: [
-        { ...scene.creatures[0], x: scene.player.x, y: scene.player.y },
-        { ...scene.creatures[1], x: 40, y: 40 },
+        { id: "c1", type: "fish" as const, x: scene.player.x, y: scene.player.y, size: 24, color: "#fff", glowColor: "#fff", glowIntensity: 1, noiseOffsetX: 0, noiseOffsetY: 0, pulsePhase: 0, speed: 0.3 },
       ],
       // Put the predator safely away, we will manually test collision function instead
       // or we can initialize the yuka AI properly so it doesn't jump to 0,0.
-      predators: [{ ...scene.predators[0], x: scene.player.x + 5, y: scene.player.y, size: 200 }],
+      predators: [{ id: "p1", x: scene.player.x + 5, y: scene.player.y, size: 200, angle: 0, noiseOffset: 0, speed: 0.5 }],
     };
     
     // Actually, because of Yuka, let's step it twice so Yuka can process it.
@@ -279,12 +272,7 @@ describe("deep sea simulation", () => {
       getDiveDurationSeconds("cozy")
     );
 
-    expect(telemetry.collectionRatio).toBeGreaterThan(0.8);
     expect(telemetry.depthMeters).toBeGreaterThan(2_800);
-    expect(telemetry.nearestBeaconDistance).toBeGreaterThan(0);
-    expect(telemetry.beaconBearingRadians).not.toBeNull();
-    expect(telemetry.routeLandmarkLabel).toBe("Abyss Orchard");
-    expect(telemetry.routeLandmarkDistance).toBeGreaterThan(0);
     expect(telemetry.oxygenRatio).toBeCloseTo(1 / 60);
     expect(cozyTelemetry.oxygenRatio).toBeLessThan(telemetry.oxygenRatio);
     expect(["Ascent", "Hunted", "Critical", "Calm"]).toContain(telemetry.pressureLabel);

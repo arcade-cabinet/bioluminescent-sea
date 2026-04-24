@@ -5,7 +5,6 @@ import type { ViewportDimensions } from "@/sim/dive/types";
 import type { Player, Predator } from "./types";
 
 export function createInitialPredators({ width, height }: ViewportDimensions): Predator[] {
-  const minDimension = Math.min(width, height);
   const baseSize = clamp(640 * 0.14, 54, 94);
   const leftEdge = playBandMinX(width);
   const rightEdge = playBandMaxX(width);

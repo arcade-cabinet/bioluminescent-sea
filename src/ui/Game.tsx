@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type Creature,
   createInitialScene,
-  createSeededScene,
   type DiveCompletionCelebration,
   type DiveRunSummary,
   type DiveTelemetry,
@@ -124,7 +123,7 @@ function DeepSeaGame({
   if (!initialSceneRef.current) {
     initialSceneRef.current = initialSnapshot
       ? cloneSceneState(initialSnapshot.scene)
-      : createSeededScene(seed, initialDimensionsRef.current, upgrades);
+      : createInitialScene(initialDimensionsRef.current, upgrades);
   }
 
   const initialScene = initialSceneRef.current;
