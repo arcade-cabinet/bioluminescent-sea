@@ -72,7 +72,7 @@ export function spawnSeededCreatures(
       noiseOffsetX: round(rng.range(0, 1000), 2),
       noiseOffsetY: round(rng.range(0, 1000), 2),
       pulsePhase: round(rng.range(0, Math.PI * 2), 3),
-      size: round(clamp(minDimension * sizeScale, 14, 36), 2),
+      size: round(clamp(640 * sizeScale, 14, 36), 2),
       speed: round(rng.range(0.18, 0.55), 3),
       type,
       x: round(xNorm * width, 2),
