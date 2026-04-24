@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.3.1...v0.4.0) (2026-04-24)
+
+
+### Features
+
+* **render:** backdrop ridges parallax with descent (F.4 backdrop) ([#49](https://github.com/arcade-cabinet/bioluminescent-sea/issues/49)) ([4c0fe81](https://github.com/arcade-cabinet/bioluminescent-sea/commit/4c0fe810ee6b552005fa1c3b63bd41aea8ab859d))
+* **render:** bridge owns a live camera synced to sim depthTravelMeters ([#48](https://github.com/arcade-cabinet/bioluminescent-sea/issues/48)) ([3ef6da4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/3ef6da4ce7bcdc3e1f533cdc2af6a9d9b3282b95))
+* **render:** parallax snow wraps with descent (F.4 parallax) ([#51](https://github.com/arcade-cabinet/bioluminescent-sea/issues/51)) ([716eb3d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/716eb3d6292427699f79b4997ac27ffeec6326b5))
+
 ## [0.3.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.3.0...v0.3.1) (2026-04-24)
 
 
