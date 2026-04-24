@@ -1,5 +1,6 @@
 import type { BiomeId } from "@/sim/world/types";
 import type {
+  Anomaly,
   Creature,
   Particle,
   Pirate,
@@ -19,6 +20,7 @@ export interface DiveInput {
 }
 
 export interface SceneState {
+  anomalies: Anomaly[];
   creatures: Creature[];
   particles: Particle[];
   pirates: Pirate[];

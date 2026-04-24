@@ -332,6 +332,7 @@ function createPlayer(position: { x: number; y: number }): Player {
     y: position.y,
     speedScale: 1,
     lampScale: 1,
+    activeBuffs: { repelUntil: 0, overdriveUntil: 0 },
   };
 }
 

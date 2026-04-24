@@ -1,4 +1,5 @@
 import {
+  AnomalyEntity,
   CreatureEntity,
   DiveRoot,
   ParticleEntity,
@@ -63,6 +64,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   // Scratch buffers — reused each frame so the render bridge allocates
   // zero intermediate arrays during steady-state play. Holes from
   // missing traits are skipped in place (length tracked explicitly).
+  const anomaliesBuf: import("@/sim/entities/types").Anomaly[] = [];
   const creatureBuf: Creature[] = [];
   const predatorBuf: Predator[] = [];
   const pirateBuf: Pirate[] = [];
@@ -92,6 +94,11 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
       if (!playerValue) return;
 
+      const anomalies = collectTraitValues(
+        world.anomalyEntities,
+        AnomalyEntity,
+        anomaliesBuf
+      );
       const creatures = collectTraitValues(
         world.creatureEntities,
         CreatureEntity,
@@ -126,7 +133,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         depthMeters: root?.depthTravelMeters ?? 0,
         pxPerMeter: camera.pxPerMeter,
       });
-      entities.sync({ creatures, predators, pirates, totalTime, camera });
+      entities.sync({ anomalies, creatures, predators, pirates, totalTime, camera });
       player.sync(playerValue, viewportScale, totalTime);
       fx.sync({
         player: playerValue,

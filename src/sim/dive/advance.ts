@@ -4,7 +4,7 @@ import {
   advancePlayer,
   createInitialPlayer,
 } from "@/sim/entities";
-import { collectCreatures, hasPredatorCollision } from "./collection";
+import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
 import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { getDiveModeTuning } from "./mode";
 import { getDiveTelemetry } from "./telemetry";
@@ -25,6 +25,7 @@ export function createInitialScene(dimensions: ViewportDimensions, upgrades?: Su
     player.lampScale = 1 + (upgrades.lamp * 0.20); // +20% per level
   }
   return {
+    anomalies: [],
     creatures: [],
     particles: [],
     pirates: [],
@@ -96,25 +97,57 @@ export function advanceScene(
     tuning.collectionOxygenScale
   );
 
-  const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND;
+  const anomalyCollection = collectAnomalies(scene.anomalies as import("@/sim/entities/types").Anomaly[], player);
+
+  // Apply buffs
+  let activeRepel = player.activeBuffs.repelUntil;
+  let activeOverdrive = player.activeBuffs.overdriveUntil;
+  
+  for (const collected of anomalyCollection.collected) {
+    if (collected.type === "repel") activeRepel = totalTime + 15; // 15 seconds
+    if (collected.type === "overdrive") activeOverdrive = totalTime + 10; // 10 seconds
+  }
+
+  // Calculate speed multiplier from overdrive
+  const isOverdrive = activeOverdrive > totalTime;
+  if (isOverdrive) {
+    player.speedScale = 2.5; 
+  } else {
+    player.speedScale = 1;
+  }
+
+  const isRepelActive = activeRepel > totalTime;
+
+  const collidedWithPredator = !isRepelActive && hasPredatorCollision(player, predators, tuning.threatRadiusScale);
+  const collidedWithPirate = !isRepelActive && hasPredatorCollision(player, pirates as unknown as import("@/sim/entities/types").Predator[], tuning.threatRadiusScale);
+
+  const isCollision = collidedWithPredator || collidedWithPirate;
+  
+  const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND * (isOverdrive ? 1.5 : 1);
   const targetDepthOffset = tuning.freeVerticalMovement ? Math.max(0, player.targetY - player.y) * 0.05 : passiveDescent;
 
   const nextDepthTravelMeters = tuning.completionCondition === "infinite" 
     ? scene.depthTravelMeters + targetDepthOffset
     : Math.min(tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS, scene.depthTravelMeters + targetDepthOffset);
 
+  const nextPlayer = { 
+    ...player, 
+    activeBuffs: { repelUntil: activeRepel, overdriveUntil: activeOverdrive } 
+  };
+
   const nextScene: SceneState = {
+    anomalies: anomalyCollection.anomalies.map(a => ({ ...a, pulsePhase: a.pulsePhase + deltaTime * 3 })),
     creatures: collection.creatures,
     particles,
     pirates,
-    player,
+    player: nextPlayer,
     predators,
     depthTravelMeters: nextDepthTravelMeters,
   };
 
   return {
     collection,
-    collidedWithPredator: hasPredatorCollision(player, predators, tuning.threatRadiusScale),
+    collidedWithPredator: isCollision,
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
   };

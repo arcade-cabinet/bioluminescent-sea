@@ -1,6 +1,7 @@
 import { createWorld, type Entity, type World } from "koota";
 import type { SceneState } from "@/sim/dive/types";
 import {
+  AnomalyEntity,
   CreatureEntity,
   DiveRoot,
   ParticleEntity,
@@ -21,6 +22,7 @@ export interface DiveWorld {
   world: World;
   rootEntity: Entity;
   playerEntity: Entity;
+  anomalyEntities: Entity[];
   creatureEntities: Entity[];
   predatorEntities: Entity[];
   pirateEntities: Entity[];
@@ -56,6 +58,9 @@ export function createDiveWorld(scene: SceneState, masterSeed = 0): DiveWorld {
   const pirateEntities = scene.pirates.map((p) =>
     world.spawn(PirateEntity({ value: p }))
   );
+  const anomalyEntities = scene.anomalies.map((a) =>
+    world.spawn(AnomalyEntity({ value: a }))
+  );
   const particleEntities = scene.particles.map((p) =>
     world.spawn(ParticleEntity({ value: p }))
   );
@@ -64,6 +69,7 @@ export function createDiveWorld(scene: SceneState, masterSeed = 0): DiveWorld {
     world,
     rootEntity,
     playerEntity,
+    anomalyEntities,
     creatureEntities,
     predatorEntities,
     pirateEntities,
@@ -84,6 +90,7 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
   if (!player) throw new Error("readSceneFromWorld: player entity missing PlayerAvatar");
   const root = w.rootEntity.get(DiveRoot);
   return {
+    anomalies: [], // Placeholder until ECS anomaly sync is written
     creatures: w.creatureEntities.map((e) => {
       const t = e.get(CreatureEntity);
       if (!t) throw new Error("Creature entity missing trait");
@@ -136,6 +143,11 @@ export function writeSceneToWorld(w: DiveWorld, scene: SceneState): DiveWorld {
     scene.pirates,
     PirateEntity,
   );
+  const nextAnomalies = syncEntities(
+    w.anomalyEntities,
+    scene.anomalies,
+    AnomalyEntity,
+  );
   const nextParticles = syncEntities(
     w.particleEntities,
     scene.particles,
@@ -144,6 +156,7 @@ export function writeSceneToWorld(w: DiveWorld, scene: SceneState): DiveWorld {
 
   return {
     ...w,
+    anomalyEntities: nextAnomalies,
     creatureEntities: nextCreatures,
     predatorEntities: nextPredators,
     pirateEntities: nextPirates,

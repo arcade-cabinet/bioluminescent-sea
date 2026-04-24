@@ -5,22 +5,7 @@ import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
 import { biomeById } from "@/sim/world/biomes";
 import type { Chunk } from "@/sim/world/types";
 import type { ViewportDimensions } from "@/sim/dive/types";
-import { CREATURE_COLORS, type Creature, type CreatureType } from "./types";
-
-/**
- * Per-chunk entity spawning.
- *
- * Given a chunk (depth range + biome + per-chunk seed), produce the
- * creatures that live inside it. The creature count is driven by the
- * biome's `creatureDensity` so the photic gate feels dense with glow
- * near the surface and the abyssal trench gets quieter.
- *
- * PR F.3 groundwork — the sim still advances 18 fixed creatures
- * today, but this path is ready for the sim migration. Creatures
- * produced here carry `worldYMeters` (in addition to the legacy
- * screen `y`) so the renderer can project them via the camera as
- * soon as camera-scroll is wired.
- */
+import { CREATURE_COLORS, type Creature, type CreatureType, type Anomaly, type AnomalyType, type Predator, type Pirate } from "./types";
 
 export const BASE_CREATURES_PER_CHUNK = 3;
 
@@ -29,8 +14,6 @@ export function spawnCreaturesForChunk(
   viewport: ViewportDimensions,
 ): Creature[] {
   const biome = biomeById(chunk.biome);
-  // Density 0..1 → count in [1, base + 2]. Photic (density ~0.9) →
-  // 4 creatures; abyssal (density ~0.3) → 2 creatures.
   const count = Math.max(
     1,
     Math.round(BASE_CREATURES_PER_CHUNK * biome.creatureDensity * 1.3),
@@ -45,20 +28,11 @@ export function spawnCreaturesForChunk(
     const colors = CREATURE_COLORS[type];
     const sizeScale = sizeForType(type);
 
-    // World-Y is a random depth within the chunk's vertical band.
     const worldYMeters = round(
       chunk.yTopMeters + rng.range(0.12, 0.88) * CHUNK_HEIGHT_METERS,
       2,
     );
-    // Legacy screen coords: x spread across viewport, y derived from
-    // the normalized position inside the chunk. The renderer replaces
-    // this with camera projection once chunk-scroll lands; today it
-    // keeps the game playable while the sim is still pixel-bound.
     const chunkLocalY = (worldYMeters - chunk.yTopMeters) / CHUNK_HEIGHT_METERS;
-    // Spawn across the full lateral play band so descending through
-    // a chunk can reveal creatures the player only finds by drifting
-    // sideways. The PRNG's range call remains seeded from the chunk
-    // so the population is deterministic across reloads.
     const xNorm = rng.range(0.04, 0.96);
     const yNorm = 0.1 + chunkLocalY * 0.8;
 
@@ -80,16 +54,130 @@ export function spawnCreaturesForChunk(
   });
 }
 
-/**
- * Spawn creatures across every chunk in the given window. Callable as
- * a direct drop-in for the scene's creature array; the resulting
- * count varies with the chunks' biome densities.
- */
+export function spawnPredatorsForChunk(
+  chunk: Chunk,
+  viewport: ViewportDimensions,
+): Predator[] {
+  const biome = biomeById(chunk.biome);
+  const isStygian = chunk.biome === "stygian-abyss";
+  const baseCount = Math.round(biome.predatorDensity * 3);
+  const count = clamp(baseCount, 0, 10);
+  
+  if (count === 0 && !isStygian) return [];
+
+  const rng = createRng(chunk.seed + 7777);
+  const { width, height } = viewport;
+  const baseSize = clamp(640 * 0.14, 54, 94);
+  const results: Predator[] = [];
+
+  for (let i = 0; i < count; i++) {
+    results.push({
+      angle: round(rng.range(-Math.PI, Math.PI), 3),
+      id: `predator-c${chunk.index}-${i}`,
+      noiseOffset: round(rng.range(0, 1000), 2),
+      size: round(baseSize * rng.range(0.85, 1.05), 2),
+      speed: round(rng.range(0.5, 0.75), 3),
+      x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
+      y: round(height * 0.5, 2),
+    });
+  }
+
+  // Spawn Leviathan in Stygian Abyss (50% chance per chunk)
+  if (isStygian && rng.next() > 0.5) {
+    results.push({
+      angle: round(rng.range(-Math.PI, Math.PI), 3),
+      id: `leviathan-c${chunk.index}`,
+      noiseOffset: round(rng.range(0, 1000), 2),
+      size: round(baseSize * 4, 2), // Massive!
+      speed: round(rng.range(0.2, 0.4), 3), // Slow and menacing
+      x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
+      y: round(height * 0.5, 2),
+      isLeviathan: true,
+    });
+  }
+
+  return results;
+}
+
+export function spawnPiratesForChunk(
+  chunk: Chunk,
+  viewport: ViewportDimensions,
+): Pirate[] {
+  const biome = biomeById(chunk.biome);
+  const baseCount = Math.round(biome.pirateDensity * 2);
+  const count = clamp(baseCount, 0, 5);
+  
+  if (count === 0) return [];
+
+  const rng = createRng(chunk.seed + 8888);
+  const { width, height } = viewport;
+  const results: Pirate[] = [];
+
+  for (let i = 0; i < count; i++) {
+    results.push({
+      angle: round(rng.range(-Math.PI, Math.PI), 3),
+      id: `pirate-c${chunk.index}-${i}`,
+      noiseOffset: round(rng.range(0, 1000), 2),
+      speed: round(rng.range(0.6, 0.9), 3),
+      lanternPhase: rng.next() * Math.PI * 2,
+      x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
+      y: round(height * 0.5, 2),
+    });
+  }
+
+  return results;
+}
+
+export function spawnAnomaliesForChunk(
+  chunk: Chunk,
+  viewport: ViewportDimensions,
+): Anomaly[] {
+  // Only spawn anomalies occasionally (e.g. 20% of chunks have one)
+  const rng = createRng(chunk.seed + 9999);
+  if (rng.next() > 0.2) return [];
+
+  const types: AnomalyType[] = ["repel", "overdrive"];
+  const { width, height } = viewport;
+  const worldYMeters = round(chunk.yTopMeters + rng.range(0.2, 0.8) * CHUNK_HEIGHT_METERS, 2);
+  const xNorm = rng.range(0.1, 0.9);
+
+  return [{
+    id: `anomaly-c${chunk.index}`,
+    type: rng.pick(types),
+    x: round(playBandMinX(width) + xNorm * playBandWidth(width), 2),
+    y: round(height * 0.5, 2),
+    worldYMeters,
+    size: 24,
+    pulsePhase: rng.range(0, Math.PI * 2),
+  }];
+}
+
 export function spawnCreaturesForChunks(
   chunks: readonly Chunk[],
   viewport: ViewportDimensions,
 ): Creature[] {
   return chunks.flatMap((c) => spawnCreaturesForChunk(c, viewport));
+}
+
+export function spawnPredatorsForChunks(
+  chunks: readonly Chunk[],
+  viewport: ViewportDimensions,
+): Predator[] {
+  return chunks.flatMap((c) => spawnPredatorsForChunk(c, viewport));
+}
+
+export function spawnPiratesForChunks(
+  chunks: readonly Chunk[],
+  viewport: ViewportDimensions,
+): Pirate[] {
+  return chunks.flatMap((c) => spawnPiratesForChunk(c, viewport));
+}
+
+export function spawnAnomaliesForChunks(
+  chunks: readonly Chunk[],
+  viewport: ViewportDimensions,
+): Anomaly[] {
+  return chunks.flatMap((c) => spawnAnomaliesForChunk(c, viewport));
 }
 
 function sizeForType(type: CreatureType): number {
@@ -103,18 +191,11 @@ function sizeForType(type: CreatureType): number {
   }
 }
 
-/**
- * Best-guess world-Y in meters for a creature whose position was
- * authored in pixels only. Used during the transition period to seed
- * `worldYMeters` on the existing 18-fixed-creatures scene without
- * re-seeding the whole placement.
- */
 export function estimateWorldYMeters(
   pixelY: number,
   viewportHeight: number,
   currentDepthMeters: number,
 ): number {
   const normalized = clamp(pixelY / viewportHeight, 0, 1);
-  // Map [0,1] viewport to a 1-chunk band around the current depth.
   return currentDepthMeters + (normalized - 0.5) * CHUNK_HEIGHT_METERS;
 }

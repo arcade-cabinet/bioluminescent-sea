@@ -1,5 +1,6 @@
 import { trait } from "koota";
 import type {
+  Anomaly,
   Creature,
   Particle,
   Pirate,
@@ -29,6 +30,10 @@ import type {
 
 export const PlayerAvatar = trait(
   () => ({ value: null as unknown as Player })
+);
+
+export const AnomalyEntity = trait(
+  () => ({ value: null as unknown as Anomaly })
 );
 
 export const CreatureEntity = trait(

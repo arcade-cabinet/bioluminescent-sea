@@ -1,5 +1,6 @@
 import { round } from "@/sim/_shared/math";
 import type {
+  Anomaly,
   Creature,
   Pirate,
   Player,
@@ -9,6 +10,30 @@ import { CREATURE_OXYGEN_BONUS_SECONDS, CREATURE_POINTS } from "@/sim/entities/t
 import { MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
 import type { CreatureCollectionResult } from "./types";
 
+export interface AnomalyCollectionResult {
+  collected: Anomaly[];
+  anomalies: Anomaly[];
+}
+
+export function collectAnomalies(
+  anomalies: Anomaly[],
+  player: Player,
+): AnomalyCollectionResult {
+  const collected: Anomaly[] = [];
+  const remaining: Anomaly[] = [];
+
+  for (const anomaly of anomalies) {
+    const distance = Math.hypot(anomaly.x - player.x, anomaly.y - player.y);
+
+    if (distance < anomaly.size * 0.5 + 30) {
+      collected.push(anomaly);
+    } else {
+      remaining.push(anomaly);
+    }
+  }
+
+  return { collected, anomalies: remaining };
+}
 export function collectCreatures(
   creatures: Creature[],
   player: Player,

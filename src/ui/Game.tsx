@@ -149,6 +149,7 @@ function DeepSeaGame({
   }
 
   const playerRef = useRef<Player>(initialScene.player);
+  const anomaliesRef = useRef<import("@/sim/entities/types").Anomaly[]>(initialScene.anomalies);
   const creaturesRef = useRef<Creature[]>(initialScene.creatures);
   const predatorsRef = useRef<Predator[]>(initialScene.predators);
   const piratesRef = useRef<Pirate[]>(initialScene.pirates);
@@ -267,6 +268,7 @@ function DeepSeaGame({
     setTelemetry(
       getDiveTelemetry(
         {
+          anomalies: anomaliesRef.current,
           creatures: creaturesRef.current,
           particles: particlesRef.current,
           pirates: piratesRef.current,
@@ -297,6 +299,7 @@ function DeepSeaGame({
       mode,
       multiplier: multiplierRef.current,
       scene: cloneSceneState({
+        anomalies: anomaliesRef.current,
         creatures: creaturesRef.current,
         particles: particlesRef.current,
         pirates: piratesRef.current,
@@ -361,6 +364,7 @@ function DeepSeaGame({
       const getCurrentSummary = (timeLeftForSummary = newTimeLeft) =>
         getDiveRunSummary(
           {
+            anomalies: anomaliesRef.current,
             creatures: creaturesRef.current,
             particles: particlesRef.current,
             pirates: piratesRef.current,
@@ -402,6 +406,7 @@ function DeepSeaGame({
       // callers will read directly from ECS traits and the mirror
       // disappears.
       playerRef.current = result.scene.player;
+      anomaliesRef.current = result.scene.anomalies;
       creaturesRef.current = result.scene.creatures;
       predatorsRef.current = result.scene.predators;
       piratesRef.current = result.scene.pirates;
@@ -777,6 +782,7 @@ function isSceneSnapshot(scene: unknown): scene is SceneState {
       typeof value === "object" &&
       value.player &&
       typeof value.player === "object" &&
+      Array.isArray(value.anomalies) &&
       Array.isArray(value.creatures) &&
       Array.isArray(value.predators) &&
       Array.isArray(value.pirates) &&
@@ -823,13 +829,13 @@ export default function Game() {
 
   // The seed used by the currently-playing dive; frozen at Begin Dive.
   const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
-  const fallbackSummary = getDiveRunSummary(
-    { ...createInitialScene({ height: 600, width: 800 }), creatures: [] },
+
+  const displaySummary = finalSummary ?? getDiveRunSummary(
+    { ...createInitialScene({ height: 600, width: 800 }), creatures: [], anomalies: [] },
     finalScore,
     getDiveDurationSeconds(sessionMode),
     getDiveDurationSeconds(sessionMode)
   );
-  const displaySummary = finalSummary ?? fallbackSummary;
   const completionCelebration = getDiveCompletionCelebration(displaySummary);
 
   return (
