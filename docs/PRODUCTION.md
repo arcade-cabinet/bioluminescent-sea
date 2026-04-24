@@ -227,19 +227,16 @@ foundation + player-journey + identity + content pass applies, in
 order, to the sibling POC extractions:
 
 - [ ] `../cosmic-gardener` — foundation in progress (2026-04-24):
-      `docs/PRODUCTION.md` merged (arcade-cabinet/cosmic-gardener PR
-      #9). Seeded-RNG scaffold opened (PR #10): seedrandom dependency
-      + `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/`,
-      matching the shape used here so mental models stay shared.
-      Remaining A → H work (engine rename, plumb RNG through engine,
+      PRODUCTION.md + seeded-RNG scaffold both merged (PR #9 + #10).
+      `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/` match
+      the shape used here so mental models stay shared across the
+      game repos. Remaining A → H work (plumb RNG through engine,
       identity-forward landing, Tone.js audio, content pipeline,
       identity icons, production deploy) tracked in that repo.
 - [ ] `../enchanted-forest` — foundation in progress (2026-04-24):
-      `docs/PRODUCTION.md` merged (arcade-cabinet/enchanted-forest PR
-      #8). Seeded-RNG scaffold opened (PR #9): seedrandom dependency
-      + `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/`,
-      matching the shape used here. Remaining A → H work tracked in
-      that repo.
+      PRODUCTION.md + seeded-RNG scaffold both merged (PR #8 + #9).
+      Same createRng/hashSeed/randomSeed module shape as the other
+      repos. Remaining A → H work tracked in that repo.
 
 Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
 The **rendering/physics layer is per-game** — bioluminescent-sea uses
