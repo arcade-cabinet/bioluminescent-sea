@@ -90,6 +90,11 @@ export function HUD({
   biomeLabel,
   biomeTintHex,
 }: HUDProps) {
+  // Oxygen progression: comfortable → warn (< 25%) → critical (< 10%).
+  // The critical stage adds a distinct "hold your breath" finale banner
+  // above the stat row so the player sees one more beat before the run
+  // surfaces or ends. Pure visual; does not change sim behavior.
+  const critical = oxygenRatio < 0.1;
   const lowOxygen = oxygenRatio < 0.25;
   return (
     <>
@@ -110,7 +115,7 @@ export function HUD({
       >
         <Stat label="Score" value={score} />
         <Stat
-          label={lowOxygen ? "Oxygen — Low" : "Oxygen"}
+          label={critical ? "Oxygen — Critical" : lowOxygen ? "Oxygen — Low" : "Oxygen"}
           value={`${Math.max(0, timeLeft).toFixed(0)}s`}
           tone={lowOxygen ? "warn" : undefined}
         />
@@ -243,8 +248,53 @@ export function HUD({
         />
       )}
 
+      {critical && <CriticalBreathBanner />}
+
       <MuteButton />
     </>
+  );
+}
+
+/**
+ * Final "hold your breath" beat between the oxygen-low warning and the
+ * ascent. Fires when oxygenRatio drops below 10%; sits above the top
+ * stat row so the player's eye catches it without obscuring the
+ * playfield. The copy is a single cartographer-voice sentence — no
+ * alarm, no shouted all-caps. This is the pause before the surface.
+ */
+function CriticalBreathBanner() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{
+        opacity: [0.75, 1, 0.75],
+        y: 0,
+      }}
+      transition={{
+        opacity: { duration: 1.6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" },
+        y: { duration: 0.4, ease: "easeOut" },
+      }}
+      style={{
+        position: "absolute",
+        top: "calc(max(env(safe-area-inset-top), 1rem) + 5.2rem)",
+        left: "50%",
+        transform: "translateX(-50%)",
+        padding: "0.55rem 1.1rem",
+        background: "rgba(40, 8, 8, 0.78)",
+        border: "1px solid var(--color-warn)",
+        borderRadius: 8,
+        fontFamily: "var(--font-display)",
+        fontSize: "clamp(0.92rem, 2.6vw, 1.1rem)",
+        letterSpacing: "0.04em",
+        color: "var(--color-warn)",
+        textShadow: "0 0 14px rgba(255, 107, 107, 0.55)",
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+        zIndex: 11,
+      }}
+    >
+      Hold your breath — surface now.
+    </motion.div>
   );
 }
 

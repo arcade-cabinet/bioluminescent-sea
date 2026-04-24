@@ -155,9 +155,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       picked by different bit ranges of the 18-bit codename seed.
       Deterministic and keyed to the same seed the player shares via
       URL. Rendered in italic under the codename on landing.
-- [ ] Running-out-of-oxygen warning progression — currently a red
-      pulse; DESIGN.md wants a "surface breathing easier" finale that
-      requires one more UI beat between warn and ascent.
+- [x] Running-out-of-oxygen warning progression — three-stage now:
+      comfortable → warn (< 25%, red stat tone + "Oxygen — Low" label)
+      → critical (< 10%, "Hold your breath — surface now." banner in
+      Cormorant Garamond pulsing above the stat row). Pure visual; sim
+      behavior unchanged.
 - [x] Sound identity — Tone.js ambient pad with per-biome chord
       voicings + five synthesized SFX. Landed with PR G.
 
