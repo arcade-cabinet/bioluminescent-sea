@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.3...v0.3.0) (2026-04-24)
+
+
+### Features
+
+* **sim:** createChunkedScene — F.3 target-shape scene factory ([#44](https://github.com/arcade-cabinet/bioluminescent-sea/issues/44)) ([59bfeb1](https://github.com/arcade-cabinet/bioluminescent-sea/commit/59bfeb1f452272260c0e0f352978a5cce6dc1b78))
+* **sim:** per-chunk creature spawning (F.3 continued) ([#43](https://github.com/arcade-cabinet/bioluminescent-sea/issues/43)) ([b8449f5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b8449f54f8d03af8a860ff7072b945ba3515ce74))
+
+
+### Documentation
+
+* **production:** sibling landing heroes in flight ([#41](https://github.com/arcade-cabinet/bioluminescent-sea/issues/41)) ([2e846fc](https://github.com/arcade-cabinet/bioluminescent-sea/commit/2e846fc3ef62db35a6f3cc4f30edc1da6ced3c05))
+
 ## [0.2.3](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.2...v0.2.3) (2026-04-24)
 
 
