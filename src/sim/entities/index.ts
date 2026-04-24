@@ -10,6 +10,7 @@
  */
 
 export * from "./types";
+export * from "./factory";
 export {
   CREATURE_ANCHORS,
   TOTAL_BEACONS,

@@ -1,0 +1,26 @@
+export {
+  type ActorArchetype,
+  type ActorBehaviour,
+  type ActorKind,
+  type AnomalyArchetype,
+  ARCHETYPE_CATALOGUE,
+  type ArchetypeId,
+  archetypesOfKind,
+  type CreatureArchetype,
+  type EnemySubArchetype,
+  getArchetype,
+  type LeviathanArchetype,
+  pickWeightedArchetype,
+  type PirateArchetype,
+  type PlayerArchetype,
+  type PredatorArchetype,
+} from "./archetypes";
+export {
+  type ActorSpawnContext,
+  type CompositeSpawnContext,
+  createActor,
+  createActorById,
+  spawnFlock,
+  spawnLeviathanEscort,
+  type SpawnedActor,
+} from "./factory";

@@ -13,6 +13,7 @@
 export * from "./types";
 export { GAME_DURATION, MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
 export { getDiveDurationSeconds, getDiveModeTuning } from "./mode";
+export { MODE_SLOTS, getModeSlots, type ModeSlots } from "./modeSlots";
 export { advanceScene, createInitialScene, resetAIManager } from "./advance";
 export {
   calculateMultiplier,
