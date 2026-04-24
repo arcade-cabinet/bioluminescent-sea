@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.2...v0.3.0) (2026-04-24)
+
+
+### Features
+
+* **sim:** chunk helpers — chunkAt, chunksInWindow (F.3 groundwork) ([#39](https://github.com/arcade-cabinet/bioluminescent-sea/issues/39)) ([e00359f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e00359fd261f3510c97274434fcd878fa824dba2))
+
+
+### Documentation
+
+* **production:** close dependabot-majors box + update sibling statuses ([#37](https://github.com/arcade-cabinet/bioluminescent-sea/issues/37)) ([cea69e7](https://github.com/arcade-cabinet/bioluminescent-sea/commit/cea69e72bcc0b7e650c40b5992822fa8c2c720a3))
+* **production:** cosmic-gardener RNG scaffold in flight ([#34](https://github.com/arcade-cabinet/bioluminescent-sea/issues/34)) ([ee21493](https://github.com/arcade-cabinet/bioluminescent-sea/commit/ee21493af6fd27f046d15d7f270a4bae0fc197f8))
+* **production:** sibling RNG scaffolds both merged ([#38](https://github.com/arcade-cabinet/bioluminescent-sea/issues/38)) ([cb9d10c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/cb9d10cbef82a487475ea30f9a548add8db3b842))
+
 ## [0.2.2](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.2.1...v0.2.2) (2026-04-24)
 
 
