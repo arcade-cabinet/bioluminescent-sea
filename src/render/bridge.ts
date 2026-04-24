@@ -7,6 +7,7 @@ import {
   PredatorEntity,
   type DiveWorld,
 } from "@/ecs";
+import { createCamera, type Camera } from "./camera";
 import type { CollectionBurstView } from "./layers/fx";
 import { mountBackdrop, type BackdropController } from "./layers/backdrop";
 import { mountEntities, type EntityController } from "./layers/entities";
@@ -29,6 +30,13 @@ export interface RenderBridge {
   renderFrame(args: RenderFrameInput): void;
   resize(widthPx: number, heightPx: number): void;
   destroy(): void;
+  /**
+   * The live camera. Layers can read `camera.project(world)` or
+   * `camera.scrollMeters` to translate world-space coordinates to
+   * screen pixels. The bridge keeps the camera's scroll in sync with
+   * the sim's `DiveRoot.depthTravelMeters` on every frame.
+   */
+  readonly camera: Camera;
 }
 
 export interface RenderFrameInput {
@@ -55,14 +63,22 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
     widthPx: stage.app.renderer.width / stage.app.renderer.resolution,
     heightPx: stage.app.renderer.height / stage.app.renderer.resolution,
   });
+  const camera: Camera = createCamera(viewport());
 
   return {
+    camera,
     renderFrame({ world, bursts, viewportScale, biomeTintHex }) {
       const v = viewport();
+
+      // Keep the camera's viewport + scroll in sync with the sim.
+      // Layers don't read this yet, but the infra is live so F.4's
+      // layer cut-over is a pure consumer change.
+      camera.setViewport(v.widthPx, v.heightPx);
 
       const root = world.rootEntity.get(DiveRoot);
       const totalTime = root?.totalTime ?? 0;
       const threatFlashAlpha = root?.threatFlashAlpha ?? 0;
+      camera.setScrollMeters(root?.depthTravelMeters ?? 0);
 
       const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
       if (!playerValue) return;
