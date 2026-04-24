@@ -223,12 +223,14 @@ After Bioluminescent Sea is production-polished and deployed, the same
 foundation + player-journey + identity + content pass applies, in
 order, to the sibling POC extractions:
 
-- [ ] `../cosmic-gardener` — foundation kicked off 2026-04-24:
-      `docs/PRODUCTION.md` seeded (arcade-cabinet/cosmic-gardener PR
-      #9). A → H sequence tailored to its DOM-particle stack:
-      engine split → seeded determinism → identity-forward landing →
-      Tone.js audio → content pipeline → identity icons → production
-      deploy. Remaining work tracked in that repo.
+- [ ] `../cosmic-gardener` — foundation in progress (2026-04-24):
+      `docs/PRODUCTION.md` merged (arcade-cabinet/cosmic-gardener PR
+      #9). Seeded-RNG scaffold opened (PR #10): seedrandom dependency
+      + `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/`,
+      matching the shape used here so mental models stay shared.
+      Remaining A → H work (engine rename, plumb RNG through engine,
+      identity-forward landing, Tone.js audio, content pipeline,
+      identity icons, production deploy) tracked in that repo.
 - [ ] `../enchanted-forest` — foundation kicked off 2026-04-24:
       `docs/PRODUCTION.md` seeded (arcade-cabinet/enchanted-forest PR
       #8). A → H sequence tailored to its rune-cadence gameplay and
