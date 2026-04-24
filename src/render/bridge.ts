@@ -103,7 +103,13 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         return t?.value;
       }).filter((p): p is NonNullable<typeof p> => p !== undefined);
 
-      backdrop.draw(v.widthPx, v.heightPx, totalTime, biomeTintHex);
+      backdrop.draw({
+        widthPx: v.widthPx,
+        heightPx: v.heightPx,
+        totalTime,
+        biomeTintHex,
+        depthMeters: root?.depthTravelMeters ?? 0,
+      });
       parallax.draw(particles);
       entities.sync({ creatures, predators, pirates, totalTime });
       player.sync(playerValue, viewportScale, totalTime);
