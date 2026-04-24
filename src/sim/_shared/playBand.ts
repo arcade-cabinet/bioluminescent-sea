@@ -16,8 +16,8 @@
  * tells them *which* pixels are legal.
  */
 
-/** The viewport-pad factor on each side. 0.7 → 2.4× viewport total. */
-export const PLAY_BAND_PAD_FACTOR = 0.7;
+/** The viewport-pad factor on each side. 3.0 → 7.0× viewport total. */
+export const PLAY_BAND_PAD_FACTOR = 3.0;
 
 /** Left edge of the band in pixel-x. */
 export function playBandMinX(width: number): number {

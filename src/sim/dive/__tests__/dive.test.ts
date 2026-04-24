@@ -47,7 +47,7 @@ describe("deep sea simulation", () => {
     expect(scene.player.x).toBe(desktop.width / 2);
   });
 
-  test("moves the player toward active pointer input and clamps targets to the viewport", () => {
+  test("moves the player toward active pointer input and clamps targets to the play band", () => {
     const player = createPlayer({ x: 100, y: 100 });
     const next = advancePlayer(
       player,
@@ -57,7 +57,7 @@ describe("deep sea simulation", () => {
       1 / 60
     );
 
-    expect(next.targetX).toBe(320);
+    expect(next.targetX).toBe(1280);
     expect(next.targetY).toBe(0);
     expect(next.x).toBeGreaterThan(player.x);
     expect(next.y).toBeLessThan(player.y);
@@ -232,7 +232,7 @@ describe("deep sea simulation", () => {
       );
       current = result.scene;
     }
-    expect(current.depthTravelMeters).toBeCloseTo(6, 1);
+    expect(current.depthTravelMeters).toBeCloseTo(11, 1);
   });
 
   test("advanceScene clamps depthTravelMeters at the trench floor", () => {
@@ -248,7 +248,7 @@ describe("deep sea simulation", () => {
       1,
       GAME_DURATION
     );
-    expect(result.scene.depthTravelMeters).toBeLessThanOrEqual(3200);
+    expect(result.scene.depthTravelMeters).toBeLessThanOrEqual(6400);
   });
 
   test("describes oxygen, depth, and collection telemetry", () => {
@@ -349,3 +349,4 @@ function createCreature(type: Creature["type"], x: number, y: number): Creature 
     y,
   };
 }
+

@@ -12,7 +12,7 @@ test.describe("Bioluminescent Sea — golden path", () => {
 
     await expect(page.getByRole("heading", { name: /bioluminescent sea/i })).toBeVisible();
     await expect(page.getByText(/sink into an abyssal trench/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /begin dive/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /new dive/i })).toBeVisible();
 
     // Verb teaser chips — the three-beat pre-teach of the loop.
     await expect(page.getByText(/collect bioluminescence/i)).toBeVisible();
@@ -22,8 +22,10 @@ test.describe("Bioluminescent Sea — golden path", () => {
     expect(errors, `console errors on landing:\n${errors.join("\n")}`).toEqual([]);
   });
 
-  test("Begin Dive transitions to gameplay and HUD appears", async ({ page }) => {
+  test("New Dive transitions to customization then gameplay and HUD appears", async ({ page }) => {
     await page.goto("/");
+    await page.getByRole("button", { name: /new dive/i }).click();
+    await expect(page.getByTestId("customization-screen")).toBeVisible();
     await page.getByRole("button", { name: /begin dive/i }).click();
 
     // Canvas playfield must mount — aria-label selector avoids depending on

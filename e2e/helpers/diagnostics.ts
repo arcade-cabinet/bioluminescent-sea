@@ -173,7 +173,9 @@ export async function dumpBeat(
   const png = testInfo.outputPath(`${project}-${slug}.png`);
   const json = testInfo.outputPath(`${project}-${slug}.json`);
 
-  await page.screenshot({ path: png, fullPage: false });
+  await page.screenshot({ path: png, fullPage: false, animations: "disabled", timeout: 5000 }).catch(e => {
+    console.warn(`[diagnostics] screenshot timed out for ${beat}: ${e}`);
+  });
 
   const dump: BeatDump = {
     beat,

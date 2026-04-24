@@ -4,9 +4,9 @@ import type { Chunk } from "@/sim/world/types";
 
 /**
  * Vertical extent of a single chunk in world-meters. Tuned so the
- * four biomes (photic 0–400, twilight 400–1200, midnight 1200–2400,
- * abyssal 2400–3200) decompose into a sensible count of chunks. A
- * 200m chunk puts:
+ * four biomes (photic 0–800, twilight 800–2400, midnight 2400–4800,
+ * abyssal 4800–6400) decompose into a sensible count of chunks. A
+ * 400m chunk puts:
  *   - photic-gate    across 2 chunks
  *   - twilight-shelf across 4 chunks
  *   - midnight-column across 6 chunks
@@ -14,7 +14,7 @@ import type { Chunk } from "@/sim/world/types";
  * for 16 chunks total at the trench floor. Small enough to retire
  * off-screen quickly, large enough that spawn cost is amortized.
  */
-export const CHUNK_HEIGHT_METERS = 200;
+export const CHUNK_HEIGHT_METERS = 400;
 
 /** Which chunk the given depth falls into (index 0 = surface). */
 export function chunkIndexAtDepth(depthMeters: number): number {
