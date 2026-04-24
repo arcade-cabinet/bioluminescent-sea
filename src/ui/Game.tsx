@@ -275,8 +275,19 @@ function DeepSeaGame({
     );
   }, [durationSeconds, timeLeft]);
 
-  const buildSnapshot = useCallback(
-    (): DeepSeaRunSnapshot => ({
+  // Mirror telemetry + timeLeft into refs so writeSnapshot stays
+  // referentially stable. If writeSnapshot closed over the state
+  // directly, the autosave useEffect below would tear down and re-arm
+  // its setInterval(2500) on every timeLeft tick (~1 Hz), and the
+  // cleanup's writeSnapshot() would fire on every rebuild — blowing
+  // well past the intended 0.4 Hz write cadence.
+  const telemetryRef = useRef(telemetry);
+  const timeLeftRef = useRef(timeLeft);
+  telemetryRef.current = telemetry;
+  timeLeftRef.current = timeLeft;
+
+  const writeSnapshot = useCallback(() => {
+    const snapshot: DeepSeaRunSnapshot = {
       lastCollectTime: lastCollectTimeRef.current,
       mode,
       multiplier: multiplierRef.current,
@@ -289,20 +300,15 @@ function DeepSeaGame({
         depthTravelMeters: depthTravelMetersRef.current,
       }),
       score: scoreRef.current,
-      telemetry,
-      timeLeft,
-    }),
-    [mode, telemetry, timeLeft]
-  );
-
-  const writeSnapshot = useCallback(() => {
-    const snapshot = buildSnapshot();
+      telemetry: telemetryRef.current,
+      timeLeft: timeLeftRef.current,
+    };
     try {
       localStorage.setItem(DIVE_SAVE_KEY, JSON.stringify(snapshot));
     } catch {
       // Storage may be disabled or full — ignore.
     }
-  }, [buildSnapshot]);
+  }, [mode]);
 
   const showOxygenPulse = useCallback((bonusSeconds: number, totalTime: number) => {
     const id = `oxygen-${Math.round(totalTime * 1000)}`;
