@@ -824,7 +824,6 @@ export default function Game() {
 
   // The seed used by the currently-playing dive; frozen at Begin Dive.
   const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
-  const previewCodename = codenameFromSeed(previewSeed);
   const fallbackSummary = getDiveRunSummary(
     { ...createInitialScene({ height: 600, width: 800 }), creatures: [] },
     finalScore,
@@ -847,10 +846,6 @@ export default function Game() {
             <StartScreen
               title="Bioluminescent Sea"
               subtitle="Sink into an abyssal trench. Trace glowing routes past landmark creatures. Surface breathing easier than when you started."
-              runPreview={{
-                codename: previewCodename,
-                blurb: trenchBlurbForSeed(previewSeed).full,
-              }}
               primaryAction={{
                 label: "New Dive",
                 onClick: () => {
@@ -863,26 +858,7 @@ export default function Game() {
                   setGameState("drydock");
                 },
               }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                }}
-              >
-                {(["cozy", "standard", "challenge"] as const).map((m) => (
-                  <OverlayButton
-                    key={m}
-                    variant={m === sessionMode ? "primary" : "ghost"}
-                    onClick={() => setSessionMode(m)}
-                  >
-                    {m}
-                  </OverlayButton>
-                ))}
-              </div>
-            </StartScreen>
+            />
           </motion.div>
         )}
         {gameState === "drydock" && (
@@ -943,10 +919,33 @@ export default function Game() {
                     marginBottom: "0.5rem",
                   }}
                 />
-                <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                <p style={{ color: "var(--color-fg-muted)", fontSize: "0.8rem", fontStyle: "italic", minHeight: "2rem" }}>
+                  {trenchBlurbForSeed(previewSeed).full}
+                </p>
+                <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "1rem" }}>
                   <OverlayButton variant="ghost" onClick={() => setPreviewSeed(randomSeed())}>Reroll</OverlayButton>
                   <OverlayButton variant="ghost" onClick={() => setPreviewSeed(dailySeed())}>Daily</OverlayButton>
                 </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  marginBottom: "2rem",
+                }}
+              >
+                {(["cozy", "standard", "challenge"] as const).map((m) => (
+                  <OverlayButton
+                    key={m}
+                    variant={m === sessionMode ? "primary" : "ghost"}
+                    onClick={() => setSessionMode(m)}
+                  >
+                    {m}
+                  </OverlayButton>
+                ))}
               </div>
 
               <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
