@@ -257,15 +257,20 @@ export function HUD({
 
 /**
  * Final "hold your breath" beat between the oxygen-low warning and the
- * ascent. Fires when oxygenRatio drops below 10%; sits above the top
- * stat row so the player's eye catches it without obscuring the
- * playfield. The copy is a single cartographer-voice sentence — no
- * alarm, no shouted all-caps. This is the pause before the surface.
+ * ascent. Fires when oxygenRatio drops below 10%; sits just above the
+ * objective banner at the bottom of the viewport where the player's
+ * eye is already landing. Copy is a single cartographer-voice
+ * sentence — no alarm, no shouted all-caps.
+ *
+ * Positioning was originally top-center, but on mobile portrait the
+ * wrapping stat row would push the banner into the playfield and
+ * overlap the landmark chip. Bottom-center keeps it out of the
+ * HUD-chip area on any viewport.
  */
 function CriticalBreathBanner() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{
         opacity: [0.75, 1, 0.75],
         y: 0,
@@ -276,7 +281,7 @@ function CriticalBreathBanner() {
       }}
       style={{
         position: "absolute",
-        top: "calc(max(env(safe-area-inset-top), 1rem) + 5.2rem)",
+        bottom: "calc(max(env(safe-area-inset-bottom), 1rem) + 4.5rem)",
         left: "50%",
         transform: "translateX(-50%)",
         padding: "0.55rem 1.1rem",
