@@ -11,6 +11,7 @@ export default defineConfig({
       "src/ecs/**/*.test.ts",
       "src/data/**/*.test.ts",
       "src/lib/**/*.test.ts",
+      "src/render/**/*.test.ts",
     ],
     exclude: ["e2e/**", "node_modules/**"],
   },
