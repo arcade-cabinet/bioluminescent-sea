@@ -1,10 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const IS_CI = !!process.env.CI;
-// Default to headed on local dev (faster feedback when watching) and
-// headless in CI where there's no display server. PW_HEADLESS=1 forces
-// headless even locally.
-const IS_HEADLESS = IS_CI || process.env.PW_HEADLESS === "1";
+const IS_HEADLESS = process.env.PW_HEADLESS === "1";
 const CHROMIUM_CHANNEL =
   process.env.PW_CHROMIUM_CHANNEL ?? (!IS_CI && !IS_HEADLESS ? "chrome" : undefined);
 const REUSE_SERVER = !IS_CI && process.env.PW_REUSE_SERVER === "1";
