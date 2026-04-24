@@ -442,8 +442,7 @@ function DeepSeaGame({
           }
         }
       }
-
-      if (isDiveComplete(result.scene)) {
+      if (isDiveComplete(result.scene, mode)) {
         setIsGameOver(true);
         void playSfx("dive-complete");
         onComplete(

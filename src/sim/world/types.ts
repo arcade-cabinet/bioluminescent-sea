@@ -24,7 +24,8 @@ export type BiomeId =
   | "photic-gate"
   | "twilight-shelf"
   | "midnight-column"
-  | "abyssal-trench";
+  | "abyssal-trench"
+  | "stygian-abyss";
 
 export interface Biome {
   id: BiomeId;

@@ -2,8 +2,9 @@ import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
 import { biomeAtDepth } from "@/sim/world/biomes";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
-import { GAME_DURATION } from "./constants";
+import { GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { describeDiveObjective, getPressureLabel } from "./objectives";
+import { getDiveModeTuning } from "./mode";
 import type {
   DiveCompletionCelebration,
   DiveRunSummary,
@@ -34,11 +35,6 @@ export function getDiveTelemetry(
   const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
   const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
   const routeLandmark = getDiveRouteLandmark(collectionRatio, nearestBeacon);
-  // Depth is now the sim's real world-Y (meters descended through the
-  // column). The earlier computeDepthMeters(collectionRatio,
-  // oxygenRatio) was a POC-era stand-in from when depth was a
-  // bookkeeping derivation rather than a physical state. Groundwork
-  // for PR F.2 chunking.
   const depthMeters = Math.round(scene.depthTravelMeters);
   const biome = biomeAtDepth(depthMeters);
 
@@ -66,8 +62,10 @@ export function getDiveTelemetry(
   };
 }
 
-export function isDiveComplete(scene: SceneState): boolean {
-  return scene.creatures.length === 0;
+export function isDiveComplete(scene: SceneState, mode: string | null | undefined): boolean {
+  const tuning = getDiveModeTuning(mode);
+  if (tuning.completionCondition === "infinite") return false;
+  return scene.depthTravelMeters >= (tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS);
 }
 
 export function getDiveRunSummary(
@@ -76,10 +74,10 @@ export function getDiveRunSummary(
   timeLeft: number,
   durationSeconds = GAME_DURATION
 ): DiveRunSummary {
-  const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
+  const completionPercent = clamp(scene.depthTravelMeters / TRENCH_FLOOR_METERS, 0, 1);
   return {
     beaconsRemaining: scene.creatures.length,
-    completionPercent: Math.round(collectionRatio * 100),
+    completionPercent: Math.round(completionPercent * 100),
     depthMeters: Math.round(scene.depthTravelMeters),
     durationSeconds,
     elapsedSeconds: durationSeconds - timeLeft,
@@ -93,21 +91,21 @@ export function getDiveCompletionCelebration(summary: DiveRunSummary): DiveCompl
   const oxygenRatio = summary.durationSeconds > 0 ? summary.timeLeft / summary.durationSeconds : 0;
   const rating =
     summary.completionPercent >= 100 && oxygenRatio >= 0.34
-      ? "Radiant Route"
+      ? "Radiant Descent"
       : summary.completionPercent >= 100 && oxygenRatio >= 0.18
-        ? "Clean Living Map"
+        ? "Safe Touchdown"
         : summary.completionPercent >= 100
-          ? "Narrow Ascent"
-          : "Partial Chart";
-  const title = summary.completionPercent >= 100 ? "Living Map Complete" : "Dive Logged";
+          ? "Narrow Arrival"
+          : "Aborted Descent";
+  const title = summary.completionPercent >= 100 ? "Trench Floor Reached" : "Dive Logged";
   const message =
     summary.completionPercent >= 100
-      ? `${summary.totalBeacons} beacons recovered through ${ROUTE_LANDMARKS.at(-1)?.label}.`
-      : `${summary.completionPercent}% of the route charted before ascent.`;
+      ? `You survived the journey to the abyssal floor, navigating all the way to ${TRENCH_FLOOR_METERS}m.`
+      : `You made it ${summary.depthMeters}m before having to resurface.`;
   const replayPrompt =
     oxygenRatio >= 0.34
       ? "Replay for faster chains and a calmer return."
-      : "Replay to bank more oxygen before the final landmark.";
+      : "Replay to bank more oxygen before the final stretch.";
 
   return {
     landmarkSequence: ROUTE_LANDMARKS.map((landmark) => landmark.label),

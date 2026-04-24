@@ -30,6 +30,7 @@ const BIOME_VOICINGS: Record<BiomeId, readonly string[]> = {
   "twilight-shelf": ["A3", "D4", "E4", "A4"],
   "midnight-column": ["A2", "E3", "C4", "B4"],
   "abyssal-trench": ["A2", "Bb2", "E3", "F3"],
+  "stygian-abyss": ["A1", "C2", "C#2", "G2"],
 };
 
 export function createAmbient(): AmbientController {

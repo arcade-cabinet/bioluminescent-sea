@@ -12,6 +12,11 @@ const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
     pirateSpeedScale: 1.1,
     predatorSpeedScale: 1.16,
     threatRadiusScale: 1.22,
+    freeLateralMovement: true,
+    freeVerticalMovement: false,
+    completionCondition: "infinite",
+    respawnThreats: true,
+    difficultyScaling: "logarithmic",
   },
   cozy: {
     collectionOxygenScale: 1.35,
@@ -22,6 +27,11 @@ const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
     pirateSpeedScale: 0.8,
     predatorSpeedScale: 0.78,
     threatRadiusScale: 0.72,
+    freeLateralMovement: true,
+    freeVerticalMovement: true,
+    completionCondition: "infinite",
+    respawnThreats: true,
+    difficultyScaling: "none",
   },
   standard: {
     collectionOxygenScale: 1,
@@ -32,6 +42,11 @@ const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
     pirateSpeedScale: 1,
     predatorSpeedScale: 1,
     threatRadiusScale: 1,
+    freeLateralMovement: true,
+    freeVerticalMovement: false,
+    completionCondition: "infinite",
+    respawnThreats: true,
+    difficultyScaling: "linear",
   },
 };
 

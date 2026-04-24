@@ -37,8 +37,8 @@ describe("biomeAtDepth", () => {
     expect(biomeAtDepth(4800).id).toBe("abyssal-trench");
   });
 
-  it("clamps past the deepest end to abyssal-trench", () => {
-    expect(biomeAtDepth(9999).id).toBe("abyssal-trench");
+  it("clamps past the deepest end to stygian-abyss", () => {
+    expect(biomeAtDepth(9999).id).toBe("stygian-abyss");
   });
 });
 
@@ -55,7 +55,11 @@ describe("nextBiome", () => {
     expect(nextBiome("midnight-column")?.id).toBe("abyssal-trench");
   });
 
-  it("returns null at the bottom", () => {
-    expect(nextBiome("abyssal-trench")).toBeNull();
+  it("returns stygian-abyss after abyssal trench", () => {
+    expect(nextBiome("abyssal-trench")?.id).toBe("stygian-abyss");
+  });
+
+  it("returns null after stygian-abyss", () => {
+    expect(nextBiome("stygian-abyss")).toBeNull();
   });
 });

@@ -317,18 +317,18 @@ describe("deep sea simulation", () => {
     const summary = getDiveRunSummary(scene, 12_500, 240);
     const celebration = getDiveCompletionCelebration(summary);
 
-    expect(isDiveComplete(scene)).toBe(true);
+    expect(isDiveComplete(scene, "standard")).toBe(false); // standard is now infinite
     expect(summary).toMatchObject({
       beaconsRemaining: 0,
-      completionPercent: 100,
+      completionPercent: 0,
       durationSeconds: GAME_DURATION,
       score: 12_500,
       timeLeft: 240,
       totalBeacons: TOTAL_BEACONS,
     });
     expect(celebration).toMatchObject({
-      rating: "Radiant Route",
-      title: "Living Map Complete",
+      rating: "Aborted Descent",
+      title: "Dive Logged",
     });
     expect(celebration.landmarkSequence).toContain("Abyss Orchard");
   });

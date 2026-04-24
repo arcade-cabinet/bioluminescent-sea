@@ -23,6 +23,9 @@ export function describeDiveObjective(
       return "Read the column by its blooms. Anglers wait in the quiet between them.";
     case "abyssal-trench":
       return "You are in the Living Map. Follow the whalefall before the lanterns find you.";
+    case "stygian-abyss":
+    default:
+      return "You have gone too far. There is only the abyss.";
   }
 }
 

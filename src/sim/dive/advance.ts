@@ -92,13 +92,13 @@ export function advanceScene(
     multiplier,
     tuning.collectionOxygenScale
   );
-  // Passive descent: the sub sinks through the column at a fixed rate.
-  // Clamped at the trench floor so `depthTravelMeters` can't overshoot
-  // the content window when a dive runs long on bonus oxygen.
-  const nextDepthTravelMeters = Math.min(
-    TRENCH_FLOOR_METERS,
-    scene.depthTravelMeters + deltaTime * DESCENT_SPEED_METERS_PER_SECOND
-  );
+
+  const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND;
+  const targetDepthOffset = tuning.freeVerticalMovement ? Math.max(0, player.targetY - player.y) * 0.05 : passiveDescent;
+
+  const nextDepthTravelMeters = tuning.completionCondition === "infinite" 
+    ? scene.depthTravelMeters + targetDepthOffset
+    : Math.min(tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS, scene.depthTravelMeters + targetDepthOffset);
 
   const nextScene: SceneState = {
     creatures: collection.creatures,
