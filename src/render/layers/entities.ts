@@ -121,28 +121,45 @@ function drawJellyfish(g: Graphics, c: Creature): void {
   const bellColor = parseHex(c.color);
   const strokeColor = parseHex(c.glowColor);
 
-  g.ellipse(0, -c.size * 0.08, c.size * 0.52, c.size * 0.42).fill({
-    color: bellColor,
-    alpha: 0.9,
-  });
-  g.ellipse(0, -c.size * 0.08, c.size * 0.52, c.size * 0.42).stroke({
+  // Pulse-driven bell squash — 6% swell on contraction gives the
+  // jellyfish a living rhythm instead of a static ellipse.
+  const pulse = 1 + Math.sin(c.pulsePhase) * 0.06;
+  const bellW = c.size * 0.58 * pulse;
+  const bellH = c.size * 0.44 * (2 - pulse);
+
+  // Dome body — layered fills: dark rim, mid body, bright crown.
+  g.ellipse(0, -c.size * 0.08, bellW, bellH).fill({ color: bellColor, alpha: 0.88 });
+  g.ellipse(0, -c.size * 0.14, bellW * 0.82, bellH * 0.72).fill({
     color: strokeColor,
-    alpha: 0.8,
+    alpha: 0.22,
+  });
+  g.ellipse(0, -c.size * 0.08, bellW, bellH).stroke({
+    color: strokeColor,
+    alpha: 0.85,
     width: 1.4,
   });
+  // Crown highlight — one pixel of life on top.
+  g.ellipse(-c.size * 0.12, -c.size * 0.22, bellW * 0.3, bellH * 0.22).fill({
+    color: 0xd9f2ec,
+    alpha: 0.35,
+  });
 
-  for (let i = -1; i <= 1; i++) {
-    const x = i * c.size * 0.28;
+  // Trailing tentacles — five strands with sinusoidal sway.
+  for (let i = -2; i <= 2; i++) {
+    const x = i * c.size * 0.18;
+    const sway = Math.sin(c.pulsePhase * 0.8 + i * 0.7) * c.size * 0.14;
     g.moveTo(x, c.size * 0.1);
     g.bezierCurveTo(
-      x + Math.sin(c.pulsePhase + i) * c.size * 0.12,
-      c.size * 0.6,
-      x - Math.cos(c.pulsePhase + i) * c.size * 0.14,
-      c.size * 0.95,
-      x,
-      c.size * 1.35
+      x + sway,
+      c.size * 0.55,
+      x - sway * 0.9,
+      c.size * 1.0,
+      x + sway * 0.3,
+      c.size * 1.45
     );
-    g.stroke({ color: strokeColor, alpha: 0.55, width: 1.1 });
+    const alpha = i === 0 ? 0.7 : 0.5;
+    const width = i === 0 ? 1.35 : 1.05;
+    g.stroke({ color: strokeColor, alpha, width });
   }
 }
 
@@ -164,24 +181,52 @@ function drawGlowFish(g: Graphics, c: Creature): void {
   const body = parseHex(c.color);
   const glow = parseHex(c.glowColor);
 
-  g.ellipse(0, 0, c.size * 0.65, c.size * 0.28).fill({
-    color: body,
-    alpha: 0.95,
-  });
-  g.ellipse(0, 0, c.size * 0.65, c.size * 0.28).stroke({
+  // Tail beat drives a subtle longitudinal squash.
+  const beat = Math.sin(c.pulsePhase * 2) * 0.04;
+  const bodyLen = c.size * 0.72 * (1 + beat);
+  const bodyH = c.size * 0.3 * (1 - beat * 0.4);
+
+  // Teardrop body — ellipse + nose taper up front.
+  g.ellipse(c.size * 0.05, 0, bodyLen, bodyH).fill({ color: body, alpha: 0.96 });
+  g.ellipse(c.size * 0.05, 0, bodyLen, bodyH).stroke({
     color: glow,
     alpha: 0.85,
     width: 1.2,
   });
 
-  g.moveTo(-c.size * 0.6, 0);
-  g.lineTo(-c.size * 0.95, -c.size * 0.22);
-  g.lineTo(-c.size * 0.95, c.size * 0.22);
-  g.lineTo(-c.size * 0.6, 0);
+  // Dorsal fin — single triangle on top, gives the fish a top silhouette.
+  g.moveTo(-c.size * 0.08, -bodyH * 0.85);
+  g.lineTo(c.size * 0.05, -bodyH * 1.6);
+  g.lineTo(c.size * 0.2, -bodyH * 0.85);
+  g.fill({ color: body, alpha: 0.85 });
+
+  // Ventral fin — mirror, slightly smaller.
+  g.moveTo(-c.size * 0.02, bodyH * 0.85);
+  g.lineTo(c.size * 0.08, bodyH * 1.35);
+  g.lineTo(c.size * 0.18, bodyH * 0.85);
+  g.fill({ color: body, alpha: 0.75 });
+
+  // Forked tail with beat offset — sway syncs to body beat.
+  const tailSway = Math.sin(c.pulsePhase * 2) * c.size * 0.08;
+  g.moveTo(-bodyLen * 0.75, 0);
+  g.lineTo(-bodyLen * 1.35, -bodyH * 0.9 + tailSway);
+  g.lineTo(-bodyLen * 1.15, 0);
+  g.lineTo(-bodyLen * 1.35, bodyH * 0.9 + tailSway);
+  g.lineTo(-bodyLen * 0.75, 0);
   g.fill({ color: body, alpha: 0.9 });
 
-  g.circle(c.size * 0.32, -c.size * 0.05, c.size * 0.06).fill({
+  // Bioluminescent stripe along the belly — the name's payoff.
+  g.moveTo(-bodyLen * 0.55, bodyH * 0.55);
+  g.lineTo(bodyLen * 0.55, bodyH * 0.35);
+  g.stroke({ color: glow, alpha: 0.75, width: 1.3 });
+
+  // Eye — white with a dark pupil for contrast.
+  g.circle(c.size * 0.34, -c.size * 0.06, c.size * 0.07).fill({
     color: 0xfffbea,
+    alpha: 1,
+  });
+  g.circle(c.size * 0.37, -c.size * 0.06, c.size * 0.03).fill({
+    color: 0x050a14,
     alpha: 1,
   });
 }
@@ -204,25 +249,53 @@ function syncPredators(
     g.position.set(p.x, p.y);
     g.rotation = p.angle;
 
-    g.ellipse(0, 0, p.size * 0.65, p.size * 0.28).fill({
+    // Main body — darker than any creature so the silhouette
+    // reads as a threat against the glow.
+    g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).fill({
       color: 0x081018,
-      alpha: 0.85,
+      alpha: 0.92,
     });
-    g.ellipse(0, 0, p.size * 0.65, p.size * 0.28).stroke({
+    g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).stroke({
       color: 0x6be6c1,
-      alpha: 0.32,
+      alpha: 0.28,
       width: 1.4,
     });
 
-    g.moveTo(-p.size * 0.55, 0);
-    g.lineTo(-p.size * 0.92, -p.size * 0.24);
-    g.lineTo(-p.size * 0.88, p.size * 0.28);
-    g.lineTo(-p.size * 0.55, 0);
-    g.fill({ color: 0x050a12, alpha: 0.95 });
+    // Dorsal fin — the first thing a player should recognize.
+    g.moveTo(-p.size * 0.05, -p.size * 0.28);
+    g.lineTo(p.size * 0.15, -p.size * 0.55);
+    g.lineTo(p.size * 0.3, -p.size * 0.28);
+    g.fill({ color: 0x050a12, alpha: 0.98 });
 
-    g.circle(p.size * 0.55, -p.size * 0.08, p.size * 0.09).fill({
+    // Pectoral fin — under-hang that reads as "not a fish."
+    g.moveTo(p.size * 0.05, p.size * 0.22);
+    g.lineTo(p.size * 0.22, p.size * 0.45);
+    g.lineTo(p.size * 0.34, p.size * 0.22);
+    g.fill({ color: 0x050a12, alpha: 0.9 });
+
+    // Forked tail — sharp triangular cut.
+    g.moveTo(-p.size * 0.55, 0);
+    g.lineTo(-p.size * 0.98, -p.size * 0.32);
+    g.lineTo(-p.size * 0.78, 0);
+    g.lineTo(-p.size * 0.96, p.size * 0.32);
+    g.lineTo(-p.size * 0.55, 0);
+    g.fill({ color: 0x050a12, alpha: 0.97 });
+
+    // Jagged gill line — adds menace without ink-draw overhead.
+    g.moveTo(p.size * 0.05, -p.size * 0.08);
+    g.lineTo(p.size * 0.15, p.size * 0.05);
+    g.lineTo(p.size * 0.12, -p.size * 0.12);
+    g.lineTo(p.size * 0.22, 0);
+    g.stroke({ color: 0x6be6c1, alpha: 0.35, width: 1 });
+
+    // Eye — amber, warm-cold contrast against the hull.
+    g.circle(p.size * 0.55, -p.size * 0.08, p.size * 0.1).fill({
       color: 0xfde68a,
-      alpha: 0.85,
+      alpha: 0.9,
+    });
+    g.circle(p.size * 0.58, -p.size * 0.08, p.size * 0.045).fill({
+      color: 0x050a12,
+      alpha: 1,
     });
   }
   for (const [id, g] of cache) {
