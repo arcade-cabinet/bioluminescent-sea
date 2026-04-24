@@ -85,7 +85,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 - [x] Favicon SVG (mint jellyfish silhouette over abyss navy) —
       `public/favicon.svg`, wired via `<link rel="icon" ...>`.
-- [ ] Android icon pack rendered from the SVG at all mipmap resolutions.
+- [x] Android icon pack rendered from the SVG at all mipmap resolutions.
+      Source SVGs live in `android/icon-source/` (legacy, round,
+      adaptive-foreground); PNGs rasterized into each of the five mipmap
+      densities. Adaptive background color flipped from `#FFFFFF` to the
+      brand `#0A1A2E`.
 - [x] Apple touch icon — `public/apple-touch-icon.svg` (180×180
       viewBox, iOS masks to its own radius).
 - [x] OG image 1200×630 — `public/og-image.svg`, referenced via
