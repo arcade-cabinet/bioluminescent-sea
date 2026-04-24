@@ -62,11 +62,24 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       `Vec3 {x, y: depthMeters, z: parallax}` in meters. Camera
       scrolls as player descends; chunks spawn below and retire
       above. Supersedes the "18 fixed creatures" scene model.
-- [ ] **PR G — Audio.** Tone.js ambient pad + Howler SFX. Depth- and
-      biome-modulated filter. Master mute + reduced-motion respect.
-- [ ] **PR H — Content pipeline.** Biomes, creature species, and
-      landmarks moved to `config/raw/*.json` with `scripts/compile-content.mjs`
-      + Zod validation. Authoring no longer requires code edits.
+- [x] **PR G — Audio.** Tone.js ambient pad with per-biome chord
+      voicings (lydian open fifth → sus4 → minor 9th → dissonant
+      minor 2nd). Low-pass filter cutoff tracks depth so the column
+      goes muddier as the player descends. Tone-synthesized SFX for
+      collect (mint chime), impact (thud + dissonant partial), biome
+      transition (open fifth), oxygen-warn (minor 2nd pulse),
+      dive-complete (rising arpeggio). Master mute toggle in HUD
+      (bottom-left), persists to localStorage, honors
+      `prefers-reduced-motion`. Howler was skipped — Tone.js owns all
+      synthesis so the bundle doesn't carry two audio libraries.
+- [x] **PR H — Content pipeline.** Biomes, creature species, and
+      landmarks authored in `config/raw/*.json` and compiled via
+      `scripts/compile-content.mjs` (Zod-validated). Runs as
+      `predev` / `prebuild` / `pretypecheck` / `pretest:*` so content
+      edits are live without touching TypeScript. Output goes to
+      `config/compiled/content.ts` (gitignored); biomes table reads
+      from there. Landmarks now carry per-landmark flavor text keyed
+      to depth and biome.
 
 ## Identity
 

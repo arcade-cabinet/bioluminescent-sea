@@ -1,0 +1,11 @@
+{
+  "id": "photic-gate",
+  "label": "Photic Gate",
+  "description": "Surface light still reaches here. Plankton drift, a first taste of the trench.",
+  "depthStartMeters": 0,
+  "depthEndMeters": 400,
+  "tintHex": "#2a8a68",
+  "creatureDensity": 0.55,
+  "predatorDensity": 0,
+  "pirateDensity": 0
+}

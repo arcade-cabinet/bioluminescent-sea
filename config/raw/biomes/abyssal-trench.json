@@ -1,0 +1,11 @@
+{
+  "id": "abyssal-trench",
+  "label": "Abyssal Trench",
+  "description": "Sparse, rare, cold. Lanterns from a wrecked flotilla sweep the dark.",
+  "depthStartMeters": 2400,
+  "depthEndMeters": 3600,
+  "tintHex": "#6a1a2a",
+  "creatureDensity": 0.4,
+  "predatorDensity": 0.55,
+  "pirateDensity": 0.85
+}

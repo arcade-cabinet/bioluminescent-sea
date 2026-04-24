@@ -1,0 +1,9 @@
+{
+  "id": "fish",
+  "type": "fish",
+  "baseScore": 50,
+  "oxygenBonusSeconds": 6,
+  "glowColor": "#8b5cf6",
+  "color": "#c4b5fd",
+  "sizeMeters": { "min": 1.2, "max": 2.4 }
+}

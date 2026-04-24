@@ -71,8 +71,8 @@ world-ceiling errors).
 | E  | Seed-driven spawning + codename UI   | in review    |
 | F.1| Biome surface (HUD chip + tint)      | in review    |
 | F.2| World coords + chunking              | not started  |
-| G  | Audio (Tone.js + Howler)             | not started  |
-| H  | Content pipeline (Zod + JSON)        | not started  |
+| G  | Audio (Tone.js synthesized)          | in review    |
+| H  | Content pipeline (Zod + JSON)        | in review    |
 
 ## Known bugs / quirks
 

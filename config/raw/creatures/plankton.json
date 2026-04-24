@@ -1,0 +1,9 @@
+{
+  "id": "plankton",
+  "type": "plankton",
+  "baseScore": 10,
+  "oxygenBonusSeconds": 4,
+  "glowColor": "#22d3ee",
+  "color": "#a5f3fc",
+  "sizeMeters": { "min": 0.8, "max": 1.4 }
+}
