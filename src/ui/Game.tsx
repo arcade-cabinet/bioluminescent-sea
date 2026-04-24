@@ -22,7 +22,7 @@ import {
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
 import { useTouchInput } from "@/hooks/useTouchInput";
-import { createAmbient, playSfx } from "@/audio";
+import { createAmbient, disposeSfx, playSfx } from "@/audio";
 import { codenameFromSeed, dailySeed, randomSeed, trenchBlurbForSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
@@ -202,6 +202,10 @@ function DeepSeaGame({
     return () => {
       ambient.stop();
       ambientRef.current = null;
+      // Tear down the module-level SFX synths too. They live on
+      // Tone.getDestination() and would otherwise accumulate orphans
+      // across StrictMode double-mount + HMR + Dive Again cycles.
+      disposeSfx();
     };
   }, []);
 
