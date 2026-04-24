@@ -7,6 +7,7 @@ import {
   PredatorEntity,
   type DiveWorld,
 } from "@/ecs";
+import type { Creature, Particle, Pirate, Predator } from "@/sim/entities/types";
 import { createCamera, type Camera } from "./camera";
 import type { CollectionBurstView } from "./layers/fx";
 import { mountBackdrop, type BackdropController } from "./layers/backdrop";
@@ -59,6 +60,14 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   const player: PlayerController = mountPlayer(stage.layers.near);
   const fx: FxController = mountFx(stage.layers.fx);
 
+  // Scratch buffers — reused each frame so the render bridge allocates
+  // zero intermediate arrays during steady-state play. Holes from
+  // missing traits are skipped in place (length tracked explicitly).
+  const creatureBuf: Creature[] = [];
+  const predatorBuf: Predator[] = [];
+  const pirateBuf: Pirate[] = [];
+  const particleBuf: Particle[] = [];
+
   const viewport = () => ({
     widthPx: stage.app.renderer.width / stage.app.renderer.resolution,
     heightPx: stage.app.renderer.height / stage.app.renderer.resolution,
@@ -83,25 +92,26 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
       if (!playerValue) return;
 
-      const creatures = world.creatureEntities.map((e) => {
-        const t = e.get(CreatureEntity);
-        return t?.value;
-      }).filter((c): c is NonNullable<typeof c> => c !== undefined);
-
-      const predators = world.predatorEntities.map((e) => {
-        const t = e.get(PredatorEntity);
-        return t?.value;
-      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
-
-      const pirates = world.pirateEntities.map((e) => {
-        const t = e.get(PirateEntity);
-        return t?.value;
-      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
-
-      const particles = world.particleEntities.map((e) => {
-        const t = e.get(ParticleEntity);
-        return t?.value;
-      }).filter((p): p is NonNullable<typeof p> => p !== undefined);
+      const creatures = collectTraitValues(
+        world.creatureEntities,
+        CreatureEntity,
+        creatureBuf,
+      );
+      const predators = collectTraitValues(
+        world.predatorEntities,
+        PredatorEntity,
+        predatorBuf,
+      );
+      const pirates = collectTraitValues(
+        world.pirateEntities,
+        PirateEntity,
+        pirateBuf,
+      );
+      const particles = collectTraitValues(
+        world.particleEntities,
+        ParticleEntity,
+        particleBuf,
+      );
 
       backdrop.draw({
         widthPx: v.widthPx,
@@ -138,4 +148,16 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       stage.destroy();
     },
   };
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: Koota trait tokens vary per trait; values are homogeneous.
+function collectTraitValues<T>(entities: readonly { get(trait: any): { value: T } | undefined }[], trait: any, buf: T[]): readonly T[] {
+  let write = 0;
+  for (let i = 0; i < entities.length; i++) {
+    const t = entities[i].get(trait);
+    if (t === undefined) continue;
+    buf[write++] = t.value;
+  }
+  if (buf.length > write) buf.length = write;
+  return buf;
 }
