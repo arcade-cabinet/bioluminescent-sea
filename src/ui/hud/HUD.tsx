@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { isMuted, onMuteChange, toggleMuted } from "@/audio";
 
 interface HUDProps {
@@ -96,6 +96,22 @@ export function HUD({
   // surfaces or ends. Pure visual; does not change sim behavior.
   const critical = oxygenRatio < 0.1;
   const lowOxygen = oxygenRatio < 0.25;
+
+  // Biome transition banner — flashes center-screen for ~2.2s when
+  // the biome shifts during descent. Silent when biomeLabel hasn't
+  // changed; fires on first real biome too (photic-gate) so the
+  // player sees the frame they're entering.
+  const [bannerLabel, setBannerLabel] = useState<string | null>(null);
+  const lastBiomeRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!biomeLabel) return;
+    if (lastBiomeRef.current === biomeLabel) return;
+    lastBiomeRef.current = biomeLabel;
+    setBannerLabel(biomeLabel);
+    const timeout = window.setTimeout(() => setBannerLabel(null), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [biomeLabel]);
+
   return (
     <>
       {/* Top stat row */}
@@ -249,6 +265,57 @@ export function HUD({
       )}
 
       {critical && <CriticalBreathBanner />}
+
+      {/* Biome transition banner — fires briefly when the biome
+          shifts as the sub descends. Gives the player a clear
+          beat of "you're now in X" without re-stating it every
+          frame. Dismisses itself after 2.2s. */}
+      <AnimatePresence>
+        {bannerLabel && (
+          <motion.div
+            key={bannerLabel}
+            initial={{ opacity: 0, y: -20, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            style={{
+              position: "fixed",
+              top: "22%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              textAlign: "center",
+              pointerEvents: "none",
+              zIndex: 20,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "0.7rem",
+                letterSpacing: "0.35em",
+                textTransform: "uppercase",
+                color: biomeTintHex ?? "var(--color-glow)",
+                opacity: 0.78,
+                marginBottom: "0.35rem",
+              }}
+            >
+              Entering
+            </div>
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: "clamp(2rem, 6vw, 3.25rem)",
+                fontWeight: 500,
+                color: "var(--color-fg)",
+                textShadow: `0 0 24px ${biomeTintHex ?? "#6be6c1"}80, 0 2px 6px rgba(0,0,0,0.7)`,
+                letterSpacing: "0.02em",
+              }}
+            >
+              {bannerLabel}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <MuteButton />
     </>
