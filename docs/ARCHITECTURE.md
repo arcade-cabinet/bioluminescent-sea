@@ -52,8 +52,8 @@ are not collidable with the player.
 │  Layered scene graph: far → mid → near → fx → UI   │
 ├───────────────────────────────────────────────────┤
 │                 Simulation engine                  │
-│  src/sim/rng, src/sim/world, src/sim/entities,     │
-│  src/sim/dive, src/sim/ai (Yuka)                   │
+│  src/sim/rng, src/sim/world, src/sim/chunk,        │
+│  src/sim/dive, src/sim/meta, src/sim/ai (Yuka)     │
 ├───────────────────────────────────────────────────┤
 │                    Audio stack                     │
 │  Tone.js ambient, Howler SFX, depth-keyed mixer    │
