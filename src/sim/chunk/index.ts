@@ -4,3 +4,8 @@ export {
   chunkIndexAtDepth,
   chunksInWindow,
 } from "./chunk";
+
+export {
+  chunkLifecycleDelta,
+  type ChunkLifecycleDelta,
+} from "./lifecycle";

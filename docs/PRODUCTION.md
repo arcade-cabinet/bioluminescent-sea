@@ -86,9 +86,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       is the follow-up. Chunks-retire logic (off-screen pruning)
       also deferred. The sim side of F.3 is fully landed; see **PR
       F.4** for the renderer cut-over.
-- [ ] **PR F.4 — Renderer camera-scroll + chunk lifecycle.**
-      Landing as a sequence of focused sub-PRs so each increment
-      stays reviewable and visibly correct:
+- [x] **PR F.4 — Renderer camera-scroll + chunk lifecycle.**
+      Landed as a sequence of focused sub-PRs. Every layer that
+      matters for "descent is visible" now consumes the live
+      camera scroll; the chunk lifecycle delta is a pure helper
+      waiting on the Game.tsx sim cut-over.
       - [x] **F.4a — Camera module.** `src/render/camera.ts` owns
             world→screen projection with `scrollMeters`,
             `pxPerMeter`, and `project(world)`. Tests lock in
@@ -105,16 +107,27 @@ Each is its own PR so reviewers can follow the chain end-to-end.
             snow drifts upward past the viewport and wraps
             modulo the viewport height, with the shift converted
             to pixels via `camera.pxPerMeter` (#51).
-      - [ ] **F.4e — Entities layer world-Y cut-over.** Creatures,
-            predators, and pirates gain a world-Y and project
-            through `camera.project()`. Game.tsx swaps from
-            `createSeededScene` to `createChunkedScene` at the
-            same seam.
-      - [ ] **F.4f — Chunk lifecycle.** `chunksInWindow` feeds
-            the spawn/retire loop so chunks below the bottom
-            edge drain and chunks above the top edge spawn.
-            Completes the "18 fixed creatures" → chunked trench
-            migration.
+      - [x] **F.4e — Entities layer world-Y cut-over.** Creatures
+            carry `worldYMeters` (populated by chunked-spawn in
+            #54); the entities layer projects that through
+            `camera.project()` when present (#55). Legacy
+            `createSeededScene` creatures keep their viewport-
+            space `y` untouched so today's Game.tsx is unchanged;
+            the sim cut-over from `createSeededScene` to
+            `createChunkedScene` lands when Game.tsx is ready.
+            Predators + pirates stay viewport-space until a
+            follow-up.
+      - [x] **F.4f — Chunk lifecycle (sim helper).**
+            `chunkLifecycleDelta(previousLiveIndices, currentWindow)`
+            shipped in `src/sim/chunk/lifecycle.ts` — pure delta
+            between last frame's live chunk indices and this
+            frame's `chunksInWindow` output. Returns
+            `{ spawned: Chunk[], retiredIndices: number[] }` with
+            stable-sorted indices so repeated frames produce
+            deterministic output. Callers consume this to spawn
+            creatures for newly-entered chunks and prune entities
+            whose chunk retired. 6 locked-in tests. Wiring into
+            the live sim loop lands alongside the Game.tsx cut-over.
 - [x] **PR G — Audio.** Tone.js ambient pad with per-biome chord
       voicings (lydian open fifth → sus4 → minor 9th → dissonant
       minor 2nd). Low-pass filter cutoff tracks depth so the column
