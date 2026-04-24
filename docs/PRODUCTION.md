@@ -98,18 +98,21 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Quality gates
 
-- [ ] `pnpm lint` passes on every authored file.
-- [ ] `pnpm typecheck` strict mode passes on all three composite
-      projects.
-- [ ] `pnpm test:node` + `pnpm test:dom` pass with real assertions.
+- [x] `pnpm lint` passes on every authored file (biome, 84 files clean).
+- [x] `pnpm typecheck` strict mode passes on all three composite
+      projects (`tsconfig.app`, `tsconfig.node`, `tsconfig.sim`).
+- [x] `pnpm test:node` + `pnpm test:dom` pass with real assertions
+      (62 node + 1 DOM, 63 total).
 - [x] `pnpm test:browser` captures a representative frame per biome.
 - [x] `pnpm test:e2e` covers the full journey landing → dive →
       completion → restart. Golden-path specs live in `e2e/` and run on
       desktop + mobile Chromium.
-- [ ] `pnpm build` produces a bundle under 600 KB gzipped (excluding
-      fonts).
-- [ ] `./gradlew assembleDebug` produces a < 12 MB debug APK.
-- [ ] GitHub Pages URL loads with zero console errors.
+- [x] `pnpm build` produces a bundle under 600 KB gzipped (excluding
+      fonts) — currently 295 KB gz.
+- [x] `./gradlew assembleDebug` produces a < 12 MB debug APK — currently
+      6.8 MB.
+- [ ] GitHub Pages URL loads with zero console errors. Verify after
+      `cd.yml` first runs post-merge.
 
 ## CI / CD
 
@@ -118,9 +121,13 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 - [x] `ci.yml` augmented with `test:browser` + `test:e2e`. The browser
       canvas job ran since PR C; the Playwright e2e job lands with the
       golden-path specs.
-- [ ] `release.yml` — on release-please tag: build bundle, publish
-      Pages artifact, build signed Android release APK.
-- [ ] `cd.yml` — on push:main: deploy Pages artifact.
+- [x] `release.yml` — release-please action opens/merges a release PR;
+      on tag creation, builds the Android release AAB (signed when the
+      keystore secrets are present, debug AAB otherwise) and uploads it
+      as a release artifact.
+- [x] `cd.yml` — on push:main: builds the web bundle, adds `.nojekyll`,
+      publishes the Pages artifact, and deploys via the official
+      `actions/deploy-pages`.
 - [x] `analysis-nightly.yml` — deterministic-seed regression sweep
       (100 seeds × 180 frames, asserts finite telemetry + bounded
       ratios + per-frame budget; opens `sim-regression` issue on
