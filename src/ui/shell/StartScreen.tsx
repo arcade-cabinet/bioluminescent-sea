@@ -8,22 +8,6 @@ interface StartScreenProps {
   subtitle?: string;
   primaryAction: { label: string; onClick: () => void };
   secondaryAction?: { label: string; onClick: () => void };
-  /**
-   * Optional run preview, rendered between the verb chips and the mode
-   * picker. Used to show the next dive's codename ("Drowsy Ember
-   * Anglerfish") so the shareable run identity is visible before
-   * gameplay starts.
-   */
-  runPreview?: {
-    codename: string;
-    label?: string;
-    /**
-     * Short procedural blurb tied to the codename — one line of
-     * cartographer's-log flavor so the landing preview feels authored
-     * rather than a raw ID display.
-     */
-    blurb?: string;
-  };
   children?: ReactNode;
 }
 
@@ -35,7 +19,7 @@ interface StartScreenProps {
  * Layout priority, top to bottom:
  *   1. Display title (Cormorant Garamond, mint, glow)
  *   2. One-sentence subtitle tagline — sets stakes in one breath
- *   3. Three-chip feature teaser ("collect · read the trench · come home")
+ *   3. Three-chip feature teaser ("collect · listen to the deep · come home")
  *      so a cold player knows the verbs before they see gameplay
  *   4. Mode selector (the `children` slot)
  *   5. Primary CTA ("Begin Dive"), optional secondary (ghost)
@@ -48,7 +32,6 @@ export function StartScreen({
   subtitle,
   primaryAction,
   secondaryAction,
-  runPreview,
   children,
 }: StartScreenProps) {
   return (
@@ -154,60 +137,6 @@ export function StartScreen({
           </div>
         ))}
       </motion.div>
-
-      {runPreview && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.95, duration: 0.55 }}
-          style={{
-            position: "relative",
-            marginTop: "1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "0.3rem",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "0.62rem",
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-              color: "var(--color-fg-muted)",
-              opacity: 0.75,
-            }}
-          >
-            {runPreview.label ?? "Your next trench"}
-          </span>
-          <span
-            className="bs-display"
-            style={{
-              fontSize: "clamp(1.15rem, 3.4vw, 1.55rem)",
-              color: "var(--color-glow)",
-              letterSpacing: "0.02em",
-              textShadow: "0 0 18px rgba(107, 230, 193, 0.35)",
-            }}
-          >
-            {runPreview.codename}
-          </span>
-          {runPreview.blurb && (
-            <p
-              style={{
-                margin: "0.35rem 0 0",
-                fontSize: "clamp(0.78rem, 1.8vw, 0.88rem)",
-                fontStyle: "italic",
-                color: "var(--color-fg-muted)",
-                maxWidth: "44ch",
-                lineHeight: 1.5,
-                opacity: 0.85,
-              }}
-            >
-              {runPreview.blurb}
-            </p>
-          )}
-        </motion.div>
-      )}
 
       {children && (
         <motion.div

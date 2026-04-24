@@ -45,20 +45,22 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
       summarizeClipping(landingDump),
       `landing has clipped elements on ${testInfo.project.name}:\n${summarizeClipping(landingDump).join("\n")}`
     ).toEqual([]);
+// Beat 2 — click New Dive, assert transition to customization
+await page.getByRole("button", { name: /new dive/i }).click();
+await expect(page.getByTestId("customization-screen")).toBeVisible({ timeout: 2000 });
 
-    // Beat 2 — mode switch exercises the ghost/primary variants
-    await page.getByRole("button", { name: /cozy/i }).click();
-    await dumpBeat(page, testInfo, "02-mode-cozy", collector, JOURNEY_PROBES, seen);
+// Beat 3 — mode switch exercises the ghost/primary variants in customization
+await page.getByRole("button", { name: /cozy/i }).click();
+await dumpBeat(page, testInfo, "02-mode-cozy", collector, JOURNEY_PROBES, seen);
 
-    await page.getByRole("button", { name: /challenge/i }).click();
-    await dumpBeat(page, testInfo, "03-mode-challenge", collector, JOURNEY_PROBES, seen);
+await page.getByRole("button", { name: /challenge/i }).click();
+await dumpBeat(page, testInfo, "03-mode-challenge", collector, JOURNEY_PROBES, seen);
 
-    await page.getByRole("button", { name: /standard/i }).click();
+// Switch back to standard before starting
+await page.getByRole("button", { name: /standard/i }).click();
 
-    // Beat 3 — click New Dive, assert transition lands under 600ms
-    const startedAt = Date.now();
-    await page.getByRole("button", { name: /new dive/i }).click();
-    await expect(page.getByTestId("customization-screen")).toBeVisible({ timeout: 2000 });
+// Beat 4 — click Begin Dive, assert transition lands under 2500ms
+const startedAt = Date.now();
     await page.getByRole("button", { name: /begin dive/i }).click();
     await expect(page.getByTestId("playing-screen")).toBeVisible({ timeout: 2500 });
     const transitionMs = Date.now() - startedAt;
