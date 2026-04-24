@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { LandingHero } from "./LandingHero";
 import { OverlayButton } from "./OverlayButton";
 
 interface StartScreenProps {
@@ -16,6 +17,12 @@ interface StartScreenProps {
   runPreview?: {
     codename: string;
     label?: string;
+    /**
+     * Short procedural blurb tied to the codename — one line of
+     * cartographer's-log flavor so the landing preview feels authored
+     * rather than a raw ID display.
+     */
+    blurb?: string;
   };
   children?: ReactNode;
 }
@@ -58,18 +65,16 @@ export function StartScreen({
         alignItems: "center",
         justifyContent: "center",
         padding: "2rem 1.5rem",
-        background: [
-          "radial-gradient(ellipse 80% 60% at center 40%, rgba(14, 79, 85, 0.45), transparent 65%)",
-          "radial-gradient(ellipse 40% 40% at center 60%, rgba(107, 230, 193, 0.08), transparent 70%)",
-          "linear-gradient(180deg, rgba(5, 10, 20, 0.85) 0%, rgba(5, 10, 20, 0.95) 100%)",
-        ].join(", "),
+        background: "var(--color-bg)",
         color: "var(--color-fg)",
         textAlign: "center",
         pointerEvents: "none",
       }}
     >
-      {/* Ambient floating glow dots — reinforces "this is a living sea" */}
-      <FloatingGlow count={6} />
+      {/* Canvas hero — animated abyss with bioluminescent sparks and a
+          drifting submersible silhouette. Paints behind the text so the
+          landing reads as a living trench, not a gradient card. */}
+      <LandingHero />
 
       <motion.h1
         initial={{ y: -20, opacity: 0 }}
@@ -186,6 +191,21 @@ export function StartScreen({
           >
             {runPreview.codename}
           </span>
+          {runPreview.blurb && (
+            <p
+              style={{
+                margin: "0.35rem 0 0",
+                fontSize: "clamp(0.78rem, 1.8vw, 0.88rem)",
+                fontStyle: "italic",
+                color: "var(--color-fg-muted)",
+                maxWidth: "44ch",
+                lineHeight: 1.5,
+                opacity: 0.85,
+              }}
+            >
+              {runPreview.blurb}
+            </p>
+          )}
         </motion.div>
       )}
 
@@ -231,50 +251,3 @@ export function StartScreen({
   );
 }
 
-/**
- * Ambient drifting bioluminescent dots on the title screen. Pure
- * decorative — draws the eye toward the hero and hints at the in-game
- * aesthetic.
- */
-function FloatingGlow({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => {
-        const delay = i * 0.7;
-        const size = 4 + (i % 3) * 3;
-        const startX = ((i * 47) % 100) - 10;
-        const driftY = 8 + (i % 4) * 6;
-        return (
-          <motion.div
-            key={i}
-            aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: [0, 0.65, 0],
-              y: [driftY, -driftY, driftY],
-              x: [0, (i % 2 ? 12 : -12), 0],
-            }}
-            transition={{
-              delay,
-              duration: 6 + (i % 3),
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-            style={{
-              position: "absolute",
-              top: `${20 + (i * 11) % 55}%`,
-              left: `${startX}%`,
-              width: size,
-              height: size,
-              borderRadius: "50%",
-              background: "var(--color-glow)",
-              boxShadow:
-                "0 0 14px rgba(107, 230, 193, 0.55), 0 0 30px rgba(107, 230, 193, 0.25)",
-              pointerEvents: "none",
-            }}
-          />
-        );
-      })}
-    </>
-  );
-}

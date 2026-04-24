@@ -23,7 +23,7 @@ import { useGameLoop } from "@/hooks/useGameLoop";
 import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
 import { useTouchInput } from "@/hooks/useTouchInput";
 import { createAmbient, playSfx } from "@/audio";
-import { codenameFromSeed, dailySeed, randomSeed } from "@/sim/rng";
+import { codenameFromSeed, dailySeed, randomSeed, trenchBlurbForSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
   createDiveWorld,
@@ -807,7 +807,10 @@ export default function Game() {
             <StartScreen
               title="Bioluminescent Sea"
               subtitle="Sink into an abyssal trench. Trace glowing routes past landmark creatures. Surface breathing easier than when you started."
-              runPreview={{ codename: previewCodename }}
+              runPreview={{
+                codename: previewCodename,
+                blurb: trenchBlurbForSeed(previewSeed).full,
+              }}
               primaryAction={{
                 label: "Begin Dive",
                 onClick: () => {

@@ -85,35 +85,53 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 - [x] Favicon SVG (mint jellyfish silhouette over abyss navy) —
       `public/favicon.svg`, wired via `<link rel="icon" ...>`.
-- [ ] Android icon pack rendered from the SVG at all mipmap resolutions.
+- [x] Android icon pack rendered from the SVG at all mipmap resolutions.
+      Source SVGs live in `android/icon-source/` (legacy, round,
+      adaptive-foreground); PNGs rasterized into each of the five mipmap
+      densities. Adaptive background color flipped from `#FFFFFF` to the
+      brand `#0A1A2E`.
 - [x] Apple touch icon — `public/apple-touch-icon.svg` (180×180
       viewBox, iOS masks to its own radius).
 - [x] OG image 1200×630 — `public/og-image.svg`, referenced via
       Open Graph + Twitter Card meta tags in `index.html`.
-- [ ] Landing hero visual replaces the typographic-only card.
+- [x] Landing hero visual replaces the typographic-only card. The new
+      `LandingHero` canvas paints the abyss with drifting kelp ribbons,
+      pulsing creature sparks, and a submersible silhouette with a
+      headlight cone parallaxing at center. Honors
+      `prefers-reduced-motion`.
 
 ## Quality gates
 
-- [ ] `pnpm lint` passes on every authored file.
-- [ ] `pnpm typecheck` strict mode passes on all three composite
-      projects.
-- [ ] `pnpm test:node` + `pnpm test:dom` pass with real assertions.
-- [ ] `pnpm test:browser` captures a representative frame per biome.
-- [ ] `pnpm test:e2e` covers the full journey landing → dive →
-      completion → restart.
-- [ ] `pnpm build` produces a bundle under 600 KB gzipped (excluding
-      fonts).
-- [ ] `./gradlew assembleDebug` produces a < 12 MB debug APK.
-- [ ] GitHub Pages URL loads with zero console errors.
+- [x] `pnpm lint` passes on every authored file (biome, 84 files clean).
+- [x] `pnpm typecheck` strict mode passes on all three composite
+      projects (`tsconfig.app`, `tsconfig.node`, `tsconfig.sim`).
+- [x] `pnpm test:node` + `pnpm test:dom` pass with real assertions
+      (62 node + 1 DOM, 63 total).
+- [x] `pnpm test:browser` captures a representative frame per biome.
+- [x] `pnpm test:e2e` covers the full journey landing → dive →
+      completion → restart. Golden-path specs live in `e2e/` and run on
+      desktop + mobile Chromium.
+- [x] `pnpm build` produces a bundle under 600 KB gzipped (excluding
+      fonts) — currently 295 KB gz.
+- [x] `./gradlew assembleDebug` produces a < 12 MB debug APK — currently
+      6.8 MB.
+- [ ] GitHub Pages URL loads with zero console errors. Verify after
+      `cd.yml` first runs post-merge.
 
 ## CI / CD
 
 - [x] `ci.yml` — lint + typecheck + test:node + test:dom + build +
       Android APK.
-- [ ] `ci.yml` augmented with `test:browser` + `test:e2e`.
-- [ ] `release.yml` — on release-please tag: build bundle, publish
-      Pages artifact, build signed Android release APK.
-- [ ] `cd.yml` — on push:main: deploy Pages artifact.
+- [x] `ci.yml` augmented with `test:browser` + `test:e2e`. The browser
+      canvas job ran since PR C; the Playwright e2e job lands with the
+      golden-path specs.
+- [x] `release.yml` — release-please action opens/merges a release PR;
+      on tag creation, builds the Android release AAB (signed when the
+      keystore secrets are present, debug AAB otherwise) and uploads it
+      as a release artifact.
+- [x] `cd.yml` — on push:main: builds the web bundle, adds `.nojekyll`,
+      publishes the Pages artifact, and deploys via the official
+      `actions/deploy-pages`.
 - [x] `analysis-nightly.yml` — deterministic-seed regression sweep
       (100 seeds × 180 frames, asserts finite telemetry + bounded
       ratios + per-frame budget; opens `sim-regression` issue on
@@ -132,14 +150,18 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Decisions that need lore/design follow-through
 
-- [ ] Landing preview copy for each codename (procedural blurb) —
-      needs a small pool of sentence templates tied to biome density
-      of the generated trench.
-- [ ] Running-out-of-oxygen warning progression — currently a red
-      pulse; DESIGN.md wants a "surface breathing easier" finale that
-      requires one more UI beat between warn and ascent.
-- [ ] Sound identity — DESIGN.md has no audio block. Add one before
-      PR G.
+- [x] Landing preview copy for each codename (procedural blurb) —
+      `trenchBlurbForSeed` stitches opener + body + closer templates
+      picked by different bit ranges of the 18-bit codename seed.
+      Deterministic and keyed to the same seed the player shares via
+      URL. Rendered in italic under the codename on landing.
+- [x] Running-out-of-oxygen warning progression — three-stage now:
+      comfortable → warn (< 25%, red stat tone + "Oxygen — Low" label)
+      → critical (< 10%, "Hold your breath — surface now." banner in
+      Cormorant Garamond pulsing above the stat row). Pure visual; sim
+      behavior unchanged.
+- [x] Sound identity — Tone.js ambient pad with per-biome chord
+      voicings + five synthesized SFX. Landed with PR G.
 
 ## Production polish — player journey audit
 
