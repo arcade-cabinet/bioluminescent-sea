@@ -32,5 +32,6 @@ export function createSeededScene(seed: number, viewport: ViewportDimensions): S
     pirates: spawnSeededPirates(pirateRng, viewport),
     player: spawnSeededPlayer(viewport),
     predators: spawnSeededPredators(predatorRng, viewport),
+    depthTravelMeters: 0,
   };
 }

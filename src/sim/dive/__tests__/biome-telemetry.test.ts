@@ -14,23 +14,19 @@ describe("getDiveTelemetry biome", () => {
   });
 
   it("biome advances as depthMeters crosses the boundaries", () => {
-    // Fake a scene where depth is near surface vs near trench floor.
-    // We can't directly control depthMeters (it's derived), but we
-    // can exercise the boundary by reducing creatures + oxygen.
-    const scene = createInitialScene(viewport);
-
-    const shallow = getDiveTelemetry(scene, 600, 600);
+    // Depth is now scene.depthTravelMeters (world-meters descended).
+    // Surface scene reports 0m (photic-gate); deep scene reports a
+    // value past the twilight-shelf boundary (400m).
+    const shallow = getDiveTelemetry(createInitialScene(viewport), 600, 600);
     const deep = getDiveTelemetry(
-      { ...scene, creatures: [] },
-      0,
+      { ...createInitialScene(viewport), depthTravelMeters: 1800 },
+      600,
       600
     );
 
-    // The deep telemetry should have a biome different from or at-least
-    // the same band as shallow (collection ratio 100% + oxygen 0 pushes
-    // depth to the bottom of the formula range).
     expect(deep.depthMeters).toBeGreaterThan(shallow.depthMeters);
-    expect(deep.biomeId).toBeDefined();
+    expect(shallow.biomeId).toBe("photic-gate");
+    expect(deep.biomeId).toBe("midnight-column");
   });
 
   it("objective copy varies with biome in ambient mode", () => {

@@ -23,6 +23,16 @@ export interface SceneState {
   pirates: Pirate[];
   player: Player;
   predators: Predator[];
+  /**
+   * Cumulative descent in world-meters. Starts at 0 (surface) and grows
+   * monotonically as the dive advances. This is the real depth — the
+   * sub is actually *moving downward* through the column. Renderer
+   * camera and audio ambient filter both read this directly.
+   *
+   * Groundwork for PR F.2 chunking. Entity world-Y + chunk spawn/retire
+   * lands in the follow-up.
+   */
+  depthTravelMeters: number;
 }
 
 export interface CreatureCollectionResult {

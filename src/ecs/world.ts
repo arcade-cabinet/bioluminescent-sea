@@ -66,6 +66,7 @@ export function createDiveWorld(scene: SceneState): DiveWorld {
 export function readSceneFromWorld(w: DiveWorld): SceneState {
   const player = w.playerEntity.get(PlayerAvatar)?.value;
   if (!player) throw new Error("readSceneFromWorld: player entity missing PlayerAvatar");
+  const root = w.rootEntity.get(DiveRoot);
   return {
     creatures: w.creatureEntities.map((e) => {
       const t = e.get(CreatureEntity);
@@ -88,6 +89,7 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
       return t.value;
     }),
     player,
+    depthTravelMeters: root?.depthTravelMeters ?? 0,
   };
 }
 
@@ -98,6 +100,10 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
  */
 export function writeSceneToWorld(w: DiveWorld, scene: SceneState): DiveWorld {
   w.playerEntity.set(PlayerAvatar, { value: scene.player });
+  w.rootEntity.set(DiveRoot, (prev) => ({
+    ...prev,
+    depthTravelMeters: scene.depthTravelMeters,
+  }));
 
   // Creatures: indexed by order; a shorter list means some were collected.
   const nextCreatures: Entity[] = [];
