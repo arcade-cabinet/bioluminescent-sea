@@ -146,94 +146,97 @@ export function HUD({
         <Stat label="Charted" value={`${beacons}%`} tone="muted" testId="charted" />
       </div>
 
-      {/* Run codename chip — the brand identity of this specific
-          trench, placed below the landmark chip at top-right. */}
-      {runCodename && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(max(env(safe-area-inset-top), 1rem) + 2.4rem)",
-            right: "1rem",
-            padding: "0.3rem 0.65rem",
-            background: "rgba(10, 26, 46, 0.55)",
-            border: "1px solid rgba(107, 230, 193, 0.18)",
-            borderRadius: 999,
-            fontFamily: "var(--font-display)",
-            fontSize: "0.78rem",
-            letterSpacing: "0.02em",
-            color: "var(--color-fg-muted)",
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        >
-          {runCodename}
-        </div>
-      )}
-
-      {/* Biome chip — the current depth band, updates as the dive
-          descends. Stroke color comes from the biome's tintHex so the
-          chip itself shifts palette on transition. */}
-      {biomeLabel && (
-        <motion.div
-          key={biomeLabel}
-          data-testid="hud-biome-chip"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{
-            position: "absolute",
-            top: "calc(max(env(safe-area-inset-top), 1rem) + 4.6rem)",
-            right: "1rem",
-            padding: "0.3rem 0.65rem",
-            background: "rgba(10, 26, 46, 0.55)",
-            border: `1px solid ${biomeTintHex ?? "#6be6c1"}55`,
-            borderRadius: 999,
-            fontFamily: "var(--font-body)",
-            fontSize: "0.65rem",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            color: biomeTintHex ?? "var(--color-glow)",
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        >
-          {biomeLabel}
-        </motion.div>
-      )}
-
-      {/* Route landmark chip */}
-      {nearestLandmarkLabel && (
-        <motion.div
-          data-testid="hud-landmark-chip"
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            position: "absolute",
-            top: "max(env(safe-area-inset-top), 1rem)",
-            right: "1rem",
-            padding: "0.5rem 0.75rem",
-            background: "rgba(14, 79, 85, 0.65)",
-            border: "1px solid rgba(107, 230, 193, 0.3)",
-            borderRadius: 999,
-            fontFamily: "var(--font-body)",
-            fontSize: "0.75rem",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--color-glow)",
-            pointerEvents: "none",
-            zIndex: 10,
-            boxShadow: "0 0 14px rgba(107, 230, 193, 0.18)",
-          }}
-        >
-          {nearestLandmarkLabel}
-          {typeof nearestLandmarkDistance === "number" &&
-            Number.isFinite(nearestLandmarkDistance) && (
-              <span style={{ marginLeft: "0.5rem", color: "var(--color-fg-muted)" }}>
-                {Math.round(nearestLandmarkDistance)}m
-              </span>
-            )}
-        </motion.div>
-      )}
+      {/* Right-side chip stack — landmark + biome + run codename.
+          Grouped in one column so they never collide with the
+          top-left HUD row when it wraps on narrow viewports. The
+          codename is last (smallest, muted) because it's identity,
+          not information the player needs frame-to-frame. */}
+      <div
+        style={{
+          position: "absolute",
+          top: "max(env(safe-area-inset-top), 1rem)",
+          right: "1rem",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: "0.35rem",
+          pointerEvents: "none",
+          zIndex: 10,
+        }}
+      >
+        {nearestLandmarkLabel && (
+          <motion.div
+            data-testid="hud-landmark-chip"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              padding: "0.5rem 0.75rem",
+              background: "rgba(14, 79, 85, 0.65)",
+              border: "1px solid rgba(107, 230, 193, 0.3)",
+              borderRadius: 999,
+              fontFamily: "var(--font-body)",
+              fontSize: "0.75rem",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--color-glow)",
+              boxShadow: "0 0 14px rgba(107, 230, 193, 0.18)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {nearestLandmarkLabel}
+            {typeof nearestLandmarkDistance === "number" &&
+              Number.isFinite(nearestLandmarkDistance) && (
+                <span style={{ marginLeft: "0.5rem", color: "var(--color-fg-muted)" }}>
+                  {Math.round(nearestLandmarkDistance)}m
+                </span>
+              )}
+          </motion.div>
+        )}
+        {biomeLabel && (
+          <motion.div
+            key={biomeLabel}
+            data-testid="hud-biome-chip"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            style={{
+              padding: "0.3rem 0.65rem",
+              background: "rgba(10, 26, 46, 0.55)",
+              border: `1px solid ${biomeTintHex ?? "#6be6c1"}55`,
+              borderRadius: 999,
+              fontFamily: "var(--font-body)",
+              fontSize: "0.65rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: biomeTintHex ?? "var(--color-glow)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {biomeLabel}
+          </motion.div>
+        )}
+        {runCodename && (
+          <div
+            data-testid="hud-codename-chip"
+            style={{
+              padding: "0.25rem 0.6rem",
+              background: "rgba(10, 26, 46, 0.45)",
+              border: "1px solid rgba(107, 230, 193, 0.14)",
+              borderRadius: 999,
+              fontFamily: "var(--font-display)",
+              fontSize: "0.68rem",
+              letterSpacing: "0.04em",
+              color: "var(--color-fg-muted)",
+              whiteSpace: "nowrap",
+              maxWidth: "min(60vw, 220px)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {runCodename}
+          </div>
+        )}
+      </div>
 
       {/* Low-oxygen pulse */}
       {lowOxygen && (

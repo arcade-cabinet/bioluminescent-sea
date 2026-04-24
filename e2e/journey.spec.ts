@@ -20,6 +20,7 @@ const JOURNEY_PROBES = [
   "[data-testid='hud-stat-charted']",
   "[data-testid='hud-biome-chip']",
   "[data-testid='hud-landmark-chip']",
+  "[data-testid='hud-codename-chip']",
   "[data-testid='objective-banner']",
   "canvas[aria-label*='playfield' i]",
   "button",
