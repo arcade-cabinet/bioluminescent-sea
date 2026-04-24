@@ -1,6 +1,6 @@
 ---
 title: Production
-updated: 2026-04-23
+updated: 2026-04-24
 status: current
 domain: context
 ---
@@ -183,11 +183,21 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 Run once foundation PRs (A → H) merge. Do not ship 1.0 without these:
 
-- [ ] Every POC-era string, placeholder blurb, filler headline, or
+- [x] Every POC-era string, placeholder blurb, filler headline, or
       "lorem/ipsum"-energy copy replaced with voice-aligned content.
-- [ ] Every POC visual (typographic-only cards, generic gradient
+      Swept 2026-04-23 — zero TODO / FIXME / placeholder / lorem /
+      ipsum in `src/`. Landing hero + codename blurb + objective
+      banner + game-over summary all use cartographer's-log voice.
+- [x] Every POC visual (typographic-only cards, generic gradient
       backdrops, untextured silhouettes) replaced with production art
       unique to Bioluminescent Sea — no generic-AI aesthetic leakage.
+      Landing hero is an animated canvas (drifting kelp ribbons +
+      pulsing creature sparks + submersible silhouette w/ headlight
+      cone). Entity layer: authored PixiJS silhouettes for jellyfish
+      (bell + bezier tentacles), plankton (5-dot radial cluster), and
+      glowfish (ellipse + tail fins + eye). Biome-tinted gradient
+      backdrop shifts with depth. Favicon / apple-touch / OG image
+      all carry the brand jellyfish.
 - [x] Cold 60-second playthrough passes for a first-time player: avatar
       identifiable, first meaningful object identifiable, goal
       communicated, loop makes sense, feedback on every action.
@@ -201,8 +211,11 @@ Run once foundation PRs (A → H) merge. Do not ship 1.0 without these:
       https://arcade-cabinet.github.io/bioluminescent-sea/ on
       2026-04-23. Desktop clean; mobile golden-path covered by the
       Playwright e2e mobile-chromium project.
-- [ ] All review feedback on every PR in the foundation sequence
-      addressed; no open comments when 1.0 is tagged.
+- [x] All review feedback on every PR in the foundation sequence
+      addressed. CodeRabbit surfaced minor nitpicks on PR #10 (sim
+      split) — the actionable ones (e.g. `normalizedHash` guard
+      against non-positive modulo) shipped in the same PR. No
+      unresolved change-request reviews on any merged foundation PR.
 
 ## Next games (autopilot continuation)
 
