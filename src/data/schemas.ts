@@ -26,6 +26,7 @@ export const CreatureSpeciesSchema = z.object({
   baseScore: z.number().int().nonnegative(),
   oxygenBonusSeconds: z.number().int().nonnegative(),
   glowColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   sizeMeters: z.object({
     min: z.number().positive(),
     max: z.number().positive(),

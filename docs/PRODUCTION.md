@@ -72,9 +72,14 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       (bottom-left), persists to localStorage, honors
       `prefers-reduced-motion`. Howler was skipped — Tone.js owns all
       synthesis so the bundle doesn't carry two audio libraries.
-- [ ] **PR H — Content pipeline.** Biomes, creature species, and
-      landmarks moved to `config/raw/*.json` with `scripts/compile-content.mjs`
-      + Zod validation. Authoring no longer requires code edits.
+- [x] **PR H — Content pipeline.** Biomes, creature species, and
+      landmarks authored in `config/raw/*.json` and compiled via
+      `scripts/compile-content.mjs` (Zod-validated). Runs as
+      `predev` / `prebuild` / `pretypecheck` / `pretest:*` so content
+      edits are live without touching TypeScript. Output goes to
+      `config/compiled/content.ts` (gitignored); biomes table reads
+      from there. Landmarks now carry per-landmark flavor text keyed
+      to depth and biome.
 
 ## Identity
 

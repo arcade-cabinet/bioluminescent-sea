@@ -20,6 +20,6 @@
       "@/sim/*": ["src/sim/*"]
     }
   },
-  "include": ["src/sim/**/*"],
+  "include": ["src/sim/**/*", "config/compiled/**/*"],
   "exclude": ["src/sim/**/*.test.ts", "src/sim/**/__tests__/**"]
 }

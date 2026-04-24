@@ -1,0 +1,11 @@
+{
+  "id": "midnight-column",
+  "label": "Midnight Column",
+  "description": "Bioluminescent bloom. Anglers and eels work the column together.",
+  "depthStartMeters": 1200,
+  "depthEndMeters": 2400,
+  "tintHex": "#3a1d5a",
+  "creatureDensity": 1,
+  "predatorDensity": 0.7,
+  "pirateDensity": 0.5
+}

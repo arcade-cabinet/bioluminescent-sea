@@ -1,0 +1,9 @@
+{
+  "id": "jellyfish",
+  "type": "jellyfish",
+  "baseScore": 30,
+  "oxygenBonusSeconds": 8,
+  "glowColor": "#0ea5e9",
+  "color": "#7dd3fc",
+  "sizeMeters": { "min": 1.6, "max": 3.2 }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "twilight-shelf",
+  "label": "Twilight Shelf",
+  "description": "The water starts listening back. A slow predator paces the shelf.",
+  "depthStartMeters": 400,
+  "depthEndMeters": 1200,
+  "tintHex": "#1e6a78",
+  "creatureDensity": 0.8,
+  "predatorDensity": 0.35,
+  "pirateDensity": 0.15
+}

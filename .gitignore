@@ -33,3 +33,7 @@ ios/App/App.xcworkspace/xcuserdata/
 
 # TypeScript composite build cache
 *.tsbuildinfo
+
+# Content compiler output — regenerated from config/raw/ by
+# scripts/compile-content.mjs on every predev/prebuild/pretest.
+config/compiled/

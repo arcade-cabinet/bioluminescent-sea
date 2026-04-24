@@ -72,7 +72,7 @@ world-ceiling errors).
 | F.1| Biome surface (HUD chip + tint)      | in review    |
 | F.2| World coords + chunking              | not started  |
 | G  | Audio (Tone.js synthesized)          | in review    |
-| H  | Content pipeline (Zod + JSON)        | not started  |
+| H  | Content pipeline (Zod + JSON)        | in review    |
 
 ## Known bugs / quirks
 
