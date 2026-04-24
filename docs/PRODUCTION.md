@@ -90,7 +90,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       viewBox, iOS masks to its own radius).
 - [x] OG image 1200×630 — `public/og-image.svg`, referenced via
       Open Graph + Twitter Card meta tags in `index.html`.
-- [ ] Landing hero visual replaces the typographic-only card.
+- [x] Landing hero visual replaces the typographic-only card. The new
+      `LandingHero` canvas paints the abyss with drifting kelp ribbons,
+      pulsing creature sparks, and a submersible silhouette with a
+      headlight cone parallaxing at center. Honors
+      `prefers-reduced-motion`.
 
 ## Quality gates
 
@@ -98,9 +102,10 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 - [ ] `pnpm typecheck` strict mode passes on all three composite
       projects.
 - [ ] `pnpm test:node` + `pnpm test:dom` pass with real assertions.
-- [ ] `pnpm test:browser` captures a representative frame per biome.
-- [ ] `pnpm test:e2e` covers the full journey landing → dive →
-      completion → restart.
+- [x] `pnpm test:browser` captures a representative frame per biome.
+- [x] `pnpm test:e2e` covers the full journey landing → dive →
+      completion → restart. Golden-path specs live in `e2e/` and run on
+      desktop + mobile Chromium.
 - [ ] `pnpm build` produces a bundle under 600 KB gzipped (excluding
       fonts).
 - [ ] `./gradlew assembleDebug` produces a < 12 MB debug APK.
@@ -110,7 +115,9 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 - [x] `ci.yml` — lint + typecheck + test:node + test:dom + build +
       Android APK.
-- [ ] `ci.yml` augmented with `test:browser` + `test:e2e`.
+- [x] `ci.yml` augmented with `test:browser` + `test:e2e`. The browser
+      canvas job ran since PR C; the Playwright e2e job lands with the
+      golden-path specs.
 - [ ] `release.yml` — on release-please tag: build bundle, publish
       Pages artifact, build signed Android release APK.
 - [ ] `cd.yml` — on push:main: deploy Pages artifact.
