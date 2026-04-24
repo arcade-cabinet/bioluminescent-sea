@@ -17,6 +17,10 @@ export function createInitialPlayer({ width, height }: ViewportDimensions): Play
     y,
     speedScale: 1,
     lampScale: 1,
+    activeBuffs: {
+      repelUntil: 0,
+      overdriveUntil: 0,
+    },
   };
 }
 

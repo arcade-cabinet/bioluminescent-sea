@@ -1,5 +1,17 @@
 export type CreatureType = "jellyfish" | "plankton" | "fish";
 
+export type AnomalyType = "repel" | "overdrive";
+
+export interface Anomaly {
+  id: string;
+  type: AnomalyType;
+  x: number;
+  y: number;
+  size: number;
+  pulsePhase: number;
+  worldYMeters?: number;
+}
+
 export interface Creature {
   id: string;
   type: CreatureType;
@@ -14,12 +26,7 @@ export interface Creature {
   speed: number;
   pulsePhase: number;
   /**
-   * World-space depth of the creature in meters. Populated by the
-   * chunk-aware `createChunkedScene` factory; omitted by the legacy
-   * `createSeededScene` path (18 fixed creatures in a single
-   * viewport). Renderer F.4e will project through
-   * `camera.project({ x, y: worldYMeters, z })` when present and
-   * fall back to the screen-space `y` otherwise.
+   * World-space depth of the creature in meters.
    */
   worldYMeters?: number;
 }
@@ -32,6 +39,7 @@ export interface Predator {
   speed: number;
   noiseOffset: number;
   angle: number;
+  isLeviathan?: boolean;
 }
 
 export interface Pirate {
@@ -64,6 +72,10 @@ export interface Player {
   glowIntensity: number;
   speedScale: number;
   lampScale: number;
+  activeBuffs: {
+    repelUntil: number;
+    overdriveUntil: number;
+  };
 }
 
 export const CREATURE_TYPES: CreatureType[] = ["jellyfish", "plankton", "fish"];
