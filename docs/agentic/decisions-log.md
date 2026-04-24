@@ -13,6 +13,38 @@ then the reason + constraint.
 
 ---
 
+## 2026-04-24 — Removed legacy unchunked spawning logic
+
+**Reason:** Maintaining two parallel spawning pipelines (`seeded-spawn.ts` for fixed 18-beacon testing, and `chunked-spawn.ts` for production depth-scaling) caused responsive rendering glitches and bloated `advanceScene`.
+
+**Constraint:** The game exclusively utilizes `ChunkManager` for entity generation across the board. The initial scene payload now spawns empty entity arrays, and chunks load them in on the first frame.
+
+---
+
+## 2026-04-24 — Meta-progression and Drydock UI added
+
+**Reason:** The core loop was too ephemeral. To give players a reason to keep diving, score is now converted into a persistent `Lux` currency saved to `localStorage`.
+
+**Constraint:** The `DrydockScreen` allows players to purchase submersible upgrades (Hull, Battery, Motor, Lamp) that alter simulation parameters like speed, penalty reduction, and render cone radius.
+
+---
+
+## 2026-04-24 — Yuka integrated for AI steering and flocking
+
+**Reason:** Simple Perlin drift paths resulted in an "interactive screensaver" feel. We needed true emergent agency to escalate threat curves.
+
+**Constraint:** The `yuka` library handles vehicle simulation inside an `AIManager`. Creatures use flocking (Alignment, Cohesion, Separation). Predators use `StalkAndDashBehavior`. Pirates use `WanderBehavior`. Yuka vehicles wrap and sync with existing simulation properties.
+
+---
+
+## 2026-04-24 — Infinite Open-World "Stygian Abyss" loop replaces fixed trench floor
+
+**Reason:** The hardcoded `TRENCH_FLOOR_METERS` (6400m) artificially capped the roguelike potential of the game.
+
+**Constraint:** Depth generation is now infinite. The final `abyssal-trench` gracefully degrades into endless iterations of the `stygian-abyss` biome, where background light drops to pure `#000000` and enemy density logarithmically scales, spawning massive procedurally-generated `Leviathans`.
+
+---
+
 ## 2026-04-24 — Autosave effect depends on stable `writeSnapshot` (refs for telemetry + timeLeft)
 
 **Reason:** The autosave `useEffect` previously depended on
