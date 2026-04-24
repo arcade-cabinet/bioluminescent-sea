@@ -39,7 +39,6 @@ export function spawnCreaturesForChunk(
   const rng = createRng(chunk.seed);
   const types: CreatureType[] = ["plankton", "jellyfish", "fish"];
   const { width, height } = viewport;
-  const minDimension = Math.min(width, height);
 
   return Array.from({ length: count }, (_, index) => {
     const type = rng.pick(types);
@@ -71,7 +70,7 @@ export function spawnCreaturesForChunk(
       noiseOffsetX: round(rng.range(0, 1000), 2),
       noiseOffsetY: round(rng.range(0, 1000), 2),
       pulsePhase: round(rng.range(0, Math.PI * 2), 3),
-      size: round(clamp(minDimension * sizeScale, 14, 36), 2),
+      size: round(clamp(640 * sizeScale, 14, 36), 2),
       speed: round(rng.range(0.18, 0.55), 3),
       type,
       worldYMeters,

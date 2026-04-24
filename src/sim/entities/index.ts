@@ -14,14 +14,12 @@ export {
   CREATURE_ANCHORS,
   TOTAL_BEACONS,
   advanceCreature,
-  createInitialCreatures,
 } from "./creatures";
-export { advancePredator, createInitialPredators } from "./predators";
-export { advancePirate, createInitialPirates } from "./pirates";
+export { advancePredator } from "./predators";
+export { advancePirate } from "./pirates";
 export {
   PARTICLE_COUNT,
   advanceParticle,
-  createInitialParticles,
   getDeterministicWrapX,
 } from "./particles";
 export { advancePlayer, createInitialPlayer } from "./player";

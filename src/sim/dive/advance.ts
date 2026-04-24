@@ -2,11 +2,7 @@ import {
   advanceCreature,
   advanceParticle,
   advancePlayer,
-  createInitialCreatures,
-  createInitialParticles,
-  createInitialPirates,
   createInitialPlayer,
-  createInitialPredators,
 } from "@/sim/entities";
 import { collectCreatures, hasPredatorCollision } from "./collection";
 import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
@@ -29,11 +25,11 @@ export function createInitialScene(dimensions: ViewportDimensions, upgrades?: Su
     player.lampScale = 1 + (upgrades.lamp * 0.20); // +20% per level
   }
   return {
-    creatures: createInitialCreatures(dimensions),
-    particles: createInitialParticles(dimensions),
-    pirates: createInitialPirates(dimensions),
+    creatures: [],
+    particles: [],
+    pirates: [],
     player,
-    predators: createInitialPredators(dimensions),
+    predators: [],
     depthTravelMeters: 0,
   };
 }
