@@ -17,3 +17,5 @@ export {
   seedFromCodename,
   type CodenameParts,
 } from "./codename";
+
+export { trenchBlurbForSeed, type TrenchBlurb } from "./blurb";

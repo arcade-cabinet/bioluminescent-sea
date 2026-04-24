@@ -17,6 +17,12 @@ interface StartScreenProps {
   runPreview?: {
     codename: string;
     label?: string;
+    /**
+     * Short procedural blurb tied to the codename — one line of
+     * cartographer's-log flavor so the landing preview feels authored
+     * rather than a raw ID display.
+     */
+    blurb?: string;
   };
   children?: ReactNode;
 }
@@ -185,6 +191,21 @@ export function StartScreen({
           >
             {runPreview.codename}
           </span>
+          {runPreview.blurb && (
+            <p
+              style={{
+                margin: "0.35rem 0 0",
+                fontSize: "clamp(0.78rem, 1.8vw, 0.88rem)",
+                fontStyle: "italic",
+                color: "var(--color-fg-muted)",
+                maxWidth: "44ch",
+                lineHeight: 1.5,
+                opacity: 0.85,
+              }}
+            >
+              {runPreview.blurb}
+            </p>
+          )}
         </motion.div>
       )}
 

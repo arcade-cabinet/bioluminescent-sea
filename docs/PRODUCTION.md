@@ -150,14 +150,16 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Decisions that need lore/design follow-through
 
-- [ ] Landing preview copy for each codename (procedural blurb) —
-      needs a small pool of sentence templates tied to biome density
-      of the generated trench.
+- [x] Landing preview copy for each codename (procedural blurb) —
+      `trenchBlurbForSeed` stitches opener + body + closer templates
+      picked by different bit ranges of the 18-bit codename seed.
+      Deterministic and keyed to the same seed the player shares via
+      URL. Rendered in italic under the codename on landing.
 - [ ] Running-out-of-oxygen warning progression — currently a red
       pulse; DESIGN.md wants a "surface breathing easier" finale that
       requires one more UI beat between warn and ascent.
-- [ ] Sound identity — DESIGN.md has no audio block. Add one before
-      PR G.
+- [x] Sound identity — Tone.js ambient pad with per-biome chord
+      voicings + five synthesized SFX. Landed with PR G.
 
 ## Production polish — player journey audit
 
