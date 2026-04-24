@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import type { Camera } from "@/render/camera";
 import type {
   Creature,
   Pirate,
@@ -12,6 +13,15 @@ import type {
  * updates its position/rotation/alpha each frame. Entities that
  * disappear from the simulation (collected creature, retired pirate)
  * get removed from the stage in the same sync pass.
+ *
+ * When a creature carries `worldYMeters` (emitted by chunked-spawn
+ * but not by the legacy seeded spawner), the layer projects it
+ * through `camera.project({ x, y: worldYMeters, z: 0 })` so the
+ * creature scrolls with descent. Creatures without `worldYMeters`
+ * keep using their viewport-space `y` — that's how the legacy
+ * 18-fixed-creatures scene stays playable until the sim migration.
+ * Predators and pirates stay viewport-space for now; they move to
+ * world-space in a follow-up.
  */
 
 export interface EntityController {
@@ -20,6 +30,12 @@ export interface EntityController {
     predators: readonly Predator[];
     pirates: readonly Pirate[];
     totalTime: number;
+    /**
+     * Live camera from the bridge. Used to project creatures whose
+     * trait carries `worldYMeters`. Optional for tests that mount
+     * the layer in isolation.
+     */
+    camera?: Camera;
   }): void;
   destroy(): void;
 }
@@ -30,8 +46,8 @@ export function mountEntities(parent: Container): EntityController {
   const pirates = new Map<string, Graphics>();
 
   return {
-    sync({ creatures: cs, predators: ps, pirates: ks, totalTime }) {
-      syncCreatures(parent, creatures, cs);
+    sync({ creatures: cs, predators: ps, pirates: ks, totalTime, camera }) {
+      syncCreatures(parent, creatures, cs, camera);
       syncPredators(parent, predators, ps);
       syncPirates(parent, pirates, ks, totalTime);
     },
@@ -49,7 +65,8 @@ export function mountEntities(parent: Container): EntityController {
 function syncCreatures(
   parent: Container,
   cache: Map<string, Graphics>,
-  list: readonly Creature[]
+  list: readonly Creature[],
+  camera: Camera | undefined
 ): void {
   const seen = new Set<string>();
   for (const c of list) {
@@ -61,7 +78,19 @@ function syncCreatures(
       cache.set(c.id, g);
     }
     g.clear();
-    g.position.set(c.x, c.y);
+    // When the creature was spawned by a chunk-aware factory it
+    // carries `worldYMeters`; project the Y through the camera so
+    // the creature scrolls vertically with descent. X stays in
+    // the sim-provided viewport-pixel space — the sim + X-axis
+    // are still viewport-bound until the full world-space
+    // migration lands. Legacy seeded creatures (no
+    // `worldYMeters`) keep using their viewport-space y unchanged.
+    if (camera && c.worldYMeters !== undefined) {
+      const projected = camera.project({ x: 0, y: c.worldYMeters, z: 0 });
+      g.position.set(c.x, projected.y);
+    } else {
+      g.position.set(c.x, c.y);
+    }
     g.rotation = Math.sin(c.pulsePhase * 0.45) * 0.16;
 
     const glowRadius = c.size * 2.4;

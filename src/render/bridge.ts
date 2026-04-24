@@ -116,7 +116,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         depthMeters: root?.depthTravelMeters ?? 0,
         pxPerMeter: camera.pxPerMeter,
       });
-      entities.sync({ creatures, predators, pirates, totalTime });
+      entities.sync({ creatures, predators, pirates, totalTime, camera });
       player.sync(playerValue, viewportScale, totalTime);
       fx.sync({
         player: playerValue,
