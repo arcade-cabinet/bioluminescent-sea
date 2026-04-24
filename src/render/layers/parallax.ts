@@ -28,6 +28,13 @@ export interface ParallaxDrawArgs {
    * offset. Optional — omit or pass 0 for the pre-F.4 behavior.
    */
   depthMeters?: number;
+  /**
+   * World→screen scale from the camera. Required whenever
+   * `depthMeters` is non-zero so the shift is computed in pixel
+   * space consistently with the rest of the render pipeline.
+   * Defaults to 1 to preserve behavior when depthMeters is 0.
+   */
+  pxPerMeter?: number;
 }
 
 const DEPTH_SCROLL_FACTOR = 0.35;
@@ -37,9 +44,11 @@ export function mountParallax(parent: Container): ParallaxController {
   parent.addChild(g);
 
   return {
-    draw({ particles, heightPx, depthMeters = 0 }) {
+    draw({ particles, heightPx, depthMeters = 0, pxPerMeter = 1 }) {
       g.clear();
-      const shift = depthMeters * DEPTH_SCROLL_FACTOR;
+      // depthMeters is world-space; multiply by pxPerMeter so the
+      // parallax shift lives in the same coordinate system as p.y.
+      const shift = depthMeters * pxPerMeter * DEPTH_SCROLL_FACTOR;
       const h = Math.max(heightPx, 1);
       for (const p of particles) {
         // Wrap in [0, h) so particles keep filling the column as
