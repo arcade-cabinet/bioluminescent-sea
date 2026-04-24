@@ -41,9 +41,14 @@ export function createAmbient(): AmbientController {
   let unsubMute: (() => void) | null = null;
 
   const scheduleChord = (time?: number) => {
-    if (!synth || isMuted()) return;
-    const voicing = BIOME_VOICINGS[currentBiome];
-    synth.triggerAttackRelease(Array.from(voicing), "2n", time);
+    if (!synth) return;
+    if (!isMuted()) {
+      const voicing = BIOME_VOICINGS[currentBiome];
+      synth.triggerAttackRelease(Array.from(voicing), "2n", time);
+    }
+    // Always reschedule so muting does not permanently kill the pad.
+    // The Transport is cancelled in stop(), which breaks the recursion
+    // on unmount.
     Tone.getTransport().scheduleOnce(scheduleChord, "+4n");
   };
 
