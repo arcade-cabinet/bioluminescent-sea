@@ -1,3 +1,4 @@
+import { chunkLifecycleDelta, chunksInWindow } from "@/sim/chunk";
 import { advanceScene } from "@/sim/dive/advance";
 import { resolveDiveThreatImpact } from "@/sim/dive/impact";
 import type {
@@ -6,12 +7,24 @@ import type {
   SceneState,
   ViewportDimensions,
 } from "@/sim/dive/types";
+import { spawnCreaturesForChunk } from "@/sim/entities/chunked-spawn";
 import { DiveRoot } from "./traits";
 import {
+  appendCreaturesToWorld,
   readSceneFromWorld,
+  retireChunkCreatures,
   writeSceneToWorld,
   type DiveWorld,
 } from "./world";
+
+/**
+ * Approximation for the camera's vertical world-meter window used
+ * by the chunk lifecycle. The render-side camera knows the exact
+ * viewport-height/pxPerMeter; the sim just needs a reasonable
+ * look-ahead so chunks spawn slightly before they're visible.
+ * 400m = two default-sized chunks.
+ */
+const CHUNK_LIFECYCLE_WINDOW_METERS = 400;
 
 /**
  * Actions — the only way outside code mutates the ECS world.
@@ -58,11 +71,43 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     args.mode
   );
 
-  const nextWorld = writeSceneToWorld(args.world, result.scene);
+  let nextWorld = writeSceneToWorld(args.world, result.scene);
+
+  // Chunk lifecycle: as the sub descends (or scrolls), chunks
+  // enter and leave the camera window. Spawn creatures for new
+  // chunks, retire creatures from departed chunks. This is the
+  // runtime consumer of the F.4f helper — the biome transitions
+  // actually happen during play now, not just in the sim's
+  // bookkeeping.
+  const currentWindow = chunksInWindow({
+    depthTravelMeters: result.scene.depthTravelMeters,
+    viewportHeightMeters: CHUNK_LIFECYCLE_WINDOW_METERS,
+    masterSeed: args.world.masterSeed,
+  });
+  const delta = chunkLifecycleDelta(args.world.liveChunkIndices, currentWindow);
+
+  if (delta.spawned.length > 0) {
+    const newCreatures = delta.spawned.flatMap((chunk) =>
+      spawnCreaturesForChunk(chunk, {
+        width: args.dimensions.width,
+        height: args.dimensions.height,
+      }),
+    );
+    nextWorld = appendCreaturesToWorld(nextWorld, newCreatures);
+  }
+  if (delta.retiredIndices.length > 0) {
+    nextWorld = retireChunkCreatures(nextWorld, delta.retiredIndices);
+  }
+  nextWorld = {
+    ...nextWorld,
+    liveChunkIndices: new Set(currentWindow.map((c) => c.index)),
+  };
+
   nextWorld.rootEntity.set(DiveRoot, {
     totalTime: args.totalTime,
     threatFlashAlpha:
       nextWorld.rootEntity.get(DiveRoot)?.threatFlashAlpha ?? 0,
+    depthTravelMeters: result.scene.depthTravelMeters,
   });
 
   return { world: nextWorld, result };

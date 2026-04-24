@@ -25,9 +25,23 @@ export interface DiveWorld {
   predatorEntities: Entity[];
   pirateEntities: Entity[];
   particleEntities: Entity[];
+  /**
+   * Chunk indices currently live in the world. Updated each frame
+   * as the sub descends — chunks that fall off the top retire,
+   * chunks that enter the lookahead window below spawn new
+   * creatures. Populated by advanceDiveFrame's chunk-lifecycle
+   * step.
+   */
+  liveChunkIndices: Set<number>;
+  /**
+   * Master seed used to derive per-chunk seeds (and per-chunk
+   * content) during lifecycle spawns. Frozen at world creation so
+   * spawn results are reproducible across the dive.
+   */
+  masterSeed: number;
 }
 
-export function createDiveWorld(scene: SceneState): DiveWorld {
+export function createDiveWorld(scene: SceneState, masterSeed = 0): DiveWorld {
   const world = createWorld();
 
   const rootEntity = world.spawn(DiveRoot({ totalTime: 0, threatFlashAlpha: 0 }));
@@ -54,6 +68,8 @@ export function createDiveWorld(scene: SceneState): DiveWorld {
     predatorEntities,
     pirateEntities,
     particleEntities,
+    liveChunkIndices: new Set<number>(),
+    masterSeed,
   };
 }
 
@@ -129,6 +145,51 @@ export function writeSceneToWorld(w: DiveWorld, scene: SceneState): DiveWorld {
   }
 
   return { ...w, creatureEntities: nextCreatures };
+}
+
+/**
+ * Append newly-spawned creatures (from a chunk that just entered
+ * the camera window) into the world. Returns a new DiveWorld with
+ * the extended `creatureEntities` list. The scene snapshot that
+ * the sim steps over is rebuilt next frame via `readSceneFromWorld`.
+ */
+export function appendCreaturesToWorld(
+  w: DiveWorld,
+  creatures: readonly import("@/sim/entities/types").Creature[],
+): DiveWorld {
+  if (creatures.length === 0) return w;
+  const newEntities = creatures.map((c) =>
+    w.world.spawn(CreatureEntity({ value: c }))
+  );
+  return { ...w, creatureEntities: [...w.creatureEntities, ...newEntities] };
+}
+
+/**
+ * Destroy every creature entity whose id was produced by a
+ * retired chunk's spawner (`beacon-c${index}-...`). Returns a new
+ * DiveWorld with the pruned list.
+ */
+export function retireChunkCreatures(
+  w: DiveWorld,
+  retiredIndices: readonly number[],
+): DiveWorld {
+  if (retiredIndices.length === 0) return w;
+  const retiredSet = new Set(retiredIndices);
+  const kept: Entity[] = [];
+  for (const entity of w.creatureEntities) {
+    const trait = entity.get(CreatureEntity);
+    const id = trait?.value.id ?? "";
+    // chunked-spawn ids are shaped `beacon-c<idx>-<n>`. Parse the
+    // index out; non-chunked creatures (legacy seeded spawn) keep
+    // their entities — the lifecycle only touches chunked ones.
+    const match = id.match(/^beacon-c(\d+)-/);
+    if (match && retiredSet.has(Number.parseInt(match[1], 10))) {
+      entity.destroy();
+      continue;
+    }
+    kept.push(entity);
+  }
+  return { ...w, creatureEntities: kept };
 }
 
 export function destroyDiveWorld(w: DiveWorld): void {

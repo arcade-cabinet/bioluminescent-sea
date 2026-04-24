@@ -144,7 +144,7 @@ function DeepSeaGame({
   // exactly once per mounted component, destroyed in the cleanup.
   const worldRef = useRef<DiveWorld | null>(null);
   if (worldRef.current === null) {
-    worldRef.current = createDiveWorld(initialScene);
+    worldRef.current = createDiveWorld(initialScene, seed);
   }
 
   const playerRef = useRef<Player>(initialScene.player);
