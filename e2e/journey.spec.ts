@@ -38,7 +38,7 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
     // Beat 1 — landing
     await expect(page.getByTestId("landing-screen")).toBeVisible();
     await expect(page.getByRole("heading", { name: /bioluminescent sea/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /begin dive/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /new dive/i })).toBeVisible();
 
     const landingDump = await dumpBeat(page, testInfo, "01-landing", collector, JOURNEY_PROBES, seen);
     expect(
@@ -55,8 +55,10 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
 
     await page.getByRole("button", { name: /standard/i }).click();
 
-    // Beat 3 — click Begin Dive, assert transition lands under 600ms
+    // Beat 3 — click New Dive, assert transition lands under 600ms
     const startedAt = Date.now();
+    await page.getByRole("button", { name: /new dive/i }).click();
+    await expect(page.getByTestId("customization-screen")).toBeVisible({ timeout: 2000 });
     await page.getByRole("button", { name: /begin dive/i }).click();
     await expect(page.getByTestId("playing-screen")).toBeVisible({ timeout: 2000 });
     const transitionMs = Date.now() - startedAt;

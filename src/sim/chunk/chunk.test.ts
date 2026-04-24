@@ -45,12 +45,12 @@ describe("chunkAt", () => {
   });
 
   it("assigns biome photic-gate for surface chunks", () => {
-    // Index 0 midpoint = 100m, inside photic-gate (0-400m).
+    // Index 0 midpoint = 200m, inside photic-gate (0-800m).
     expect(chunkAt(0, 42).biome).toBe("photic-gate");
   });
 
   it("assigns biome abyssal-trench for trench-floor chunks", () => {
-    // Index 14 midpoint = 2900m, inside abyssal-trench (2400-3200m).
+    // Index 14 midpoint = 5800m, inside abyssal-trench (4800-6400m).
     expect(chunkAt(14, 42).biome).toBe("abyssal-trench");
   });
 });
@@ -72,11 +72,11 @@ describe("chunksInWindow", () => {
       viewportHeightMeters: 720,
       masterSeed: 42,
     });
-    // Camera at 1200m, lookbehind 200m, lookahead = viewport + viewport
-    // so indices should span roughly 5 → 11.
+    // Camera at 1200m, lookbehind 400m, lookahead = viewport + viewport
+    // so indices should span roughly 2 → 6.
     const indices = chunks.map((c) => c.index);
-    expect(indices[0]).toBeLessThanOrEqual(5);
-    expect(indices[indices.length - 1]).toBeGreaterThanOrEqual(9);
+    expect(indices[0]).toBeLessThanOrEqual(2);
+    expect(indices[indices.length - 1]).toBeGreaterThanOrEqual(6);
   });
 
   it("chunk contents are stable across calls — same seed, same content", () => {

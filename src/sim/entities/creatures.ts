@@ -1,5 +1,6 @@
 import { noise2D } from "@/sim/_shared/perlin";
 import { clamp, getFrameScale, round, wrapCoordinate } from "@/sim/_shared/math";
+import { playBandMinX, playBandWidth, wrapAroundPlayBand } from "@/sim/_shared/playBand";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import { CREATURE_COLORS, type Creature, type CreatureType } from "./types";
 
@@ -35,6 +36,12 @@ export const TOTAL_BEACONS = CREATURE_ANCHORS.length;
 
 export function createInitialCreatures({ width, height }: ViewportDimensions): Creature[] {
   const minDimension = Math.min(width, height);
+  // The legacy seeded scene packs creatures tight in the viewport;
+  // the chunked-spawn path is the canonical world-aware one. For
+  // this fallback we stretch the anchors across the full play band
+  // so lateral exploration finds creatures instead of an empty band.
+  const bandMin = playBandMinX(width);
+  const bandWidth = playBandWidth(width);
 
   return CREATURE_ANCHORS.map((anchor, index) => {
     const colors = CREATURE_COLORS[anchor.type];
@@ -51,7 +58,7 @@ export function createInitialCreatures({ width, height }: ViewportDimensions): C
       size: round(clamp(minDimension * anchor.size, 14, 36), 2),
       speed: round(0.2 + (index % 4) * 0.075, 3),
       type: anchor.type,
-      x: round(clamp(width * anchor.x + laneOffset, 20, width - 20), 2),
+      x: round(bandMin + anchor.x * bandWidth + laneOffset, 2),
       y: round(clamp(height * anchor.y - laneOffset * 0.35, 24, height - 24), 2),
     };
   });
@@ -72,7 +79,7 @@ export function advanceCreature(
     ...creature,
     glowIntensity: round(0.62 + Math.sin(pulsePhase) * 0.28, 3),
     pulsePhase,
-    x: wrapCoordinate(creature.x + noiseX * 2 * frameScale, width, creature.size),
+    x: wrapAroundPlayBand(creature.x + noiseX * 2 * frameScale, width, creature.size),
     y: wrapCoordinate(creature.y + noiseY * 2 * frameScale, height, creature.size),
   };
 }

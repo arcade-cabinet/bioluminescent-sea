@@ -27,7 +27,7 @@ export default defineConfig({
   retries: IS_CI ? 1 : 0,
   workers: IS_CI ? 1 : undefined,
   timeout: IS_CI ? 90_000 : 60_000,
-  reporter: IS_CI ? [["github"], ["html", { open: "never" }]] : [["list"], ["html", { open: "never" }]],
+  reporter: IS_CI ? [["github"], ["json", { outputFile: "test-results/results.json" }]] : [["list"], ["json", { outputFile: "test-results/results.json" }]],
   use: {
     baseURL: "http://127.0.0.1:41731",
     headless: IS_HEADLESS,

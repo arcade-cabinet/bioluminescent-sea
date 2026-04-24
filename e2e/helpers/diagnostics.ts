@@ -173,7 +173,9 @@ export async function dumpBeat(
   const png = testInfo.outputPath(`${project}-${slug}.png`);
   const json = testInfo.outputPath(`${project}-${slug}.json`);
 
-  await page.screenshot({ path: png, fullPage: false });
+  await page.screenshot({ path: png, fullPage: false, animations: "disabled", timeout: 5000 }).catch(e => {
+    console.warn(`[diagnostics] screenshot timed out for ${beat}: ${e}`);
+  });
 
   const dump: BeatDump = {
     beat,
@@ -192,7 +194,13 @@ export async function dumpBeat(
   const fs = await import("node:fs/promises");
   await fs.writeFile(json, JSON.stringify(dump, null, 2));
 
-  await testInfo.attach(`${beat} screenshot`, { path: png, contentType: "image/png" });
+  try {
+    await fs.access(png);
+    await testInfo.attach(`${beat} screenshot`, { path: png, contentType: "image/png" });
+  } catch (e) {
+    // Screenshot timed out and wasn't created.
+  }
+  
   await testInfo.attach(`${beat} diagnostics`, {
     path: json,
     contentType: "application/json",

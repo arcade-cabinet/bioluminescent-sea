@@ -1,9 +1,7 @@
 import {
   advanceCreature,
   advanceParticle,
-  advancePirate,
   advancePlayer,
-  advancePredator,
   createInitialCreatures,
   createInitialParticles,
   createInitialPirates,
@@ -14,6 +12,7 @@ import { collectCreatures, hasPredatorCollision } from "./collection";
 import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { getDiveModeTuning } from "./mode";
 import { getDiveTelemetry } from "./telemetry";
+import { AIManager } from "@/sim/ai/manager";
 import type {
   DiveInput,
   SceneAdvanceResult,
@@ -32,6 +31,12 @@ export function createInitialScene(dimensions: ViewportDimensions): SceneState {
   };
 }
 
+let aiManager: AIManager | null = null;
+
+export function resetAIManager() {
+  aiManager = null;
+}
+
 export function advanceScene(
   scene: SceneState,
   input: DiveInput,
@@ -44,16 +49,32 @@ export function advanceScene(
   mode: string | null | undefined = "standard"
 ): SceneAdvanceResult {
   const tuning = getDiveModeTuning(mode);
+  
+  if (!aiManager) {
+    aiManager = new AIManager(dimensions);
+  }
+
   const player = advancePlayer(scene.player, input, dimensions, totalTime, deltaTime);
+  
+  aiManager.updatePlayer(player);
+  aiManager.syncPredators(scene.predators);
+  aiManager.syncPirates(scene.pirates);
+  aiManager.update(deltaTime);
+
   const creatures = scene.creatures.map((creature) =>
     advanceCreature(creature, dimensions, totalTime, deltaTime)
   );
-  const predators = scene.predators.map((predator) =>
-    advancePredator(predator, player, dimensions, totalTime, deltaTime, tuning.predatorSpeedScale)
-  );
-  const pirates = scene.pirates.map((pirate) =>
-    advancePirate(pirate, player, dimensions, totalTime, deltaTime, tuning.pirateSpeedScale)
-  );
+  
+  const predators = scene.predators.map((p) => {
+    const updated = aiManager!.readPredator(p);
+    return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
+  });
+  
+  const pirates = scene.pirates.map((p) => {
+    const updated = aiManager!.readPirate(p);
+    return { ...updated, y: Math.max(50, Math.min(updated.y, dimensions.height - 50)), lanternPhase: p.lanternPhase + deltaTime * 5 };
+  });
+  
   const particles = scene.particles.map((particle) =>
     advanceParticle(particle, dimensions, totalTime, deltaTime)
   );

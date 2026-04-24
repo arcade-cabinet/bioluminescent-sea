@@ -32,9 +32,9 @@ describe("biomeAtDepth", () => {
   });
 
   it("snaps on boundaries toward the deeper biome", () => {
-    expect(biomeAtDepth(400).id).toBe("twilight-shelf");
-    expect(biomeAtDepth(1200).id).toBe("midnight-column");
-    expect(biomeAtDepth(2400).id).toBe("abyssal-trench");
+    expect(biomeAtDepth(800).id).toBe("twilight-shelf");
+    expect(biomeAtDepth(2400).id).toBe("midnight-column");
+    expect(biomeAtDepth(4800).id).toBe("abyssal-trench");
   });
 
   it("clamps past the deepest end to abyssal-trench", () => {

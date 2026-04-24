@@ -121,30 +121,55 @@ export function writeSceneToWorld(w: DiveWorld, scene: SceneState): DiveWorld {
     depthTravelMeters: scene.depthTravelMeters,
   }));
 
-  // Creatures: indexed by order; a shorter list means some were collected.
-  const nextCreatures: Entity[] = [];
-  for (let i = 0; i < scene.creatures.length; i++) {
-    const entity = w.creatureEntities[i];
-    if (!entity) break;
-    entity.set(CreatureEntity, { value: scene.creatures[i] });
-    nextCreatures.push(entity);
-  }
-  // Destroy any entities beyond the new length (collected this frame).
-  for (let i = scene.creatures.length; i < w.creatureEntities.length; i++) {
-    w.creatureEntities[i].destroy();
-  }
+  const nextCreatures = syncEntities(
+    w.creatureEntities,
+    scene.creatures,
+    CreatureEntity,
+  );
+  const nextPredators = syncEntities(
+    w.predatorEntities,
+    scene.predators,
+    PredatorEntity,
+  );
+  const nextPirates = syncEntities(
+    w.pirateEntities,
+    scene.pirates,
+    PirateEntity,
+  );
+  const nextParticles = syncEntities(
+    w.particleEntities,
+    scene.particles,
+    ParticleEntity,
+  );
 
-  for (let i = 0; i < scene.predators.length; i++) {
-    w.predatorEntities[i].set(PredatorEntity, { value: scene.predators[i] });
-  }
-  for (let i = 0; i < scene.pirates.length; i++) {
-    w.pirateEntities[i].set(PirateEntity, { value: scene.pirates[i] });
-  }
-  for (let i = 0; i < scene.particles.length; i++) {
-    w.particleEntities[i].set(ParticleEntity, { value: scene.particles[i] });
-  }
+  return {
+    ...w,
+    creatureEntities: nextCreatures,
+    predatorEntities: nextPredators,
+    pirateEntities: nextPirates,
+    particleEntities: nextParticles,
+  };
+}
 
-  return { ...w, creatureEntities: nextCreatures };
+// biome-ignore lint/suspicious/noExplicitAny: trait factories differ per trait; values are homogeneous
+function syncEntities<T>(entities: Entity[], values: readonly T[], trait: any): Entity[] {
+  const n = values.length;
+  if (n === entities.length) {
+    for (let i = 0; i < n; i++) {
+      entities[i].set(trait, { value: values[i] });
+    }
+    return entities;
+  }
+  const next: Entity[] = [];
+  const fit = Math.min(n, entities.length);
+  for (let i = 0; i < fit; i++) {
+    entities[i].set(trait, { value: values[i] });
+    next.push(entities[i]);
+  }
+  for (let i = n; i < entities.length; i++) {
+    entities[i].destroy();
+  }
+  return next;
 }
 
 /**

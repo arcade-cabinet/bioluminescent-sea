@@ -22,8 +22,8 @@ import {
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { pushSeedToUrl, useSearchParamSeed } from "@/hooks/useSearchParamSeed";
 import { useTouchInput } from "@/hooks/useTouchInput";
-import { createAmbient, playSfx } from "@/audio";
-import { codenameFromSeed, dailySeed, randomSeed, trenchBlurbForSeed } from "@/sim/rng";
+import { createAmbient, disposeSfx, playSfx } from "@/audio";
+import { codenameFromSeed, dailySeed, randomSeed, seedFromCodename, trenchBlurbForSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
   createDiveWorld,
@@ -202,6 +202,10 @@ function DeepSeaGame({
     return () => {
       ambient.stop();
       ambientRef.current = null;
+      // Tear down the module-level SFX synths too. They live on
+      // Tone.getDestination() and would otherwise accumulate orphans
+      // across StrictMode double-mount + HMR + Dive Again cycles.
+      disposeSfx();
     };
   }, []);
 
@@ -785,7 +789,7 @@ function cloneSceneState(scene: SceneState): SceneState {
 }
 
 export default function Game() {
-  const [gameState, setGameState] = useState<"landing" | "playing" | "gameover" | "complete">(
+  const [gameState, setGameState] = useState<"landing" | "customization" | "playing" | "gameover" | "complete">(
     "landing"
   );
   const [sessionMode, setSessionMode] = useState<SessionMode>("standard");
@@ -800,9 +804,16 @@ export default function Game() {
   const [previewSeed, setPreviewSeed] = useState<number>(
     () => urlSeed ?? randomSeed()
   );
+  const [editingCodename, setEditingCodename] = useState<string>("");
+
   useEffect(() => {
     if (urlSeed !== null) setPreviewSeed(urlSeed);
   }, [urlSeed]);
+
+  useEffect(() => {
+    setEditingCodename(codenameFromSeed(previewSeed));
+  }, [previewSeed]);
+
   // The seed used by the currently-playing dive; frozen at Begin Dive.
   const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
   const previewCodename = codenameFromSeed(previewSeed);
@@ -834,19 +845,17 @@ export default function Game() {
                 blurb: trenchBlurbForSeed(previewSeed).full,
               }}
               primaryAction={{
-                label: "Begin Dive",
+                label: "New Dive",
                 onClick: () => {
-                  const snapshot = resolveDeepSeaSnapshot();
-                  const nextSeed = snapshot ? activeSeed : previewSeed;
-                  setActiveSeed(nextSeed);
-                  pushSeedToUrl(nextSeed);
-                  setInitialSnapshot(snapshot);
-                  setGameState("playing");
+                  setGameState("customization");
                 },
               }}
               secondaryAction={{
                 label: `Today's Trench — ${todayCodename}`,
-                onClick: () => setPreviewSeed(dailySeed()),
+                onClick: () => {
+                  setPreviewSeed(dailySeed());
+                  setGameState("customization");
+                },
               }}
             >
               <div
@@ -868,6 +877,75 @@ export default function Game() {
                 ))}
               </div>
             </StartScreen>
+          </motion.div>
+        )}
+        {gameState === "customization" && (
+          <motion.div
+            key="customization"
+            data-testid="customization-screen"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "2rem 1.5rem",
+              background: "var(--color-bg)",
+              color: "var(--color-fg)",
+              textAlign: "center",
+              zIndex: 10,
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div style={{ maxWidth: 400, width: "100%", background: "var(--color-abyss)", padding: "2rem", borderRadius: "1rem", border: "1px solid var(--color-deep)" }}>
+              <h2 style={{ fontFamily: "var(--font-display)", color: "var(--color-glow)", fontSize: "2rem", margin: "0 0 1rem 0" }}>Chart Your Route</h2>
+              <p style={{ color: "var(--color-fg-muted)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+                Every trench is generated from a three-word phrase. Edit this phrase to explore a different permutation of the abyss.
+              </p>
+              
+              <div style={{ marginBottom: "2rem" }}>
+                <input 
+                  type="text" 
+                  value={editingCodename}
+                  onChange={(e) => {
+                    setEditingCodename(e.target.value);
+                    const parsed = seedFromCodename(e.target.value);
+                    if (parsed !== null) setPreviewSeed(parsed);
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    background: "rgba(5, 10, 20, 0.5)",
+                    border: "1px solid var(--color-glow)",
+                    color: "var(--color-fg)",
+                    fontFamily: "var(--font-body)",
+                    fontSize: "1rem",
+                    textAlign: "center",
+                    borderRadius: "0.5rem",
+                    marginBottom: "0.5rem",
+                  }}
+                />
+                <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                  <OverlayButton variant="ghost" onClick={() => setPreviewSeed(randomSeed())}>Reroll</OverlayButton>
+                  <OverlayButton variant="ghost" onClick={() => setPreviewSeed(dailySeed())}>Daily</OverlayButton>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+                <OverlayButton variant="ghost" onClick={() => setGameState("landing")}>Back</OverlayButton>
+                <OverlayButton variant="primary" onClick={() => {
+                  const snapshot = resolveDeepSeaSnapshot();
+                  const nextSeed = snapshot ? activeSeed : previewSeed;
+                  setActiveSeed(nextSeed);
+                  pushSeedToUrl(nextSeed);
+                  setInitialSnapshot(snapshot);
+                  setGameState("playing");
+                }}>Begin Dive</OverlayButton>
+              </div>
+            </div>
           </motion.div>
         )}
         {gameState === "playing" && (

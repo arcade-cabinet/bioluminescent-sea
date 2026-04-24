@@ -19,7 +19,7 @@ describe("getDiveTelemetry biome", () => {
     // value past the twilight-shelf boundary (400m).
     const shallow = getDiveTelemetry(createInitialScene(viewport), 600, 600);
     const deep = getDiveTelemetry(
-      { ...createInitialScene(viewport), depthTravelMeters: 1800 },
+      { ...createInitialScene(viewport), depthTravelMeters: 3000 },
       600,
       600
     );
