@@ -1,5 +1,6 @@
 import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
+import { biomeAtDepth } from "@/sim/world/biomes";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
 import { GAME_DURATION } from "./constants";
 import { describeDiveObjective, getPressureLabel } from "./objectives";
@@ -33,18 +34,24 @@ export function getDiveTelemetry(
   const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
   const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
   const routeLandmark = getDiveRouteLandmark(collectionRatio, nearestBeacon);
+  const depthMeters = computeDepthMeters(collectionRatio, oxygenRatio);
+  const biome = biomeAtDepth(depthMeters);
 
   return {
     beaconBearingRadians: nearestBeacon.bearingRadians,
+    biomeId: biome.id,
+    biomeLabel: biome.label,
+    biomeTintHex: biome.tintHex,
     collectionRatio,
-    depthMeters: computeDepthMeters(collectionRatio, oxygenRatio),
+    depthMeters,
     nearestBeaconDistance: nearestBeacon.distance,
     nearestThreatDistance,
     objective: describeDiveObjective(
       scene.creatures.length,
       timeLeft,
       nearestThreatDistance,
-      nearestBeacon.distance
+      nearestBeacon.distance,
+      biome.id
     ),
     oxygenRatio,
     pressureLabel: getPressureLabel(oxygenRatio, nearestThreatDistance),

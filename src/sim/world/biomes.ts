@@ -13,7 +13,8 @@ export const BIOMES: readonly Biome[] = [
       "Surface light still reaches here. Plankton drift, a first taste of the trench.",
     depthStartMeters: 0,
     depthEndMeters: 400,
-    tintHex: "#0e4f55",
+    // Warm kelp-green — the surface's last gift before the dark.
+    tintHex: "#2a8a68",
     creatureDensity: 0.55,
     predatorDensity: 0,
     pirateDensity: 0,
@@ -24,7 +25,8 @@ export const BIOMES: readonly Biome[] = [
     description: "The water starts listening back. A slow predator paces the shelf.",
     depthStartMeters: 400,
     depthEndMeters: 1200,
-    tintHex: "#0c3a48",
+    // Cool teal — the shelf is still readable but the sun is gone.
+    tintHex: "#1e6a78",
     creatureDensity: 0.8,
     predatorDensity: 0.35,
     pirateDensity: 0.15,
@@ -35,7 +37,9 @@ export const BIOMES: readonly Biome[] = [
     description: "Bioluminescent bloom. Anglers and eels work the column together.",
     depthStartMeters: 1200,
     depthEndMeters: 2400,
-    tintHex: "#0a1a2e",
+    // Indigo bruise — the column's own color, a deep violet that
+    // makes the mint creatures pop.
+    tintHex: "#3a1d5a",
     creatureDensity: 1,
     predatorDensity: 0.7,
     pirateDensity: 0.5,
@@ -46,7 +50,10 @@ export const BIOMES: readonly Biome[] = [
     description: "Sparse, rare, cold. Lanterns from a wrecked flotilla sweep the dark.",
     depthStartMeters: 2400,
     depthEndMeters: 3600,
-    tintHex: "#050a14",
+    // Ember warn — the trench floor smells of the warn-red palette,
+    // because this is where the pirate lanterns and the rare red
+    // alerts live.
+    tintHex: "#6a1a2a",
     creatureDensity: 0.4,
     predatorDensity: 0.55,
     pirateDensity: 0.85,
