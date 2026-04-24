@@ -110,7 +110,11 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         biomeTintHex,
         depthMeters: root?.depthTravelMeters ?? 0,
       });
-      parallax.draw(particles);
+      parallax.draw({
+        particles,
+        heightPx: v.heightPx,
+        depthMeters: root?.depthTravelMeters ?? 0,
+      });
       entities.sync({ creatures, predators, pirates, totalTime });
       player.sync(playerValue, viewportScale, totalTime);
       fx.sync({
