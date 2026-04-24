@@ -63,7 +63,7 @@ export function createRng(seed: number): Rng {
 
 export function randomSeed(): number {
   const values = new Uint32Array(1);
-  globalThis.crypto.getRandomValues(values);
+  crypto.getRandomValues(values);
   return 1 + (values[0] % 2147483646);
 }
 
