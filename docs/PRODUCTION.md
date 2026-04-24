@@ -83,11 +83,13 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Identity
 
-- [ ] Favicon SVG (mint jellyfish silhouette over abyss navy).
+- [x] Favicon SVG (mint jellyfish silhouette over abyss navy) —
+      `public/favicon.svg`, wired via `<link rel="icon" ...>`.
 - [ ] Android icon pack rendered from the SVG at all mipmap resolutions.
-- [ ] Apple touch icon 180×180.
-- [ ] OG image 1200×630 stored in `public/` and referenced from
-      `index.html`.
+- [x] Apple touch icon — `public/apple-touch-icon.svg` (180×180
+      viewBox, iOS masks to its own radius).
+- [x] OG image 1200×630 — `public/og-image.svg`, referenced via
+      Open Graph + Twitter Card meta tags in `index.html`.
 - [ ] Landing hero visual replaces the typographic-only card.
 
 ## Quality gates
@@ -112,8 +114,14 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 - [ ] `release.yml` — on release-please tag: build bundle, publish
       Pages artifact, build signed Android release APK.
 - [ ] `cd.yml` — on push:main: deploy Pages artifact.
-- [ ] `analysis-nightly.yml` — deterministic-seed regression sweep.
-- [ ] `automerge.yml` — automerge green dependabot patches.
+- [x] `analysis-nightly.yml` — deterministic-seed regression sweep
+      (100 seeds × 180 frames, asserts finite telemetry + bounded
+      ratios + per-frame budget; opens `sim-regression` issue on
+      failure). Driver: `scripts/sim-sweep.ts`, also runnable as
+      `pnpm run sim:sweep` locally.
+- [x] `automerge.yml` — automerge green dependabot PRs for
+      semver-patch + semver-minor updates. Major bumps still require
+      human review.
 
 ## Triage queue (open now)
 
