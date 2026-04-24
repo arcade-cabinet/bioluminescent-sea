@@ -14,13 +14,35 @@ export interface PlayerController {
 }
 
 export function mountPlayer(parent: Container): PlayerController {
+  const trail = new Graphics();
   const lamp = new Graphics();
   const hull = new Graphics();
-  parent.addChild(lamp, hull);
+  parent.addChild(trail, lamp, hull);
+
+  const trailPositions: { x: number; y: number; time: number }[] = [];
 
   return {
     sync(player, viewportScale, totalTime) {
       const s = Math.max(0.75, viewportScale);
+
+      // Record trail
+      trailPositions.unshift({ x: player.x, y: player.y, time: totalTime });
+      if (trailPositions.length > 25) trailPositions.pop();
+
+      trail.clear();
+      if (trailPositions.length > 1) {
+        trail.moveTo(trailPositions[0].x, trailPositions[0].y);
+        for (let i = 1; i < trailPositions.length; i++) {
+          const pt = trailPositions[i];
+          const age = totalTime - pt.time;
+          const alpha = Math.max(0, 1 - age * 1.5);
+          if (alpha > 0) {
+             trail.lineTo(pt.x, pt.y);
+             trail.stroke({ color: 0x6be6c1, alpha: alpha * 0.4, width: 4 * s });
+             trail.moveTo(pt.x, pt.y);
+          }
+        }
+      }
 
       lamp.clear();
       lamp.position.set(player.x, player.y);

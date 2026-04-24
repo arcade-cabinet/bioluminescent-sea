@@ -1,11 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { createInitialScene } from "@/sim/dive/advance";
+import { describe, expect, it, beforeEach } from "vitest";
+import { createInitialScene, resetAIManager } from "@/sim/dive/advance";
 import { advanceDiveFrame } from "../actions";
 import { createDiveWorld, readSceneFromWorld, writeSceneToWorld } from "../world";
 
 const viewport = { width: 1280, height: 720 };
 
 describe("createDiveWorld", () => {
+  beforeEach(() => {
+    resetAIManager();
+  });
+
   it("spawns one entity per creature / predator / pirate / particle plus root + player", () => {
     const scene = createInitialScene(viewport);
     const w = createDiveWorld(scene);
@@ -45,6 +49,10 @@ describe("createDiveWorld", () => {
 });
 
 describe("advanceDiveFrame", () => {
+  beforeEach(() => {
+    resetAIManager();
+  });
+
   it("produces the same result as calling advanceScene directly", () => {
     const scene = createInitialScene(viewport);
     const world = createDiveWorld(scene);
@@ -84,6 +92,7 @@ describe("advanceDiveFrame", () => {
     };
 
     const a = advanceDiveFrame({ world: worldA, ...commonInput });
+    resetAIManager();
     const b = advanceDiveFrame({ world: worldB, ...commonInput });
 
     expect(a.result.scene.player).toEqual(b.result.scene.player);

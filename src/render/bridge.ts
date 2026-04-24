@@ -135,6 +135,16 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         threatFlashAlpha,
         viewport: v,
       });
+
+      // Apply camera shake to the entire stage based on threatFlashAlpha
+      if (threatFlashAlpha > 0) {
+        const intensity = threatFlashAlpha * 12; // max shake pixels
+        const shakeX = (Math.random() - 0.5) * intensity;
+        const shakeY = (Math.random() - 0.5) * intensity;
+        stage.app.stage.position.set(shakeX, shakeY);
+      } else {
+        stage.app.stage.position.set(0, 0);
+      }
     },
     resize(widthPx, heightPx) {
       stage.resize(widthPx, heightPx);

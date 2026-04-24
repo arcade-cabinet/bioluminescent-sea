@@ -1,3 +1,4 @@
+import type { BiomeId } from "@/sim/world/types";
 import type {
   Creature,
   Particle,
@@ -46,7 +47,7 @@ export interface CreatureCollectionResult {
 
 export interface DiveTelemetry {
   beaconBearingRadians: number | null;
-  biomeId: "photic-gate" | "twilight-shelf" | "midnight-column" | "abyssal-trench";
+  biomeId: BiomeId;
   biomeLabel: string;
   biomeTintHex: string;
   collectionRatio: number;
@@ -96,6 +97,20 @@ export interface DiveModeTuning {
   pirateSpeedScale: number;
   predatorSpeedScale: number;
   threatRadiusScale: number;
+  
+  // Modular Game Mechanics Slots
+  /** If true, the player can move laterally as well as vertically. If false, lateral movement is constrained. */
+  freeLateralMovement: boolean;
+  /** If true, the player dictates descent speed. If false, the game scrolls continuously. */
+  freeVerticalMovement: boolean;
+  /** The type of objective to complete the dive. */
+  completionCondition: "infinite" | "depth_goal" | "clear_room";
+  /** Target depth if condition is depth_goal */
+  targetDepthMeters?: number;
+  /** If true, enemies will continuously respawn as chunks load. */
+  respawnThreats: boolean;
+  /** How much harder the game gets as depth increases. */
+  difficultyScaling: "none" | "logarithmic" | "linear";
 }
 
 export interface DiveThreatImpactResult {
