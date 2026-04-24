@@ -223,8 +223,12 @@ After Bioluminescent Sea is production-polished and deployed, the same
 foundation + player-journey + identity + content pass applies, in
 order, to the sibling POC extractions:
 
-- [ ] `../cosmic-gardener` — same A → H style foundation, tight
-      game-loop audit, production copy + visuals, GitHub Pages deploy.
+- [ ] `../cosmic-gardener` — foundation kicked off 2026-04-24:
+      `docs/PRODUCTION.md` seeded (arcade-cabinet/cosmic-gardener PR
+      #9). A → H sequence tailored to its DOM-particle stack:
+      engine split → seeded determinism → identity-forward landing →
+      Tone.js audio → content pipeline → identity icons → production
+      deploy. Remaining work tracked in that repo.
 - [ ] `../enchanted-forest` — same treatment.
 
 Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
