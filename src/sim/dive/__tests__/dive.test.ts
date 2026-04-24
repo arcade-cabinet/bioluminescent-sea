@@ -113,45 +113,47 @@ describe("deep sea simulation", () => {
   });
 
   test("maps session modes to recoverable dive pressure", () => {
-    expect(getDiveDurationSeconds("standard")).toBe(GAME_DURATION);
-    expect(getDiveDurationSeconds("standard")).toBeGreaterThanOrEqual(8 * 60);
-    expect(getDiveDurationSeconds("standard")).toBeLessThanOrEqual(15 * 60);
-    expect(getDiveDurationSeconds("cozy")).toBeGreaterThan(getDiveDurationSeconds("standard"));
-    expect(getDiveDurationSeconds("challenge")).toBeLessThan(getDiveDurationSeconds("standard"));
-    expect(getDiveModeTuning("challenge").threatRadiusScale).toBeGreaterThan(
-      getDiveModeTuning("standard").threatRadiusScale
+    expect(getDiveDurationSeconds("descent")).toBe(GAME_DURATION);
+    expect(getDiveDurationSeconds("descent")).toBeGreaterThanOrEqual(8 * 60);
+    expect(getDiveDurationSeconds("descent")).toBeLessThanOrEqual(15 * 60);
+    expect(getDiveDurationSeconds("exploration")).toBeGreaterThan(
+      getDiveDurationSeconds("descent")
     );
-    expect(getDiveModeTuning("cozy").predatorSpeedScale).toBeLessThan(
-      getDiveModeTuning("standard").predatorSpeedScale
+    expect(getDiveDurationSeconds("arena")).toBeLessThan(getDiveDurationSeconds("descent"));
+    expect(getDiveModeTuning("arena").threatRadiusScale).toBeGreaterThan(
+      getDiveModeTuning("descent").threatRadiusScale
     );
-    expect(getDiveModeTuning("standard").collisionEndsDive).toBe(false);
-    expect(getDiveModeTuning("challenge").collisionEndsDive).toBe(true);
+    expect(getDiveModeTuning("exploration").predatorSpeedScale).toBeLessThan(
+      getDiveModeTuning("descent").predatorSpeedScale
+    );
+    expect(getDiveModeTuning("descent").collisionEndsDive).toBe(false);
+    expect(getDiveModeTuning("arena").collisionEndsDive).toBe(true);
   });
 
-  test("resolves predator contact as recoverable oxygen loss outside challenge", () => {
-    const standardImpact = resolveDiveThreatImpact({
+  test("resolves predator contact as recoverable oxygen loss outside arena", () => {
+    const descentImpact = resolveDiveThreatImpact({
       collided: true,
       lastImpactTimeSeconds: -100,
-      mode: "standard",
+      mode: "descent",
       timeLeft: 300,
       totalTimeSeconds: 90,
     });
     const graceImpact = resolveDiveThreatImpact({
       collided: true,
       lastImpactTimeSeconds: 90,
-      mode: "standard",
-      timeLeft: standardImpact.timeLeft,
+      mode: "descent",
+      timeLeft: descentImpact.timeLeft,
       totalTimeSeconds: 92,
     });
-    const challengeImpact = resolveDiveThreatImpact({
+    const arenaImpact = resolveDiveThreatImpact({
       collided: true,
       lastImpactTimeSeconds: -100,
-      mode: "challenge",
+      mode: "arena",
       timeLeft: 300,
       totalTimeSeconds: 90,
     });
 
-    expect(standardImpact).toMatchObject({
+    expect(descentImpact).toMatchObject({
       oxygenPenaltySeconds: 45,
       timeLeft: 255,
       type: "oxygen-penalty",
@@ -161,7 +163,7 @@ describe("deep sea simulation", () => {
       timeLeft: 255,
       type: "none",
     });
-    expect(challengeImpact).toMatchObject({
+    expect(arenaImpact).toMatchObject({
       timeLeft: 0,
       type: "dive-failed",
     });
@@ -266,15 +268,15 @@ describe("deep sea simulation", () => {
       depthTravelMeters: 2900,
     };
     const telemetry = getDiveTelemetry(nearFloor, 10);
-    const cozyTelemetry = getDiveTelemetry(
+    const explorationTelemetry = getDiveTelemetry(
       nearFloor,
       10,
-      getDiveDurationSeconds("cozy")
+      getDiveDurationSeconds("exploration")
     );
 
     expect(telemetry.depthMeters).toBeGreaterThan(2_800);
     expect(telemetry.oxygenRatio).toBeCloseTo(1 / 60);
-    expect(cozyTelemetry.oxygenRatio).toBeLessThan(telemetry.oxygenRatio);
+    expect(explorationTelemetry.oxygenRatio).toBeLessThan(telemetry.oxygenRatio);
     expect(["Ascent", "Hunted", "Critical", "Calm"]).toContain(telemetry.pressureLabel);
   });
 
@@ -305,7 +307,7 @@ describe("deep sea simulation", () => {
     const summary = getDiveRunSummary(scene, 12_500, 240);
     const celebration = getDiveCompletionCelebration(summary);
 
-    expect(isDiveComplete(scene, "standard")).toBe(false); // standard is now infinite
+    expect(isDiveComplete(scene, "descent")).toBe(false); // descent is infinite
     expect(summary).toMatchObject({
       beaconsRemaining: 0,
       completionPercent: 0,

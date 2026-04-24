@@ -38,30 +38,35 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
     // Beat 1 — landing
     await expect(page.getByTestId("landing-screen")).toBeVisible();
     await expect(page.getByRole("heading", { name: /bioluminescent sea/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /new dive/i })).toBeVisible();
 
     const landingDump = await dumpBeat(page, testInfo, "01-landing", collector, JOURNEY_PROBES, seen);
     expect(
       summarizeClipping(landingDump),
       `landing has clipped elements on ${testInfo.project.name}:\n${summarizeClipping(landingDump).join("\n")}`
     ).toEqual([]);
-// Beat 2 — click New Dive, assert transition to customization
-await page.getByRole("button", { name: /new dive/i }).click();
-await expect(page.getByTestId("customization-screen")).toBeVisible({ timeout: 2000 });
 
-// Beat 3 — mode switch exercises the ghost/primary variants in customization
-await page.getByRole("button", { name: /cozy/i }).click();
-await dumpBeat(page, testInfo, "02-mode-cozy", collector, JOURNEY_PROBES, seen);
+    // Beat 2 — open the seed picker for each mode card, exercising the
+    // shared overlay across descent / arena / exploration variants.
+    await page.getByTestId("mode-card-descent").click();
+    await expect(page.getByTestId("seed-picker-overlay")).toBeVisible({ timeout: 2000 });
+    await dumpBeat(page, testInfo, "02-mode-descent", collector, JOURNEY_PROBES, seen);
 
-await page.getByRole("button", { name: /challenge/i }).click();
-await dumpBeat(page, testInfo, "03-mode-challenge", collector, JOURNEY_PROBES, seen);
+    await page.getByTestId("seed-cancel-button").click();
+    await expect(page.getByTestId("seed-picker-overlay")).not.toBeVisible();
 
-// Switch back to standard before starting
-await page.getByRole("button", { name: /standard/i }).click();
+    await page.getByTestId("mode-card-arena").click();
+    await expect(page.getByTestId("seed-picker-overlay")).toBeVisible({ timeout: 2000 });
+    await dumpBeat(page, testInfo, "03-mode-arena", collector, JOURNEY_PROBES, seen);
 
-// Beat 4 — click Begin Dive, assert transition lands under 2500ms
-const startedAt = Date.now();
-    await page.getByRole("button", { name: /begin dive/i }).click();
+    await page.getByTestId("seed-cancel-button").click();
+    await expect(page.getByTestId("seed-picker-overlay")).not.toBeVisible();
+
+    await page.getByTestId("mode-card-exploration").click();
+    await expect(page.getByTestId("seed-picker-overlay")).toBeVisible({ timeout: 2000 });
+
+    // Beat 4 — click Begin Dive, assert transition lands under 2500ms
+    const startedAt = Date.now();
+    await page.getByTestId("begin-dive-button").click();
     await expect(page.getByTestId("playing-screen")).toBeVisible({ timeout: 2500 });
     const transitionMs = Date.now() - startedAt;
     expect(

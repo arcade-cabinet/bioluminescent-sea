@@ -7,7 +7,7 @@ import "pixi.js/unsafe-eval";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import "@/theme/global.css";
-import Game from "@/ui/Game";
+import Game from "@/ui/screens/Game";
 
 const mountNode = document.getElementById("root");
 if (!mountNode) {

@@ -4,37 +4,22 @@ import type { DiveModeTuning } from "./types";
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
 const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
-  challenge: {
-    collectionOxygenScale: 0.55,
-    collisionEndsDive: true,
-    durationSeconds: 480,
-    impactGraceSeconds: 0,
-    impactOxygenPenaltySeconds: 0,
-    pirateSpeedScale: 1.1,
-    predatorSpeedScale: 1.16,
-    threatRadiusScale: 1.22,
-    freeLateralMovement: true,
-    freeVerticalMovement: false,
-    completionCondition: "infinite",
-    respawnThreats: true,
-    difficultyScaling: "logarithmic",
-  },
-  cozy: {
-    collectionOxygenScale: 1.35,
+  exploration: {
+    collectionOxygenScale: 1.5,
     collisionEndsDive: false,
-    durationSeconds: 780,
+    durationSeconds: 900, // Very long base
     impactGraceSeconds: 5,
-    impactOxygenPenaltySeconds: 25,
-    pirateSpeedScale: 0.8,
-    predatorSpeedScale: 0.78,
-    threatRadiusScale: 0.72,
+    impactOxygenPenaltySeconds: 15, // Low penalty
+    pirateSpeedScale: 0.7,
+    predatorSpeedScale: 0.7,
+    threatRadiusScale: 0.8,
     freeLateralMovement: true,
-    freeVerticalMovement: true,
+    freeVerticalMovement: true, // You control descent
     completionCondition: "infinite",
-    respawnThreats: true,
+    respawnThreats: false, // More static world
     difficultyScaling: "none",
   },
-  standard: {
+  descent: {
     collectionOxygenScale: 1,
     collisionEndsDive: false,
     durationSeconds: GAME_DURATION,
@@ -44,8 +29,23 @@ const DIVE_MODE_TUNING: Record<SessionMode, DiveModeTuning> = {
     predatorSpeedScale: 1,
     threatRadiusScale: 1,
     freeLateralMovement: true,
-    freeVerticalMovement: false,
+    freeVerticalMovement: false, // Forced descent
     completionCondition: "infinite",
+    respawnThreats: true,
+    difficultyScaling: "logarithmic",
+  },
+  arena: {
+    collectionOxygenScale: 0.75,
+    collisionEndsDive: true, // Instant death in bullet hell
+    durationSeconds: 480,
+    impactGraceSeconds: 0,
+    impactOxygenPenaltySeconds: 0,
+    pirateSpeedScale: 1.25,
+    predatorSpeedScale: 1.25,
+    threatRadiusScale: 1.3,
+    freeLateralMovement: true,
+    freeVerticalMovement: true, // Maneuver inside the room
+    completionCondition: "clear_room", // Halts descent per chunk until enemies cleared
     respawnThreats: true,
     difficultyScaling: "linear",
   },
