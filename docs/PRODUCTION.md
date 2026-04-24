@@ -67,11 +67,32 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       summary now read `scene.depthTravelMeters`; biome chip shows
       Photic Gate at cold-start instead of jumping straight to
       Midnight. Landed in PR #23.
-- [ ] **PR F.3 — Entity world-Y + chunking.** Entities carry
-      `Vec3 {x, y: depthMeters, z: parallax}` in meters. Camera
-      scrolls as player descends; chunks spawn below and retire
-      above. Supersedes the "18 fixed creatures" scene model. Builds
-      on F.2's depthTravelMeters baseline.
+- [x] **PR F.3 — Entity world-Y + chunking (sim side).** Three PRs
+      landed (#39, #43, #44):
+      * `src/sim/chunk/` — `chunkAt`, `chunksInWindow`,
+        `chunkIndexAtDepth` with 15 determinism tests; 200m chunk
+        height decomposes the 3200m trench into 16 chunks across the
+        four biomes.
+      * `src/sim/entities/chunked-spawn.ts` —
+        `spawnCreaturesForChunk(chunk, viewport)` driven by biome
+        `creatureDensity` (photic 2, twilight 3, midnight 4,
+        abyssal 2). Creature ids prefixed by chunk index
+        (`beacon-c3-2`) so cross-chunk collisions are impossible.
+      * `src/sim/dive/chunked-scene.ts` — `createChunkedScene(seed,
+        viewport, initialDepth)` flat-maps creatures across the
+        camera window. Production-shape target for replacing the
+        legacy 18-fixed-creatures spawner.
+      Not yet wired into Game.tsx — the renderer-side camera-scroll
+      is the follow-up. Chunks-retire logic (off-screen pruning)
+      also deferred. The sim side of F.3 is fully landed; see **PR
+      F.4** for the renderer cut-over.
+- [ ] **PR F.4 — Renderer camera-scroll + chunk lifecycle.**
+      Game.tsx swaps from `createSeededScene` to
+      `createChunkedScene`. Renderer projects entity positions
+      through a scrolling camera reading `scene.depthTravelMeters`.
+      Chunks below the bottom edge retire; chunks above the top
+      edge spawn in. Completes the "18 fixed creatures" → chunked
+      trench migration.
 - [x] **PR G — Audio.** Tone.js ambient pad with per-biome chord
       voicings (lydian open fifth → sus4 → minor 9th → dissonant
       minor 2nd). Low-pass filter cutoff tracks depth so the column
@@ -164,8 +185,17 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       still blocked by missing `workflow` OAuth scope; user must run
       `gh auth refresh -s workflow`.
 - [x] Merge release-please 0.2.0 (PR #1) after foundation PRs land.
-- [ ] Seed the `.release-please-manifest.json` if 1.0 cut requires
-      manual bump.
+- [x] Seed the `.release-please-manifest.json` if 1.0 cut requires
+      manual bump. **Decision (2026-04-24):** not required. Current
+      config is `release-type: node` with `bump-minor-pre-major:
+      true`, and release-please has been correctly bumping through
+      0.2.0 → 0.2.1 → 0.2.2 → 0.2.3 → 0.3.0 in response to
+      conventional-commit prefixes. When the cross-repo polish work
+      completes and the player experience is judged 1.0-ready, the
+      cut can be triggered by either (a) a manual manifest bump to
+      `"1.0.0"` or (b) a `BREAKING CHANGE:` footer on any commit.
+      Either path lands automatically via the existing workflow; no
+      prep work needed today.
 
 ## Decisions that need lore/design follow-through
 
