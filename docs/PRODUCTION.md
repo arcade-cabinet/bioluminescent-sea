@@ -227,16 +227,20 @@ foundation + player-journey + identity + content pass applies, in
 order, to the sibling POC extractions:
 
 - [ ] `../cosmic-gardener` — foundation in progress (2026-04-24):
-      PRODUCTION.md + seeded-RNG scaffold both merged (PR #9 + #10).
-      `createRng` / `hashSeed` / `randomSeed` in `src/sim/rng/` match
-      the shape used here so mental models stay shared across the
-      game repos. Remaining A → H work (plumb RNG through engine,
-      identity-forward landing, Tone.js audio, content pipeline,
-      identity icons, production deploy) tracked in that repo.
+      PRODUCTION.md + seeded-RNG scaffold + animated landing hero
+      all merged (PR #9 + #10 + #11). Starfield + drifting cosmic
+      dust + pulsing orb with a constellation ring. POC-leakage copy
+      purged — verb chips now "Launch the orb / Awaken the pattern /
+      Rest when it hums" and the title uses Fraunces instead of the
+      stale bs-display class. Remaining A → H work (audio, content
+      pipeline, identity icons, production deploy) tracked in that
+      repo.
 - [ ] `../enchanted-forest` — foundation in progress (2026-04-24):
-      PRODUCTION.md + seeded-RNG scaffold both merged (PR #8 + #9).
-      Same createRng/hashSeed/randomSeed module shape as the other
-      repos. Remaining A → H work tracked in that repo.
+      PRODUCTION.md + seeded-RNG scaffold merged (PR #8 + #9);
+      animated grove hero in flight (PR #10). Forest canopy +
+      sacred tree silhouette + 32 fireflies + 18 rising cinders +
+      drifting rune glyphs. Remaining A → H work tracked in that
+      repo.
 
 Each repo gets its own `docs/PRODUCTION.md` with a tailored sequence.
 The **rendering/physics layer is per-game** — bioluminescent-sea uses
