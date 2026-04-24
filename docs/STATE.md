@@ -1,11 +1,42 @@
 ---
 title: State
-updated: 2026-04-23
+updated: 2026-04-24
 status: in-progress
 domain: context
 ---
 
 # State
+
+## 2026-04-24 update
+
+Since the 2026-04-23 baseline the renderer, ECS, and player journey
+have caught up with the foundation plan and a memory-spike audit
+landed four perf patches.
+
+Merged since 2026-04-23:
+
+- **PR #55 (F.4e)** — entities layer projects `worldYMeters` through
+  camera
+- **PR #56 (F.4f)** — `chunkLifecycleDelta` spawn/retire helper
+- **PR #59** — tap-lag fix (RAF rebind decoupled from pointer events)
+- **PR #60** — biome transition banner
+- **PR #61** — multi-viewport Playwright journey harness +
+  HUD testids
+- **PR #62** — right-side HUD chip stack (landmark + biome +
+  codename) as one flex-column group
+- **PR #63** — stabilized autosave effect; mute-safe ambient pad
+- **PR #58** — runtime chunk lifecycle (biomes change during play)
+
+Net effect: a cold player on mobile portrait 390×844 lands, sees
+title + tagline + verb teaser, taps Begin Dive, transitions to a
+live sub with a full HUD inside 600ms, and the dive's biome visibly
+shifts as they descend. The journey harness proves this across
+three viewports in under 25s.
+
+For material decisions and reasons, see
+[docs/agentic/decisions-log.md](agentic/decisions-log.md). For the
+next agent's pickup list, see
+[docs/agentic/next-work.md](agentic/next-work.md).
 
 ## Current baseline
 
