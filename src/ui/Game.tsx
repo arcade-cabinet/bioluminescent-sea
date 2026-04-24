@@ -642,6 +642,7 @@ function DeepSeaGame({
         }}
       >
         <div
+          data-testid="objective-banner"
           style={{
             padding: "0.6rem 1.1rem",
             background: "rgba(10, 26, 46, 0.75)",
@@ -815,6 +816,7 @@ export default function Game() {
         {gameState === "landing" && (
           <motion.div
             key="landing"
+            data-testid="landing-screen"
             style={{ position: "absolute", inset: 0 }}
             exit={{ opacity: 0 }}
           >
@@ -865,6 +867,7 @@ export default function Game() {
         {gameState === "playing" && (
           <motion.div
             key="playing"
+            data-testid="playing-screen"
             className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -891,6 +894,7 @@ export default function Game() {
         {gameState === "gameover" && (
           <motion.div
             key="gameover"
+            data-testid="gameover-screen"
             style={{ position: "absolute", inset: 0 }}
             exit={{ opacity: 0 }}
           >
@@ -916,6 +920,7 @@ export default function Game() {
         {gameState === "complete" && (
           <motion.div
             key="complete"
+            data-testid="complete-screen"
             style={{ position: "absolute", inset: 0 }}
             exit={{ opacity: 0 }}
           >
