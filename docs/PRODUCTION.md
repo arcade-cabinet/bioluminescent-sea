@@ -58,10 +58,20 @@ Each is its own PR so reviewers can follow the chain end-to-end.
       rewritten from the base-color clones to evocative shifts
       (photic = kelp green, twilight = cool teal, midnight =
       indigo bruise, abyssal = ember warn) so transitions read.
-- [ ] **PR F.2 — World-space coords + chunking.** Entities carry
+- [x] **PR F.2 — World-space coords (groundwork).**
+      `SceneState.depthTravelMeters` is the sim's real world-Y state,
+      advancing at 6 m/s via `advanceScene` (clamped at the 3200m
+      trench floor). Replaces the POC-era
+      `computeDepthMeters(collectionRatio, oxygenRatio)` formula which
+      reported 2200–3400m regardless of actual descent. Telemetry +
+      summary now read `scene.depthTravelMeters`; biome chip shows
+      Photic Gate at cold-start instead of jumping straight to
+      Midnight. Landed in PR #23.
+- [ ] **PR F.3 — Entity world-Y + chunking.** Entities carry
       `Vec3 {x, y: depthMeters, z: parallax}` in meters. Camera
       scrolls as player descends; chunks spawn below and retire
-      above. Supersedes the "18 fixed creatures" scene model.
+      above. Supersedes the "18 fixed creatures" scene model. Builds
+      on F.2's depthTravelMeters baseline.
 - [x] **PR G — Audio.** Tone.js ambient pad with per-biome chord
       voicings (lydian open fifth → sus4 → minor 9th → dissonant
       minor 2nd). Low-pass filter cutoff tracks depth so the column
