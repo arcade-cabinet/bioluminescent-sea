@@ -237,3 +237,103 @@ export function destroyDiveWorld(w: DiveWorld): void {
   w.world.destroy();
 }
 
+/** Append newly-spawned predators from chunks that just entered view. */
+export function appendPredatorsToWorld(
+  w: DiveWorld,
+  predators: readonly import("@/sim/entities/types").Predator[],
+): DiveWorld {
+  if (predators.length === 0) return w;
+  const newEntities = predators.map((p) =>
+    w.world.spawn(PredatorEntity({ value: p }))
+  );
+  return { ...w, predatorEntities: [...w.predatorEntities, ...newEntities] };
+}
+
+/** Destroy every predator entity belonging to a retired chunk. */
+export function retireChunkPredators(
+  w: DiveWorld,
+  retiredIndices: readonly number[],
+): DiveWorld {
+  if (retiredIndices.length === 0) return w;
+  const retiredSet = new Set(retiredIndices);
+  const kept: Entity[] = [];
+  // chunked spawner ids for predators:
+  //   predator-c<idx>-<n>
+  //   marauder-sub-c<idx>-<n>   (bullet-hell enemy subs)
+  //   leviathan-c<idx>          (stygian boss)
+  const pattern = /^(?:predator|marauder-sub|leviathan)-c(\d+)(?:-\d+)?$/;
+  for (const entity of w.predatorEntities) {
+    const trait = entity.get(PredatorEntity);
+    const id = trait?.value.id ?? "";
+    const match = id.match(pattern);
+    if (match && retiredSet.has(Number.parseInt(match[1], 10))) {
+      entity.destroy();
+      continue;
+    }
+    kept.push(entity);
+  }
+  return { ...w, predatorEntities: kept };
+}
+
+export function appendPiratesToWorld(
+  w: DiveWorld,
+  pirates: readonly import("@/sim/entities/types").Pirate[],
+): DiveWorld {
+  if (pirates.length === 0) return w;
+  const newEntities = pirates.map((p) =>
+    w.world.spawn(PirateEntity({ value: p }))
+  );
+  return { ...w, pirateEntities: [...w.pirateEntities, ...newEntities] };
+}
+
+export function retireChunkPirates(
+  w: DiveWorld,
+  retiredIndices: readonly number[],
+): DiveWorld {
+  if (retiredIndices.length === 0) return w;
+  const retiredSet = new Set(retiredIndices);
+  const kept: Entity[] = [];
+  for (const entity of w.pirateEntities) {
+    const trait = entity.get(PirateEntity);
+    const id = trait?.value.id ?? "";
+    const match = id.match(/^pirate-c(\d+)-/);
+    if (match && retiredSet.has(Number.parseInt(match[1], 10))) {
+      entity.destroy();
+      continue;
+    }
+    kept.push(entity);
+  }
+  return { ...w, pirateEntities: kept };
+}
+
+export function appendAnomaliesToWorld(
+  w: DiveWorld,
+  anomalies: readonly import("@/sim/entities/types").Anomaly[],
+): DiveWorld {
+  if (anomalies.length === 0) return w;
+  const newEntities = anomalies.map((a) =>
+    w.world.spawn(AnomalyEntity({ value: a }))
+  );
+  return { ...w, anomalyEntities: [...w.anomalyEntities, ...newEntities] };
+}
+
+export function retireChunkAnomalies(
+  w: DiveWorld,
+  retiredIndices: readonly number[],
+): DiveWorld {
+  if (retiredIndices.length === 0) return w;
+  const retiredSet = new Set(retiredIndices);
+  const kept: Entity[] = [];
+  for (const entity of w.anomalyEntities) {
+    const trait = entity.get(AnomalyEntity);
+    const id = trait?.value.id ?? "";
+    const match = id.match(/^anomaly-c(\d+)$/);
+    if (match && retiredSet.has(Number.parseInt(match[1], 10))) {
+      entity.destroy();
+      continue;
+    }
+    kept.push(entity);
+  }
+  return { ...w, anomalyEntities: kept };
+}
+

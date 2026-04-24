@@ -1,7 +1,16 @@
 import { EntityManager, Time, AlignmentBehavior, CohesionBehavior, SeparationBehavior } from "yuka";
 import type { Player, Predator, Pirate, Creature } from "@/sim/entities/types";
-import { GameVehicle, WanderBehavior, WrapPlayBandBehavior, StalkAndDashBehavior } from "./steering";
+import { getArchetype } from "@/sim/entities/factory";
+import {
+  EnemySubHuntBehavior,
+  GameVehicle,
+  StalkAndDashBehavior,
+  WanderBehavior,
+  WrapPlayBandBehavior,
+} from "./steering";
 import type { ViewportDimensions } from "@/sim/dive/types";
+
+const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
 
 export class AIManager {
   public entityManager: EntityManager;
@@ -39,13 +48,29 @@ export class AIManager {
         vehicle.position.set(p.x, p.y, 0);
         const baseSpeed = p.speed * 60;
         vehicle.maxSpeed = baseSpeed;
-        
-        const stalk = new StalkAndDashBehavior(this.playerVehicle.position, baseSpeed);
-        vehicle.steering.add(stalk);
-        
+
+        // Route by archetype id prefix. The chunked spawner tags
+        // marauder-sub entities with the `marauder-sub-` prefix so
+        // we can wire the archetype-specific hunting behaviour here
+        // without a second ECS trait for enemy subs.
+        if (p.id.startsWith("marauder-sub")) {
+          const seed =
+            Math.floor(p.x * 1000) + Math.floor(p.y * 1000) + Math.floor(p.speed * 1000);
+          const hunt = new EnemySubHuntBehavior(
+            this.playerVehicle.position,
+            baseSpeed,
+            MARAUDER_SUB_ARCHETYPE.detectionRadius,
+            seed,
+          );
+          vehicle.steering.add(hunt);
+        } else {
+          const stalk = new StalkAndDashBehavior(this.playerVehicle.position, baseSpeed);
+          vehicle.steering.add(stalk);
+        }
+
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
         vehicle.steering.add(wrap);
-        
+
         this.entityManager.add(vehicle);
         this.vehicleMap.set(p.id, vehicle);
       }

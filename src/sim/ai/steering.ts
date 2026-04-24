@@ -66,6 +66,90 @@ export class WrapPlayBandBehavior extends SteeringBehavior {
   }
 }
 
+/**
+ * Enemy-sub hunting behaviour. Distinct from StalkAndDash — enemy subs
+ * patrol a loose box until the player enters `detectionRadius`, then
+ * commit to a short pursuit for `pursueSeconds`, then drop back to
+ * patrol. Feels like a military sub instead of a feral predator: they
+ * don't chase forever, they *engage*, then break off.
+ */
+export class EnemySubHuntBehavior extends SteeringBehavior {
+  private target: Vector3;
+  private baseSpeed: number;
+  private detectionRadius: number;
+  private pursueSpeed: number;
+  private pursueSeconds: number;
+  private cooldownSeconds: number;
+  private state: "patrol" | "pursue" | "cooldown" = "patrol";
+  private stateElapsed = 0;
+  private patrolAnchor: Vector3;
+  private patrolPhase: number;
+  private rng: Rng;
+
+  constructor(target: Vector3, baseSpeed: number, detectionRadius: number, seed: number) {
+    super();
+    this.target = target;
+    this.baseSpeed = baseSpeed;
+    this.detectionRadius = detectionRadius;
+    this.pursueSpeed = baseSpeed * 2.2;
+    this.pursueSeconds = 2.5;
+    this.cooldownSeconds = 3;
+    this.rng = createRng(seed);
+    this.patrolAnchor = new Vector3(0, 0, 0);
+    this.patrolPhase = this.rng.range(0, Math.PI * 2);
+  }
+
+  calculate(vehicle: Vehicle, force: Vector3, delta: number): Vector3 {
+    this.stateElapsed += delta;
+    if (this.patrolAnchor.squaredLength() === 0) {
+      // First call — anchor the patrol around the sub's spawn position.
+      this.patrolAnchor.copy(vehicle.position);
+    }
+
+    const toTarget = new Vector3().subVectors(this.target, vehicle.position);
+    const distToPlayer = toTarget.length();
+
+    switch (this.state) {
+      case "patrol":
+        if (distToPlayer < this.detectionRadius) {
+          this.state = "pursue";
+          this.stateElapsed = 0;
+        }
+        break;
+      case "pursue":
+        if (this.stateElapsed >= this.pursueSeconds) {
+          this.state = "cooldown";
+          this.stateElapsed = 0;
+        }
+        break;
+      case "cooldown":
+        if (this.stateElapsed >= this.cooldownSeconds) {
+          this.state = "patrol";
+          this.stateElapsed = 0;
+        }
+        break;
+    }
+
+    if (this.state === "pursue") {
+      vehicle.maxSpeed = this.pursueSpeed;
+      toTarget.normalize().multiplyScalar(vehicle.maxSpeed);
+      force.copy(toTarget).sub(vehicle.velocity);
+      return force;
+    }
+
+    // Patrol: orbit the anchor in a lazy ellipse whose phase drifts slowly.
+    this.patrolPhase += delta * 0.5;
+    const orbitRadius = 90;
+    const targetX = this.patrolAnchor.x + Math.cos(this.patrolPhase) * orbitRadius;
+    const targetY = this.patrolAnchor.y + Math.sin(this.patrolPhase * 0.8) * orbitRadius * 0.5;
+    const orbit = new Vector3(targetX - vehicle.position.x, targetY - vehicle.position.y, 0);
+    vehicle.maxSpeed = this.state === "cooldown" ? this.baseSpeed * 0.6 : this.baseSpeed;
+    orbit.normalize().multiplyScalar(vehicle.maxSpeed);
+    force.copy(orbit).sub(vehicle.velocity);
+    return force;
+  }
+}
+
 export class StalkAndDashBehavior extends SteeringBehavior {
   private target: Vector3;
   private baseSpeed: number;

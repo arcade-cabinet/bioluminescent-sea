@@ -5,7 +5,20 @@ import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
 import { biomeById } from "@/sim/world/biomes";
 import type { Chunk } from "@/sim/world/types";
 import type { ViewportDimensions } from "@/sim/dive/types";
+import type { ModeSlots } from "@/sim/dive/modeSlots";
 import { CREATURE_COLORS, type Creature, type CreatureType, type Anomaly, type AnomalyType, type Predator, type Pirate } from "./types";
+
+/**
+ * Spawn pattern — the *shape* of a chunk's threat layout. A slot value on
+ * `ModeSlots`, consumed here and only here. Adding a new pattern is a
+ * switch arm, not a cross-cutting rewrite.
+ *
+ *   scattered   — baseline. Random positions across the play band.
+ *   swarm       — tight clusters around a few anchors per chunk.
+ *   bullet-hell — dense grid of small fast predators. Used by arena mode
+ *                 to produce clear-room encounters.
+ */
+export type ThreatPattern = ModeSlots["threatPattern"];
 
 export const BASE_CREATURES_PER_CHUNK = 3;
 
@@ -57,12 +70,18 @@ export function spawnCreaturesForChunk(
 export function spawnPredatorsForChunk(
   chunk: Chunk,
   viewport: ViewportDimensions,
+  pattern: ThreatPattern = "scattered",
 ): Predator[] {
   const biome = biomeById(chunk.biome);
   const isStygian = chunk.biome === "stygian-abyss";
   const baseCount = Math.round(biome.predatorDensity * 3);
-  const count = clamp(baseCount, 0, 10);
-  
+  // Pattern scales the raw count: swarm doubles, bullet-hell triples,
+  // scattered stays at biome density. This keeps each chunk's pressure
+  // tuneable from the mode slot alone.
+  const patternScale =
+    pattern === "bullet-hell" ? 3 : pattern === "swarm" ? 2 : 1;
+  const count = clamp(baseCount * patternScale, 0, pattern === "bullet-hell" ? 24 : 10);
+
   if (count === 0 && !isStygian) return [];
 
   const rng = createRng(chunk.seed + 7777);
@@ -70,26 +89,82 @@ export function spawnPredatorsForChunk(
   const baseSize = clamp(640 * 0.14, 54, 94);
   const results: Predator[] = [];
 
-  for (let i = 0; i < count; i++) {
-    results.push({
-      angle: round(rng.range(-Math.PI, Math.PI), 3),
-      id: `predator-c${chunk.index}-${i}`,
-      noiseOffset: round(rng.range(0, 1000), 2),
-      size: round(baseSize * rng.range(0.85, 1.05), 2),
-      speed: round(rng.range(0.5, 0.75), 3),
-      x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
-      y: round(height * 0.5, 2),
-    });
+  switch (pattern) {
+    case "swarm": {
+      // Two tight clusters; everybody orbits an anchor.
+      const anchors = [
+        { ax: playBandMinX(width) + rng.range(0.2, 0.45) * playBandWidth(width), ay: height * rng.range(0.3, 0.7) },
+        { ax: playBandMinX(width) + rng.range(0.55, 0.8) * playBandWidth(width), ay: height * rng.range(0.3, 0.7) },
+      ];
+      for (let i = 0; i < count; i++) {
+        const anchor = anchors[i % anchors.length];
+        const r = rng.range(10, 80);
+        const theta = rng.range(0, Math.PI * 2);
+        results.push({
+          angle: round(theta, 3),
+          id: `predator-c${chunk.index}-${i}`,
+          noiseOffset: round(rng.range(0, 1000), 2),
+          size: round(baseSize * rng.range(0.8, 1.0), 2),
+          speed: round(rng.range(0.55, 0.85), 3),
+          x: round(anchor.ax + Math.cos(theta) * r, 2),
+          y: round(anchor.ay + Math.sin(theta) * r, 2),
+        });
+      }
+      break;
+    }
+    case "bullet-hell": {
+      // Tight grid of small fast marauders. Forms the room in arena mode.
+      const cols = 6;
+      const rows = Math.max(1, Math.ceil(count / cols));
+      const cellW = playBandWidth(width) / (cols + 1);
+      const cellH = (height * 0.8) / (rows + 1);
+      for (let i = 0; i < count; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const cx = playBandMinX(width) + (col + 1) * cellW + rng.range(-10, 10);
+        const cy = height * 0.1 + (row + 1) * cellH + rng.range(-8, 8);
+        const isMarauder = rng.next() > 0.4;
+        results.push({
+          angle: round(rng.range(-Math.PI, Math.PI), 3),
+          // Bullet-hell mode uses the marauder-sub archetype so the AI
+          // manager can route a hunting behaviour via id prefix.
+          id: isMarauder
+            ? `marauder-sub-c${chunk.index}-${i}`
+            : `predator-c${chunk.index}-${i}`,
+          noiseOffset: round(rng.range(0, 1000), 2),
+          size: round(baseSize * rng.range(0.55, 0.75), 2),
+          speed: round(rng.range(0.9, 1.2), 3),
+          x: round(cx, 2),
+          y: round(cy, 2),
+        });
+      }
+      break;
+    }
+    default: {
+      // scattered — baseline
+      for (let i = 0; i < count; i++) {
+        results.push({
+          angle: round(rng.range(-Math.PI, Math.PI), 3),
+          id: `predator-c${chunk.index}-${i}`,
+          noiseOffset: round(rng.range(0, 1000), 2),
+          size: round(baseSize * rng.range(0.85, 1.05), 2),
+          speed: round(rng.range(0.5, 0.75), 3),
+          x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
+          y: round(height * 0.5, 2),
+        });
+      }
+    }
   }
 
-  // Spawn Leviathan in Stygian Abyss (50% chance per chunk)
+  // Spawn Leviathan in Stygian Abyss (50% chance per chunk) — independent
+  // of pattern; the leviathan is a named boss, not a wave member.
   if (isStygian && rng.next() > 0.5) {
     results.push({
       angle: round(rng.range(-Math.PI, Math.PI), 3),
       id: `leviathan-c${chunk.index}`,
       noiseOffset: round(rng.range(0, 1000), 2),
-      size: round(baseSize * 4, 2), // Massive!
-      speed: round(rng.range(0.2, 0.4), 3), // Slow and menacing
+      size: round(baseSize * 4, 2),
+      speed: round(rng.range(0.2, 0.4), 3),
       x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
       y: round(height * 0.5, 2),
       isLeviathan: true,
@@ -162,8 +237,9 @@ export function spawnCreaturesForChunks(
 export function spawnPredatorsForChunks(
   chunks: readonly Chunk[],
   viewport: ViewportDimensions,
+  pattern: ThreatPattern = "scattered",
 ): Predator[] {
-  return chunks.flatMap((c) => spawnPredatorsForChunk(c, viewport));
+  return chunks.flatMap((c) => spawnPredatorsForChunk(c, viewport, pattern));
 }
 
 export function spawnPiratesForChunks(
