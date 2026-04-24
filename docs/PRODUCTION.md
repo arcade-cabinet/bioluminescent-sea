@@ -143,8 +143,11 @@ Each is its own PR so reviewers can follow the chain end-to-end.
 
 ## Triage queue (open now)
 
-- [ ] Merge or close dependabot PRs #2–#7 once rebased.
-- [ ] Merge release-please 0.2.0 (PR #1) after foundation PRs land.
+- [ ] Merge or close dependabot PRs #3–#7 (major-version bumps — each
+      needs a compatibility check). PR #2 (actions group) is blocked
+      by missing `workflow` OAuth scope; user must run
+      `gh auth refresh -s workflow`.
+- [x] Merge release-please 0.2.0 (PR #1) after foundation PRs land.
 - [ ] Seed the `.release-please-manifest.json` if 1.0 cut requires
       manual bump.
 
@@ -172,9 +175,13 @@ Run once foundation PRs (A → H) merge. Do not ship 1.0 without these:
 - [ ] Every POC visual (typographic-only cards, generic gradient
       backdrops, untextured silhouettes) replaced with production art
       unique to Bioluminescent Sea — no generic-AI aesthetic leakage.
-- [ ] Cold 60-second playthrough passes for a first-time player: avatar
+- [x] Cold 60-second playthrough passes for a first-time player: avatar
       identifiable, first meaningful object identifiable, goal
       communicated, loop makes sense, feedback on every action.
+      Audited on 2026-04-23 via Chrome DevTools MCP at 1280×720; caught
+      a first-second HULL SHOCK bug (lastImpactTimeRef was init to
+      -Infinity, defeating the grace window). Fix shipped in PR #21.
+      Screenshots archived to `docs/screenshots/`.
 - [ ] Deployed to GitHub Pages. Zero console errors on the live URL
       across desktop (1280×720) and mobile portrait (390×844).
 - [ ] All review feedback on every PR in the foundation sequence
