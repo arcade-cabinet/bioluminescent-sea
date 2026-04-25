@@ -66,8 +66,11 @@ export function SeedPickerOverlay({
         <DialogHeader>
           {meta && (
             <p
-              className="text-[0.65rem] uppercase tracking-[0.18em]"
-              style={{ color: meta.accentHex }}
+              className="bs-label text-[0.62rem]"
+              style={{
+                color: meta.accentHex,
+                filter: "url(#bs-soft-glow)",
+              }}
             >
               {meta.label} dive
             </p>
@@ -83,7 +86,8 @@ export function SeedPickerOverlay({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="seed-codename"
-              className="text-[0.65rem] uppercase tracking-[0.14em] text-fg-muted"
+              className="bs-label text-[0.62rem] text-fg-muted"
+              style={{ filter: "url(#bs-soft-glow)" }}
             >
               Trench codename
             </label>

@@ -40,7 +40,8 @@ export function ObjectivePanel({ queue }: ObjectivePanelProps) {
     return (
       <div
         data-testid="objective-panel-empty"
-        className="rounded-md border border-deep/50 bg-bg/50 p-3 text-xs text-fg-muted"
+        className="text-xs italic text-fg-muted"
+        style={{ fontFamily: "var(--font-body)", fontWeight: 300 }}
       >
         No objectives for this dive.
       </div>
@@ -49,7 +50,7 @@ export function ObjectivePanel({ queue }: ObjectivePanelProps) {
   return (
     <ol
       data-testid="objective-panel"
-      className="flex flex-col gap-2 text-sm text-fg"
+      className="flex flex-col gap-3 text-sm text-fg"
     >
       {queue.map((entry, index) => {
         const { objective, current, completed } = entry;
@@ -63,35 +64,62 @@ export function ObjectivePanel({ queue }: ObjectivePanelProps) {
             data-completed={completed ? "true" : "false"}
             className={
               completed
-                ? "rounded-md border border-deep/30 bg-abyss/30 p-3 opacity-60"
+                ? "py-1 opacity-50"
                 : isActive
-                  ? "rounded-md border border-glow/40 bg-abyss/80 p-3"
-                  : "rounded-md border border-deep/40 bg-abyss/50 p-3 opacity-80"
+                  ? "py-1"
+                  : "py-1 opacity-70"
             }
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-[0.6rem] uppercase tracking-[0.16em] text-fg-muted">
+                <span
+                  className="bs-label text-[0.58rem] text-fg-muted"
+                  style={{ filter: "url(#bs-soft-glow)" }}
+                >
                   {objective.areaLabel}
                 </span>
-                <span className="font-body text-sm font-medium leading-tight text-fg">
+                <span
+                  className="leading-tight text-fg"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    fontWeight: 400,
+                    fontSize: "0.95rem",
+                  }}
+                >
                   {objective.label}
                 </span>
               </div>
               {completed && (
-                <Check className="size-4 shrink-0 text-glow" aria-hidden="true" />
+                <Check
+                  className="size-4 shrink-0 text-glow"
+                  aria-hidden="true"
+                  style={{ filter: "url(#bs-soft-glow)" }}
+                />
               )}
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-bg/60">
+              {/* Progress: a thin glowing thread, no track box. */}
+              <div className="relative h-px flex-1 bg-fg-muted/15">
                 <div
                   className={
-                    completed ? "h-full bg-glow/60" : isActive ? "h-full bg-glow" : "h-full bg-glow/40"
+                    completed
+                      ? "h-px bg-glow/70"
+                      : isActive
+                        ? "h-px bg-glow"
+                        : "h-px bg-glow/40"
                   }
-                  style={{ width: `${ratio * 100}%`, transition: "width 240ms ease-out" }}
+                  style={{
+                    width: `${ratio * 100}%`,
+                    transition: "width 240ms ease-out",
+                    boxShadow: isActive
+                      ? "0 0 6px rgba(107,230,193,0.6)"
+                      : undefined,
+                  }}
                 />
               </div>
-              <span className="shrink-0 font-body text-xs tabular-nums text-fg-muted">
+              <span
+                className="bs-numeral shrink-0 text-[0.7rem] text-fg-muted"
+              >
                 {Math.floor(current)}/{objective.target}
               </span>
             </div>

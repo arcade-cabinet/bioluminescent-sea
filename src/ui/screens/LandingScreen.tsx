@@ -1,18 +1,17 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Compass, Crosshair, MoveDown } from "lucide-react";
 import { type ComponentType, useCallback, useEffect, useRef, useState } from "react";
-import { useDeviceClass } from "@/hooks/useDeviceClass";
 import {
   getModeMetadata,
   SESSION_MODES,
   type SessionMode,
   type SessionModeMetadata,
 } from "@/sim";
-import { Button, Card, CardCorners } from "@/ui/primitives";
+import { EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
 
 interface LandingScreenProps {
-  /** Lux balance to surface in the Drydock chip on the landing. */
+  /** Lux balance to surface in the Drydock label on the landing. */
   currency: number;
   /** Called when the player picks a mode card — opens the seed picker. */
   onPickMode: (mode: SessionMode) => void;
@@ -26,17 +25,19 @@ const MODE_ICONS: Record<SessionMode, ComponentType<{ className?: string }>> = {
   arena: Crosshair,
 };
 
+/**
+ * LandingScreen — the trench is the chrome.
+ *
+ * No boxy cards, no bordered chips. The fluidic backdrop (LandingHero)
+ * IS the surface; every label floats on top with an SVG-filter glow
+ * that makes it look like it's been carved into the water and lit
+ * from within. Cinzel display + Spectral body + small-caps tracking
+ * carry the identity.
+ *
+ * The single mode picker is the carousel — full descriptions, scales
+ * to N modes, no fixed grid.
+ */
 export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingScreenProps) {
-  const { klass, isPortrait } = useDeviceClass();
-  const isPhoneLandscape = klass === "phone-landscape";
-  const isPhonePortrait = klass === "phone-portrait";
-  const isTabletPortrait = klass === "tablet" && isPortrait;
-  // Compact layouts swap the 3-up grid for a swipeable carousel: one
-  // full mode card per page, snap-scroll, dot indicators below. This
-  // gives the tagline + description back on phones (the compact grid
-  // had to drop them) and scales naturally to a fourth/fifth mode.
-  const useCarousel = isPhonePortrait || isPhoneLandscape || isTabletPortrait;
-  const pinTriptychToBottom = useCarousel;
   return (
     <motion.div
       data-testid="landing-screen"
@@ -44,20 +45,12 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className={
-        pinTriptychToBottom
-          ? // Compact layouts: header + title flow top-down; triptych is
-            // absolutely pinned to viewport-bottom by the section below.
-            "absolute inset-0 flex flex-col items-stretch justify-start overflow-hidden bg-bg text-fg"
-          : // Desktop + tablet-landscape: space header / title / triptych
-            // evenly down the viewport so the title centers and the
-            // triptych sits in the lower third.
-            "absolute inset-0 flex flex-col items-stretch justify-between overflow-hidden bg-bg text-fg"
-      }
+      className="absolute inset-0 flex flex-col overflow-hidden bg-bg text-fg"
     >
+      <EmbossFilters />
       <LandingHero />
 
-      {/* Drydock chip — top right, shows Lux balance */}
+      {/* Drydock — top right. Floating label, no chip border. */}
       <header
         className="relative flex items-start justify-end px-6 pt-4"
         style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
@@ -66,103 +59,78 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
           type="button"
           onClick={onOpenDrydock}
           data-testid="drydock-chip"
-          className="pointer-events-auto group flex items-center gap-2 rounded-full border border-deep bg-abyss/70 px-3.5 py-1.5 font-body text-xs uppercase tracking-[0.14em] text-fg backdrop-blur-md transition-colors hover:border-glow/60 hover:text-glow"
+          className="pointer-events-auto group flex items-baseline gap-2 bg-transparent text-fg-muted transition-colors hover:text-glow"
         >
-          <span className="text-glow" aria-hidden="true">◇</span>
-          <span>Drydock</span>
-          <span className="text-glow tabular-nums">{currency} Lux</span>
+          <span
+            className="bs-label text-[0.62rem]"
+            style={{ filter: "url(#bs-soft-glow)" }}
+          >
+            Drydock
+          </span>
+          <span
+            className="bs-numeral text-[0.78rem] tracking-wider text-glow"
+            style={{ filter: "url(#bs-soft-glow)" }}
+          >
+            {currency} Lux
+          </span>
         </button>
       </header>
 
-      {/* Title + tagline — tighter sizing across compact viewports so
-       * the hero doesn't eat the fold. Tagline only renders when there's
-       * room (desktop + tablet-landscape) and sits on a dark scrim so
-       * the god-ray beams underneath can't bleach the body text. */}
-      <div
-        className={
-          isPhoneLandscape
-            ? "relative flex flex-col items-center justify-center px-4 pb-0 pt-1 text-center"
-            : isPhonePortrait
-              ? "relative flex flex-col items-center justify-start px-4 pb-2 pt-10 text-center"
-              : "relative flex flex-col items-center justify-center px-6 pb-2 pt-4 text-center"
-        }
-      >
+      {/* Title + tagline — engraved into the water via SVG emboss filter.
+       * Sizing scales on min(vw, vh) so phone-landscape (390px tall)
+       * doesn't push the carousel off-screen. */}
+      <div className="relative flex flex-col items-center justify-center px-6 pt-1 text-center sm:pt-3 md:pt-10 [@media(max-height:500px)]:pt-0.5">
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
+          transition={{ delay: 0.2, duration: 0.9 }}
           className="bs-display m-0 font-medium text-glow"
           style={{
-            fontSize: isPhoneLandscape
-              ? "1.5rem"
-              : isPhonePortrait
-                ? "clamp(2rem, 10vw, 2.75rem)"
-                : "clamp(2.5rem, 9vw, 5rem)",
+            fontSize: "clamp(1.6rem, min(7vw, 8vh), 5rem)",
+            letterSpacing: "0.16em",
+            filter: "url(#bs-emboss-glow)",
             textShadow:
-              "0 0 24px rgba(107, 230, 193, 0.45), 0 0 48px rgba(107, 230, 193, 0.18)",
-            letterSpacing: "0.01em",
+              "0 0 18px rgba(107,230,193,0.55), 0 0 40px rgba(107,230,193,0.25), 0 2px 0 rgba(2,6,17,0.4)",
           }}
         >
           Bioluminescent Sea
         </motion.h1>
 
-        {!isPhoneLandscape && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.95 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="m-0 mt-3 max-w-[44ch] rounded-lg text-fg-muted"
-            style={{
-              fontSize: "clamp(0.95rem, 2.4vw, 1.05rem)",
-              lineHeight: 1.55,
-              padding: "0.5rem 1rem",
-              background:
-                "color-mix(in srgb, var(--color-bg) 68%, transparent)",
-              backdropFilter: "blur(3px)",
-              WebkitBackdropFilter: "blur(3px)",
-            }}
-          >
-            Sink into an abyssal trench. Trace glowing routes past landmark
-            creatures. Surface breathing easier than when you started.
-          </motion.p>
-        )}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.92 }}
+          transition={{ delay: 0.55, duration: 0.9 }}
+          className="m-0 mt-2 max-w-[42ch] text-fg italic sm:mt-3 md:mt-5 [@media(max-height:500px)]:hidden"
+          style={{
+            fontFamily: "var(--font-body)",
+            fontWeight: 300,
+            fontSize: "clamp(0.82rem, min(2.2vw, 2.4vh), 1.05rem)",
+            lineHeight: 1.55,
+            filter: "url(#bs-soft-glow)",
+            textShadow: "0 0 12px rgba(2,6,17,0.85), 0 1px 0 rgba(2,6,17,0.6)",
+          }}
+        >
+          Sink into an abyssal trench. Trace glowing routes past landmark
+          creatures. Surface breathing easier than when you started.
+        </motion.p>
       </div>
 
-      {/* Mode triptych — every compact viewport pins it to the bottom so
-       * the three mode cards are always above the fold. Desktop +
-       * tablet-landscape get natural document flow. */}
+      {/* Mode carousel — the only picker. Floating, no card boxes. */}
       <motion.section
-        initial={pinTriptychToBottom ? { opacity: 0 } : { opacity: 0, y: 16 }}
-        animate={pinTriptychToBottom ? { opacity: 1 } : { opacity: 1, y: 0 }}
-        transition={{ delay: 0.75, duration: 0.7 }}
-        className={
-          pinTriptychToBottom
-            ? "absolute inset-x-0 bottom-3 z-10 mx-auto w-full max-w-5xl px-3"
-            : "relative mx-auto w-full max-w-5xl px-6 pb-10"
-        }
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.85, duration: 0.7 }}
+        // Bottom-anchored on phones (where the title eats most of the
+        // viewport), naturally placed below the title on tablet/desktop.
+        // Generous bottom padding so the chevrons + page dots never
+        // brush the viewport edge — the playwright clipping diagnostic
+        // is intentionally strict here.
+        className="relative mt-auto px-4"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 2rem)" }}
         aria-label="Choose dive mode"
         data-testid="mode-triptych"
       >
-        {!useCarousel && (
-          <p className="mb-3 text-center text-[0.7rem] uppercase tracking-[0.18em] text-fg-muted">
-            Choose your descent
-          </p>
-        )}
-        {useCarousel ? (
-          <ModeCarousel onPickMode={onPickMode} />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {SESSION_MODES.map((mode, index) => (
-              <ModeCard
-                key={mode}
-                meta={getModeMetadata(mode)}
-                icon={MODE_ICONS[mode]}
-                onSelect={() => onPickMode(mode)}
-                animationDelay={0.8 + index * 0.08}
-              />
-            ))}
-          </div>
-        )}
+        <ModeCarousel onPickMode={onPickMode} />
       </motion.section>
     </motion.div>
   );
@@ -175,75 +143,93 @@ interface ModeCardProps {
   animationDelay: number;
 }
 
+/**
+ * Mode entry — text-on-water with a soft radial wash behind. No
+ * border, no rounded panel; the label glows in the trench. Hover
+ * deepens the wash and lifts the title closer to the lamp colour.
+ */
 function ModeCard({ meta, icon: Icon, onSelect, animationDelay }: ModeCardProps) {
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      onClick={onSelect}
+      aria-label={`Begin ${meta.label} dive — ${meta.tagline}`}
+      data-testid={`mode-card-${meta.id}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay, duration: 0.55 }}
-      className="h-full"
+      whileHover={{ y: -2 }}
+      // Compact padding on shortest viewports so the card fits inside
+      // a 390px-tall mobile-landscape window without pushing the
+      // carousel chrome off-screen.
+      className="group relative h-full w-full bg-transparent p-3 text-left text-fg transition-all sm:p-5 lg:p-6"
+      style={{
+        // Soft radial wash carries the mode's accent without a frame.
+        backgroundImage: `radial-gradient(120% 90% at 50% 0%, ${meta.accentHex}1c 0%, ${meta.accentHex}0a 40%, transparent 75%)`,
+      }}
     >
-      <Button
-        asChild
-        variant="ghost"
-        size="lg"
-        className="group h-full w-full justify-start whitespace-normal p-0 text-left"
-        data-testid={`mode-card-${meta.id}`}
-      >
-        <button
-          type="button"
-          onClick={onSelect}
-          aria-label={`Begin ${meta.label} dive — ${meta.tagline}`}
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="inline-flex size-9 items-center justify-center"
+          style={{
+            color: meta.accentHex,
+            filter: "url(#bs-soft-glow)",
+          }}
         >
-          <Card
-            className="group relative h-full w-full overflow-hidden border-deep/70 bg-abyss/80 p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-glow/50 group-hover:shadow-[0_0_32px_rgba(107,230,193,0.18)]"
+          <Icon className="size-6" />
+        </span>
+        <div className="flex flex-col">
+          <span
+            className="bs-label text-[0.6rem] text-fg-muted"
+            style={{ filter: "url(#bs-soft-glow)" }}
+          >
+            {meta.paceLabel}
+          </span>
+          <h3
+            className="bs-display m-0 font-medium leading-tight"
             style={{
-              backgroundImage: `radial-gradient(circle at 0% 0%, ${meta.accentHex}14, transparent 60%)`,
+              color: meta.accentHex,
+              fontSize: "clamp(1.4rem, 3.4vw, 1.85rem)",
+              filter: "url(#bs-emboss-glow)",
+              textShadow: `0 0 14px ${meta.accentHex}60, 0 0 30px ${meta.accentHex}30`,
             }}
           >
-            <CardCorners color={meta.accentHex} />
+            {meta.label}
+          </h3>
+        </div>
+      </div>
 
-            <div className="flex items-start gap-3">
-              <div
-                className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-bg/40"
-                style={{
-                  borderColor: `${meta.accentHex}55`,
-                  color: meta.accentHex,
-                }}
-              >
-                <Icon className="size-5" />
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[0.65rem] uppercase tracking-[0.14em] text-fg-muted">
-                  {meta.paceLabel}
-                </span>
-                <h3
-                  className="bs-display m-0 text-2xl font-medium leading-tight"
-                  style={{ color: meta.accentHex }}
-                >
-                  {meta.label}
-                </h3>
-              </div>
-            </div>
+      <p
+        // Tagline hidden on very-short viewports (mobile-landscape)
+        // so the card stays inside the 390px-tall window. The CSS
+        // media query checks viewport height, not Tailwind's
+        // width-based sm: which doesn't help here.
+        className="mt-3 text-sm italic leading-relaxed text-fg/85 [@media(max-height:500px)]:hidden"
+        style={{
+          fontWeight: 300,
+          textShadow: "0 0 10px rgba(2,6,17,0.85), 0 1px 0 rgba(2,6,17,0.5)",
+        }}
+      >
+        {meta.tagline}
+      </p>
 
-            <p className="mt-3 text-sm leading-relaxed text-fg-muted normal-case">
-              {meta.tagline}
-            </p>
-
-            <div className="mt-4 flex items-center justify-between text-[0.7rem] uppercase tracking-[0.16em] text-fg/70 normal-case">
-              <span className="text-fg-muted">Tap to chart</span>
-              <span
-                aria-hidden="true"
-                className="transition-transform duration-300 group-hover:translate-x-0.5"
-                style={{ color: meta.accentHex }}
-              >
-                →
-              </span>
-            </div>
-          </Card>
-        </button>
-      </Button>
-    </motion.div>
+      <div
+        className="mt-3 flex items-center justify-between sm:mt-5"
+        style={{ filter: "url(#bs-soft-glow)" }}
+      >
+        <span className="bs-label text-[0.62rem] text-fg-muted transition-colors group-hover:text-glow">
+          Tap to chart
+        </span>
+        <span
+          aria-hidden="true"
+          className="text-base transition-transform duration-300 group-hover:translate-x-1"
+          style={{ color: meta.accentHex }}
+        >
+          →
+        </span>
+      </div>
+    </motion.button>
   );
 }
 
@@ -252,35 +238,42 @@ interface ModeCarouselProps {
 }
 
 /**
- * Horizontal scroll-snap carousel — one full mode card per page on
- * compact viewports. All cards stay in the DOM (clickable from
- * Playwright via auto-scroll). Dot indicators reflect the active page;
- * left/right keys navigate; arrow buttons appear on tablet-portrait
- * where there's room for chrome. Adding a fourth mode is one extra
- * card in the same scroller — no layout work.
+ * Universal mode picker — horizontal scroll-snap carousel. Slides are
+ * full-width on phones (one card per page), fractional on tablet
+ * landscape and desktop (multiple visible with side-peek). Adding a
+ * 4th/5th mode is one more entry in SESSION_MODES — the carousel
+ * adapts. No fixed 3-up grid anywhere.
  */
 function ModeCarousel({ onPickMode }: ModeCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const scrollToIndex = useCallback((index: number) => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
-    const clamped = Math.max(0, Math.min(SESSION_MODES.length - 1, index));
-    scroller.scrollTo({
-      left: clamped * scroller.clientWidth,
-      behavior: "smooth",
-    });
+    const slide = slideRefs.current[index];
+    if (!scroller || !slide) return;
+    const target = slide.offsetLeft - (scroller.clientWidth - slide.clientWidth) / 2;
+    scroller.scrollTo({ left: target, behavior: "smooth" });
   }, []);
 
-  // Track the active page from scroll position so swipe + arrow + dot
-  // taps all stay in sync. We round to nearest page width.
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
     const onScroll = () => {
-      const page = Math.round(scroller.scrollLeft / scroller.clientWidth);
-      setActiveIndex(page);
+      const scrollerCentre = scroller.scrollLeft + scroller.clientWidth / 2;
+      let bestIdx = 0;
+      let bestDist = Number.POSITIVE_INFINITY;
+      slideRefs.current.forEach((slide, i) => {
+        if (!slide) return;
+        const slideCentre = slide.offsetLeft + slide.clientWidth / 2;
+        const d = Math.abs(slideCentre - scrollerCentre);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
+        }
+      });
+      setActiveIndex(bestIdx);
     };
     scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => scroller.removeEventListener("scroll", onScroll);
@@ -297,19 +290,22 @@ function ModeCarousel({ onPickMode }: ModeCarouselProps) {
   };
 
   return (
-    <div className="relative" data-testid="mode-carousel">
+    <div className="relative mx-auto w-full max-w-6xl" data-testid="mode-carousel">
       <div
         ref={scrollerRef}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-roledescription="carousel"
         aria-label="Dive mode picker"
       >
         {SESSION_MODES.map((mode, index) => (
           <div
             key={mode}
-            className="w-full shrink-0 snap-center px-2"
+            ref={(node) => {
+              slideRefs.current[index] = node;
+            }}
+            className="w-full shrink-0 snap-center px-3 sm:basis-[calc(60%-1.5rem)] md:basis-[calc(34%-1.5rem)] xl:basis-[calc(28%-1.5rem)]"
             aria-roledescription="slide"
             aria-label={`${getModeMetadata(mode).label} (${index + 1} of ${SESSION_MODES.length})`}
           >
@@ -317,15 +313,15 @@ function ModeCarousel({ onPickMode }: ModeCarouselProps) {
               meta={getModeMetadata(mode)}
               icon={MODE_ICONS[mode]}
               onSelect={() => onPickMode(mode)}
-              animationDelay={0.8 + index * 0.08}
+              animationDelay={0.9 + index * 0.08}
             />
           </div>
         ))}
       </div>
 
-      {/* Page dots — tap to jump. */}
+      {/* Page dots — soft mint glow, never a chip. */}
       <div
-        className="mt-1 flex items-center justify-center gap-2"
+        className="mt-2 flex items-center justify-center gap-2"
         role="tablist"
         aria-label="Mode pages"
       >
@@ -342,33 +338,34 @@ function ModeCarousel({ onPickMode }: ModeCarouselProps) {
               onClick={() => scrollToIndex(index)}
               className={
                 isActive
-                  ? "h-2 w-6 rounded-full bg-glow transition-all"
-                  : "h-2 w-2 rounded-full bg-fg-muted/40 transition-all hover:bg-fg-muted/70"
+                  ? "h-1.5 w-7 rounded-full bg-glow shadow-[0_0_10px_rgba(107,230,193,0.6)] transition-all"
+                  : "h-1.5 w-1.5 rounded-full bg-fg-muted/40 transition-all hover:bg-fg-muted/70"
               }
             />
           );
         })}
       </div>
 
-      {/* Prev/Next chevrons — tablet-portrait has the width to host
-       * them; phones rely on swipe + dots. */}
+      {/* Prev/Next chevrons — visible from sm+ where there's room. */}
       <button
         type="button"
         aria-label="Previous mode"
         onClick={() => scrollToIndex(activeIndex - 1)}
         disabled={activeIndex === 0}
-        className="absolute left-0 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-deep/60 bg-abyss/80 p-1.5 text-fg-muted backdrop-blur-md transition-colors hover:border-glow/60 hover:text-glow disabled:opacity-30 md:flex"
+        className="absolute left-0 top-1/2 hidden -translate-y-1/2 items-center justify-center bg-transparent p-2 text-fg-muted transition-colors hover:text-glow disabled:opacity-20 sm:flex"
+        style={{ filter: "url(#bs-soft-glow)" }}
       >
-        <ChevronLeft className="size-4" aria-hidden="true" />
+        <ChevronLeft className="size-5" aria-hidden="true" />
       </button>
       <button
         type="button"
         aria-label="Next mode"
         onClick={() => scrollToIndex(activeIndex + 1)}
         disabled={activeIndex === SESSION_MODES.length - 1}
-        className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-deep/60 bg-abyss/80 p-1.5 text-fg-muted backdrop-blur-md transition-colors hover:border-glow/60 hover:text-glow disabled:opacity-30 md:flex"
+        className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center justify-center bg-transparent p-2 text-fg-muted transition-colors hover:text-glow disabled:opacity-20 sm:flex"
+        style={{ filter: "url(#bs-soft-glow)" }}
       >
-        <ChevronRight className="size-4" aria-hidden="true" />
+        <ChevronRight className="size-5" aria-hidden="true" />
       </button>
     </div>
   );

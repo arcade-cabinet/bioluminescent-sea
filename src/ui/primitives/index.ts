@@ -20,5 +20,6 @@ export {
   DialogTitle,
   DialogTrigger,
 } from "./Dialog";
+export { EmbossFilters } from "./EmbossFilters";
 export { Input } from "./Input";
 export { StatTile, type StatTileProps } from "./StatTile";

@@ -3,21 +3,45 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Card surface for the abyssal palette. Subtle abyss background, deep teal
- * stroke, soft inner glow on hover when interactive. Pair with `<CardCorners />`
- * for the cartographer's-chart corner ticks shown on landing mode cards.
+ * Luminous-patch surface. The previous boxy Card with hard borders
+ * and rectangular shadow read as "SaaS dashboard tile" against the
+ * trench. This version paints a soft radial mint wash that fades
+ * into the water at the edges — a glowing patch, not a frame.
+ *
+ * Borders are off by default. Hover lifts the inner glow without
+ * introducing a hard outline. The `accent` prop tints the radial
+ * wash so each mode card glows in its own colour.
  */
-export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        "relative rounded-lg border border-deep/80 bg-abyss/80 text-fg shadow-[0_24px_60px_rgba(5,10,20,0.5)] backdrop-blur-sm",
-        className,
-      )}
-      {...props}
-    />
-  ),
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  /** Hex string used as the radial-wash tint. Defaults to mint glow. */
+  accent?: string;
+  /** Suppress the radial wash for HUD/details surfaces that just need a panel feel. */
+  flat?: boolean;
+}
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, accent = "#6be6c1", flat, style, ...props }, ref) => {
+    const wash = flat
+      ? undefined
+      : `radial-gradient(120% 90% at 50% 0%, ${accent}1f 0%, ${accent}0d 35%, transparent 70%)`;
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          // No border, no hard rounding — just soft text-on-water.
+          // The inner shadow keeps content readable against the
+          // brightest part of the wash.
+          "relative isolate text-fg",
+          className,
+        )}
+        style={{
+          backgroundImage: wash,
+          ...style,
+        }}
+        {...props}
+      />
+    );
+  },
 );
 Card.displayName = "Card";
 
@@ -33,7 +57,7 @@ export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadi
     <h3
       ref={ref}
       className={cn(
-        "bs-display text-2xl font-medium tracking-tight text-glow",
+        "bs-display text-2xl font-medium tracking-wide text-glow",
         className,
       )}
       {...props}
@@ -78,8 +102,10 @@ interface CardCornersProps {
 }
 
 /**
- * Four cartographer's-chart corner markers — absolutely positioned inside
- * a `relative` parent. Pure decoration; aria-hidden.
+ * Four delicate corner ticks — kept for components that genuinely
+ * want a chartmaker's frame (the seed picker dialog). Mode cards no
+ * longer use them; their luminous wash carries the identity instead
+ * of a literal frame.
  */
 export function CardCorners({ color = "var(--color-glow)" }: CardCornersProps) {
   const style = { color };

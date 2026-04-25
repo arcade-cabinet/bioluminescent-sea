@@ -85,6 +85,14 @@ export function mountWater(parent: Container): WaterController {
   caustics.blendMode = "add";
   parent.addChild(caustics);
 
+  // --- Leviathan shadow layer -----------------------------------------------
+  // A huge ellipse glides slowly across the deep band of the viewport.
+  // Periodic reveal — alpha pulses on a Sin curve so most of the time
+  // it's not visible. Sells "the abyss is alive" without distracting.
+  const leviathanShadow = new Graphics();
+  leviathanShadow.label = "water:leviathan-shadow";
+  parent.addChild(leviathanShadow);
+
   // --- Depth tint -----------------------------------------------------------
   const adjustment = new AdjustmentFilter({
     saturation: 1,
@@ -147,6 +155,36 @@ export function mountWater(parent: Container): WaterController {
         }
       }
 
+      // --- Leviathan shadow: drifts across the bottom band on a slow
+      //   60-second cycle. Alpha peaks mid-pass so the silhouette
+      //   appears, glides past, and fades again. Suppressed at the
+      //   shallowest depths where the player can clearly see — the
+      //   abyss only feels alive once you're committed to the dive.
+      leviathanShadow.clear();
+      const surfaceCutoff = 80; // metres
+      if (depthMeters > surfaceCutoff) {
+        const cyclePhase = ((totalTime / 60) % 1 + 1) % 1;
+        const reveal = Math.sin(cyclePhase * Math.PI);
+        const surfaceFade = Math.min(1, (depthMeters - surfaceCutoff) / 200);
+        const alpha = 0.16 * reveal * reveal * surfaceFade;
+        if (alpha > 0.005) {
+          const lvX = -widthPx * 0.4 + cyclePhase * (widthPx * 1.8);
+          const lvY = heightPx * 0.78 + Math.sin(totalTime * 0.18) * heightPx * 0.04;
+          const lvW = widthPx * 0.45;
+          const lvH = heightPx * 0.16;
+          leviathanShadow.ellipse(lvX, lvY, lvW, lvH).fill({
+            color: 0x020611,
+            alpha,
+          });
+          // Tail tendril
+          const tailX = lvX - lvW * 0.85;
+          leviathanShadow.ellipse(tailX, lvY, lvW * 0.5, lvH * 0.5).fill({
+            color: 0x020611,
+            alpha: alpha * 0.65,
+          });
+        }
+      }
+
       // --- Depth tint: lower saturation + darken as we descend --------------
       const depthFrac = Math.min(1, depthMeters / 2400);
       adjustment.saturation = 1 - depthFrac * 0.55;
@@ -159,6 +197,7 @@ export function mountWater(parent: Container): WaterController {
     destroy() {
       surface.destroy({ children: true });
       caustics.destroy();
+      leviathanShadow.destroy();
       parent.filters = [];
     },
   };

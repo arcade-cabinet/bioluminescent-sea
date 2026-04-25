@@ -6,16 +6,36 @@ interface CompletionBackdropProps {
 }
 
 /**
- * Decorative arc + landmark dots painted behind the completion screen
- * summary. Aria-hidden, pointer-events disabled — purely an aesthetic beat.
+ * Completion backdrop — the arc the player traced through the trench
+ * and the named landmarks they passed. Painted behind the GameOverScreen
+ * summary. Pure decoration, aria-hidden.
+ *
+ * Identity rule: stays inside the locked palette (mint glow on
+ * abyssal navy). The previous version went amber + cyan + monospace
+ * which broke the brand.
  */
 export function CompletionBackdrop({ celebration, summary }: CompletionBackdropProps) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_50%_42%,rgba(45,212,191,0.2),transparent_42%),linear-gradient(180deg,#051923,#020611)]"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(circle at 50% 42%, rgba(107, 230, 193, 0.18), transparent 42%), linear-gradient(180deg, #072033 0%, #050a14 60%, #020611 100%)",
+      }}
     >
-      <div className="absolute inset-x-[8%] top-[16%] h-[52%] rounded-[50%] border border-cyan-200/20 shadow-[0_0_80px_rgba(45,212,191,0.22)]" />
+      {/* The arc through the trench — a soft mint ellipse echoing the
+       * route the dive traced. */}
+      <div
+        className="absolute inset-x-[8%] top-[16%] h-[52%]"
+        style={{
+          borderRadius: "50%",
+          border: "1px solid rgba(107, 230, 193, 0.25)",
+          boxShadow: "0 0 80px rgba(107, 230, 193, 0.22)",
+        }}
+      />
+      {/* Landmark dots along the arc — each is a glowing mint mark
+       * showing the order they were charted. */}
       {celebration.landmarkSequence.map((landmark, index) => {
         const progress =
           celebration.landmarkSequence.length <= 1
@@ -24,19 +44,36 @@ export function CompletionBackdrop({ celebration, summary }: CompletionBackdropP
         return (
           <div
             key={landmark}
-            className="absolute grid h-14 w-14 place-items-center rounded-full border border-cyan-100/30 bg-cyan-900/35 text-[0.48rem] font-black uppercase tracking-[0.14em] text-cyan-50 shadow-[0_0_28px_rgba(103,232,249,0.4)]"
+            className="bs-numeral absolute grid h-12 w-12 place-items-center text-glow"
             style={{
               left: `${12 + progress * 76}%`,
               top: `${62 - Math.sin(progress * Math.PI) * 34}%`,
               transform: "translate(-50%, -50%)",
+              fontSize: "0.78rem",
+              filter: "url(#bs-soft-glow)",
+              textShadow: "0 0 14px rgba(107, 230, 193, 0.55)",
             }}
           >
             {index + 1}
           </div>
         );
       })}
-      <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 rounded-md border border-amber-200/25 bg-slate-950/56 px-4 py-2 text-center font-mono text-[0.64rem] font-black uppercase tracking-[0.2em] text-amber-100">
-        {summary.timeLeft}s oxygen banked / {summary.depthMeters}m charted
+      {/* Below-arc readout — oxygen banked + depth charted. Type-on-water,
+       * not a tile. */}
+      <div
+        className="absolute bottom-[16%] left-1/2 -translate-x-1/2 text-center"
+        style={{
+          fontFamily: "var(--font-body)",
+          fontFeatureSettings: '"smcp" 1, "c2sc" 1, "tnum" 1, "lnum" 1',
+          fontSize: "0.7rem",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--color-fg-muted)",
+          filter: "url(#bs-soft-glow)",
+          textShadow: "0 0 12px rgba(2,6,17,0.85)",
+        }}
+      >
+        {summary.timeLeft}s oxygen banked &nbsp;·&nbsp; {summary.depthMeters}m charted
       </div>
     </div>
   );

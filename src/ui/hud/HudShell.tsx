@@ -131,12 +131,14 @@ export function HudShell({
           data-testid="hud-menu-button"
           onClick={() => setOpen(true)}
           className={[
-            "pointer-events-auto flex size-11 items-center justify-center rounded-full border bg-abyss/85 text-fg backdrop-blur-md transition-colors",
+            "pointer-events-auto flex size-11 items-center justify-center bg-transparent transition-colors",
             threatAlert
-              ? "border-warn animate-pulse text-warn"
-              : "border-glow/30 hover:border-glow/60 hover:text-glow",
+              ? "animate-pulse text-warn"
+              : "text-fg-muted hover:text-glow",
           ].join(" ")}
-          style={{ boxShadow: "var(--shadow-hud)" }}
+          style={{
+            filter: threatAlert ? "url(#bs-warm-glow)" : "url(#bs-soft-glow)",
+          }}
         >
           <Menu className="size-5" aria-hidden="true" />
         </button>
@@ -171,15 +173,23 @@ export function HudShell({
               data-testid="hud-menu-panel"
               className={
                 klass === "phone-landscape"
-                  ? "absolute bottom-0 right-0 top-0 z-50 flex w-[min(20rem,80vw)] flex-col gap-3 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-4"
+                  ? "absolute bottom-0 right-0 top-0 z-50 flex w-[min(20rem,80vw)] flex-col gap-4 overflow-y-auto p-5"
                   : klass === "phone-portrait"
-                    ? "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto border-b border-deep/60 bg-abyss/95 p-4"
+                    ? "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-4 overflow-y-auto p-5"
                     // Tablet / desktop: fixed-width right-side drawer.
-                    : "absolute bottom-0 right-0 top-0 z-50 flex w-[min(26rem,60vw)] flex-col gap-4 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-5"
+                    : "absolute bottom-0 right-0 top-0 z-50 flex w-[min(26rem,60vw)] flex-col gap-5 overflow-y-auto p-6"
               }
               style={{
-                paddingTop: "max(env(safe-area-inset-top), 1rem)",
-                paddingBottom: "max(env(safe-area-inset-bottom), 1rem)",
+                paddingTop: "max(env(safe-area-inset-top), 1.25rem)",
+                paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)",
+                // Soft mint-tinted radial wash instead of a flat abyss
+                // panel — same identity language as the seed picker.
+                backgroundImage:
+                  klass === "phone-portrait"
+                    ? "linear-gradient(to bottom, rgba(10,26,46,0.95) 0%, rgba(5,10,20,0.92) 100%)"
+                    : "linear-gradient(to left, rgba(10,26,46,0.95) 0%, rgba(5,10,20,0.92) 100%)",
+                backdropFilter: "blur(18px)",
+                WebkitBackdropFilter: "blur(18px)",
                 boxShadow:
                   klass === "phone-portrait"
                     ? "var(--shadow-hud-panel)"
@@ -199,7 +209,10 @@ export function HudShell({
               transition={{ type: "spring", damping: 28, stiffness: 240 }}
             >
               <header className="flex items-center justify-between">
-                <span className="font-body text-xs uppercase tracking-[0.18em] text-fg-muted">
+                <span
+                  className="bs-label text-[0.62rem] text-fg-muted"
+                  style={{ filter: "url(#bs-soft-glow)" }}
+                >
                   Dive Details · Paused
                 </span>
                 <button
@@ -207,7 +220,8 @@ export function HudShell({
                   aria-label="Close dive details"
                   data-testid="hud-menu-close"
                   onClick={() => setOpen(false)}
-                  className="flex size-9 items-center justify-center rounded-full border border-deep/60 bg-bg/60 text-fg-muted hover:border-glow/50 hover:text-glow"
+                  className="flex size-9 items-center justify-center bg-transparent text-fg-muted transition-colors hover:text-glow"
+                  style={{ filter: "url(#bs-soft-glow)" }}
                 >
                   <X className="size-4" aria-hidden="true" />
                 </button>
@@ -216,8 +230,11 @@ export function HudShell({
               {/* Objective progression — always shown, tablet/desktop
                * included, because the hamburger is the canonical place
                * to check quest progress. */}
-              <div className="flex flex-col gap-2">
-                <h3 className="m-0 font-body text-xs uppercase tracking-[0.18em] text-fg-muted">
+              <div className="flex flex-col gap-3">
+                <h3
+                  className="bs-label text-[0.62rem] text-fg-muted m-0"
+                  style={{ filter: "url(#bs-soft-glow)" }}
+                >
                   Objectives
                 </h3>
                 {objectivePanel}
@@ -227,8 +244,11 @@ export function HudShell({
                * the panel (on tablet/desktop it's already inline so no
                * need to duplicate). */}
               {isCompact && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="m-0 font-body text-xs uppercase tracking-[0.18em] text-fg-muted">
+                <div className="flex flex-col gap-3">
+                  <h3
+                    className="bs-label text-[0.62rem] text-fg-muted m-0"
+                    style={{ filter: "url(#bs-soft-glow)" }}
+                  >
                     Dive Details
                   </h3>
                   <div className="contents">{fullHud}</div>
