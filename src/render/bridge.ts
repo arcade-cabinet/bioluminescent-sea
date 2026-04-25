@@ -58,28 +58,30 @@ export interface RenderFrameInput {
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
   const stage: PixiStage = await createStage(canvas);
+  // Renderer DPR (typically 2 on retina). Every Pixi filter that
+  // wants fullscreen rendering MUST set its `.resolution` to this,
+  // or the filter texture renders at half size and composites onto
+  // the upper-left quadrant — the long-running "square" artifact.
+  // See pixijs/pixijs#11467 + src/render/layers/water.ts for the
+  // longer diagnosis.
+  const dpr = stage.app.renderer.resolution;
   const backdrop: BackdropController = mountBackdrop(stage.layers.far);
   const ambient: AmbientController = mountAmbient(stage.layers.ambient);
-  const water: WaterController = mountWater(stage.layers.water);
+  const water: WaterController = mountWater(stage.layers.water, dpr);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
-  const entities: EntityController = mountEntities(stage.layers.near);
+  const entities: EntityController = mountEntities(stage.layers.near, dpr);
   // The player sub used to live on the `near` layer, but that layer
-  // also carries the refraction `DisplacementFilter` (added later for
-  // marine snow / entity wobble). The combined filter stack rendered
-  // the sub silhouette invisible in production despite `near`-layer
-  // entities rendering correctly — a Pixi v8 quirk we couldn't pin
-  // down beyond "the sub vanishes". Mounting on `fx` instead keeps
-  // the sub above entities (correct visual stacking), avoids the
-  // displacement filter entirely, and shares its transform with the
-  // sonar circle so they always render at the same position.
-  const player: PlayerController = mountPlayer(stage.layers.fx);
+  // also carries the refraction `DisplacementFilter`. Mounting on
+  // `fx` instead keeps the sub above entities, avoids the
+  // displacement filter, and shares its transform with the sonar
+  // circle so they always render at the same player coordinates.
+  const player: PlayerController = mountPlayer(stage.layers.fx, dpr);
   const fx: FxController = mountFx(stage.layers.fx);
-  // Refraction wobble: targets the mid + near containers so marine snow
-  // and entities feel observed through moving water. Backdrop, water,
-  // FX, and overlay stay sharp on purpose.
+  // Refraction wobble: targets the mid + near containers.
   const refraction: RefractionController = mountRefraction(
     [stage.layers.mid, stage.layers.near],
     stage.app.stage,
+    dpr,
   );
 
   // Scratch buffers — reused each frame so the render bridge allocates

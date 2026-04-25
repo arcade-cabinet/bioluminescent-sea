@@ -57,7 +57,7 @@ function smoothNoise(x: number, y: number, t: number): number {
   return (a + b + c) / 3;
 }
 
-export function mountWater(parent: Container): WaterController {
+export function mountWater(parent: Container, rendererResolution = 1): WaterController {
   // --- God-ray surface layer -------------------------------------------------
   const surface = new Container();
   surface.label = "water:surface";
@@ -66,19 +66,20 @@ export function mountWater(parent: Container): WaterController {
   const surfaceRect = new Graphics();
   surface.addChild(surfaceRect);
 
-  // Volumetric light columns over the surfaceRect. Note the
-  // `resolution` stamp below — without it the filter renders to a
-  // 1×-resolution texture even though the renderer runs at
-  // devicePixelRatio (typically 2× on retina). On a 2× canvas that
-  // produced a hard-edged "square" artifact in the upper-left
-  // quadrant, because the smaller filter texture composited over
-  // only half the screen. See pixijs/pixijs#11467.
+  // Volumetric light columns over the surfaceRect. The explicit
+  // `resolution` stamp is critical: by default pixi-filters@6 ship
+  // with `resolution = 1`, but on a retina canvas the renderer runs
+  // at devicePixelRatio (typically 2). Without matching resolution
+  // here, the filter renders to a half-size texture that composites
+  // over only the upper-left quadrant of the visible canvas — the
+  // long-running "square" artifact. See pixijs/pixijs#11467.
   const godray = new GodrayFilter({
     angle: 8,
     gain: 0.22,
     lacunarity: 2.75,
     parallel: true,
   });
+  godray.resolution = rendererResolution;
   surface.filters = [godray];
   surface.filterArea = new Rectangle(0, 0, 1, 1);
 
@@ -105,6 +106,7 @@ export function mountWater(parent: Container): WaterController {
     contrast: 1,
     brightness: 1,
   });
+  adjustment.resolution = rendererResolution;
   parent.filters = [adjustment];
   // Pin the parent's filterArea to the viewport so the AdjustmentFilter
   // covers fullscreen regardless of where its children's bounds happen

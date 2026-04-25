@@ -21,25 +21,24 @@ export interface EntityController {
   destroy(): void;
 }
 
-export function mountEntities(parent: Container): EntityController {
+export function mountEntities(parent: Container, rendererResolution = 1): EntityController {
   // Anomalies live in their own sub-container with a GlowFilter so
-  // the buff pickups read as emissive even at a distance — they're
-  // strategic prizes, the player should be able to spot one across
-  // the playfield. The FilterSystem patch
-  // (src/render/filterResolutionPatch.ts) auto-stamps the filter's
-  // resolution to match the renderer so it doesn't quadrant-clip on
-  // retina canvases.
+  // the buff pickups read as emissive even at distance. The explicit
+  // resolution stamp matches the renderer's DPR — without it the
+  // glow texture renders at half size on retina, producing the
+  // upper-left rectangle artifact (see water.ts for the longer
+  // diagnosis + pixijs/pixijs#11467).
   const anomalyHost = new Container();
   anomalyHost.label = "entities:anomalies";
-  anomalyHost.filters = [
-    new GlowFilter({
-      distance: 18,
-      outerStrength: 1.6,
-      innerStrength: 0.2,
-      color: 0xffffff,
-      quality: 0.35,
-    }),
-  ];
+  const anomalyGlow = new GlowFilter({
+    distance: 18,
+    outerStrength: 1.6,
+    innerStrength: 0.2,
+    color: 0xffffff,
+    quality: 0.35,
+  });
+  anomalyGlow.resolution = rendererResolution;
+  anomalyHost.filters = [anomalyGlow];
   parent.addChild(anomalyHost);
 
   const anomalies = new Map<string, Graphics>();
