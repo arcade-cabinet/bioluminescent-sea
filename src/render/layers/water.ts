@@ -106,11 +106,23 @@ export function mountWater(parent: Container): WaterController {
     brightness: 1,
   });
   parent.filters = [adjustment];
+  // Pin the parent's filterArea to the viewport so the AdjustmentFilter
+  // covers fullscreen regardless of where its children's bounds happen
+  // to fall this frame. Without this, pixi auto-fits the filter area to
+  // the union of child bounds, and on early frames (before the
+  // leviathan-shadow ellipse has appeared and before caustics have
+  // populated all corners) that union is a rectangle that excludes
+  // half the screen — producing a visible dotted-rectangle artifact in
+  // the upper-left where caustics ARE drawn but the depth tint isn't.
+  parent.filterArea = new Rectangle(0, 0, 1, 1);
 
   return {
     draw({ widthPx, heightPx, totalTime, depthMeters, biomeTintHex }) {
-      // Update fullscreen geometry.
+      // Update fullscreen geometry — both the godray surface filter
+      // and the parent's depth-tint filter need an explicit
+      // viewport-sized filterArea every frame.
       surface.filterArea = new Rectangle(0, 0, widthPx, heightPx);
+      parent.filterArea = new Rectangle(0, 0, widthPx, heightPx);
       // Godray attenuation: shafts ride on `time` and fade with depth.
       const depthFade = Math.max(0, 1 - depthMeters / GODRAY_MAX_DEPTH);
       surfaceRect.clear();
@@ -198,6 +210,7 @@ export function mountWater(parent: Container): WaterController {
     },
     resize(widthPx, heightPx) {
       surface.filterArea = new Rectangle(0, 0, widthPx, heightPx);
+      parent.filterArea = new Rectangle(0, 0, widthPx, heightPx);
     },
     destroy() {
       surface.destroy({ children: true });
