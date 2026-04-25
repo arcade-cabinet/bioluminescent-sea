@@ -89,6 +89,16 @@ export function advanceScene(
   ai.syncCreatures(scene.creatures);
   ai.update(deltaTime);
 
+  // Lamp-pressure: predators inside the player's lamp cone take
+  // damage and flip to FleeState. Lamp-flare buff scales the cone
+  // by 1.35× (matching the renderer's `lampBoost` in player.ts) —
+  // not a doubling, but enough to noticeably extend reach + width.
+  // This is the player's only offensive tool — the lamp is the
+  // bridge between "vehicle with a light" and "predator deterrent."
+  const isLampFlareActive = player.activeBuffs.lampFlareUntil > totalTime;
+  const lampBoost = isLampFlareActive ? 1.35 : 1;
+  ai.applyLampPressure(player.x, player.y, player.angle, player.lampScale, lampBoost);
+
   // Lure buff: collectibles within the lure radius drift toward the
   // player. Only acts on non-ambient creatures (scoring beacons) so
   // ambient atmosphere doesn't get sucked in. Strength scales with
@@ -115,10 +125,18 @@ export function advanceScene(
     return { ...base, x: nx, y: ny };
   });
 
-  const predators = scene.predators.map((p) => {
-    const updated = ai.readPredator(p);
-    return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
-  });
+  // Prune predators the lamp killed this frame (the lamp pressure
+  // pass earlier in this tick may have decremented HP to 0). The
+  // brain map cleanup happens on the next syncPredators tick — its
+  // live-ids set drops anything not in the new scene.predators
+  // array.
+  const deadIds = ai.getDeadPredatorIds();
+  const predators = scene.predators
+    .filter((p) => !deadIds.has(p.id))
+    .map((p) => {
+      const updated = ai.readPredator(p);
+      return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
+    });
 
   const pirates = scene.pirates.map((p) => {
     const updated = ai.readPirate(p);
@@ -292,11 +310,19 @@ export function advanceScene(
     objectiveQueue: nextObjectiveQueue,
   };
 
+  // Strike-burst feedback: if any predator is mid-strike inside a
+  // generous radius around the player, surface that to the runtime
+  // so it can fire the threat-flash camera shake even when the
+  // collision check missed. Tuned wider than the actual hit radius
+  // (~140 vs 60) so a near-miss still feels dangerous.
+  const predatorStrikeNearPlayer = ai.anyPredatorStrikingNear(player.x, player.y, 140);
+
   return {
     collection,
     collidedWithPredator: isCollision,
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
     oxygenBonusSeconds: breathBonus,
+    predatorStrikeNearPlayer,
   };
 }

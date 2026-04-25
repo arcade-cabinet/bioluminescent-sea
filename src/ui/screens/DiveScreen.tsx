@@ -173,6 +173,10 @@ export function DiveScreen({
   const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
   const previousBiomeRef = useRef<string | null>(null);
   const previousLowOxRef = useRef(false);
+  /** Edge-detector for `predatorStrikeNearPlayer`. Without it, the
+   *  threat flash retriggers every frame the strike is in range,
+   *  pinning camera shake at 100% across a multi-frame strike. */
+  const previousStrikeNearRef = useRef(false);
   const depthTravelMetersRef = useRef(initialSnapshot?.scene.depthTravelMeters ?? 0);
   const objectiveQueueRef = useRef(
     initialSnapshot?.scene.objectiveQueue ?? initialScene.objectiveQueue,
@@ -547,6 +551,16 @@ export function DiveScreen({
         void playSfx("oxygen-warn");
       }
       previousLowOxRef.current = lowOx;
+
+      // Strike-near edge: fire the threat flash once on the rising
+      // edge so a near-miss lunge feels dangerous without locking
+      // the camera into permanent shake while the strike persists
+      // for several frames.
+      if (result.predatorStrikeNearPlayer && !previousStrikeNearRef.current) {
+        recordThreatFlash(currentWorld);
+        void playSfx("impact");
+      }
+      previousStrikeNearRef.current = result.predatorStrikeNearPlayer;
 
       if (result.collidedWithPredator) {
         const impact = resolveDiveThreatImpact({

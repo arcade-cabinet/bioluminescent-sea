@@ -24,10 +24,13 @@ test.describe("Oxygen depletion", () => {
 
     // With 80× burn, the dive's seed-resolved oxygen budget (Descent
     // ranges 600–780s) drains in 7.5–9.75s wall clock. Local runs stay
-    // tight at 15s; CI doubles via the budget helper to absorb slow
-    // tablet-portrait containers (which ran 18s on the run that flaked
-    // this test before the bump).
-    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: budget(15_000) });
+    // tight at 20s; CI doubles via the budget helper to absorb slow
+    // tablet-portrait containers + the per-frame Yuka brain tick added
+    // in PR #134 (StateMachine + MemorySystem + FuzzyModule per
+    // predator) which adds noticeable per-tick CPU on slow runners.
+    // Bumped from 15s after that PR's first run flaked at ~18s on
+    // tablet-portrait.
+    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: budget(20_000) });
 
     // Final score + stats grid should be present on the surfaced screen.
     await expect(page.getByTestId("gameover-stats")).toBeVisible();

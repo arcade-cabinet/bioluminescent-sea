@@ -109,6 +109,14 @@ export interface SceneAdvanceResult {
    * pure — no localStorage / React calls. 0 most frames.
    */
   oxygenBonusSeconds: number;
+  /**
+   * True if any predator entered StrikeState near the player this
+   * frame. Drives a brief screen-shake + flash burst even when the
+   * strike misses the collision check — the *attempt* is the
+   * feedback. Decays to false naturally as the predator transitions
+   * to RecoverState.
+   */
+  predatorStrikeNearPlayer: boolean;
 }
 
 export interface DiveModeTuning {
