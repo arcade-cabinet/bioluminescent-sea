@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.25.0...v0.26.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** adrenaline mode — auto-trigger slow-mo on full threat saturation ([#159](https://github.com/arcade-cabinet/bioluminescent-sea/issues/159)) ([d4ba0a8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d4ba0a864963257201a5dcd42b58b4861fee26a1))
+
 ## [0.25.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.24.0...v0.25.0) (2026-04-25)
 
 
