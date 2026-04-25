@@ -1,6 +1,6 @@
 import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
-import { biomeAtDepth } from "@/sim/world/biomes";
+import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
 import { GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { describeDiveObjective, getPressureLabel } from "./objectives";

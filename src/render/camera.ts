@@ -1,4 +1,4 @@
-import type { Vec3 } from "@/sim/world";
+import type { Vec3 } from "@/sim/factories/region";
 
 /**
  * World → screen projection.

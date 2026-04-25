@@ -1,4 +1,4 @@
-import type { BiomeId } from "@/sim/world/types";
+import type { BiomeId } from "@/sim/factories/region/types";
 import type {
   Anomaly,
   Creature,

@@ -1,6 +1,6 @@
-import { biomeAtDepth } from "@/sim/world/biomes";
+import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { hashSeed } from "@/sim/rng";
-import type { Chunk } from "@/sim/world/types";
+import type { Chunk } from "@/sim/factories/region/types";
 
 /**
  * Vertical extent of a single chunk in world-meters. Tuned so the

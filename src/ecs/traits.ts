@@ -18,7 +18,7 @@ import type {
  *
  * ## Trait ↔ Archetype mapping
  *
- * Every archetype produced by `src/sim/entities/factory` materialises
+ * Every archetype produced by `src/sim/factories/actor` materialises
  * onto exactly one of these traits. Archetypes are the *content
  * identity* (what spawns, with what stats, under what AI profile);
  * traits are the *runtime shape* (what the renderer + AI manager see).

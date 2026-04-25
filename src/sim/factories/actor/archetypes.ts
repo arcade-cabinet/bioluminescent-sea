@@ -1,4 +1,4 @@
-import type { CreatureType, AnomalyType } from "../types";
+import type { CreatureType, AnomalyType } from "@/sim/entities/types";
 
 /**
  * The factory's input language. Every spawnable actor is described as one

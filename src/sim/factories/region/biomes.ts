@@ -1,4 +1,4 @@
-import { COMPILED_BIOMES } from "../../../config/compiled/content";
+import { COMPILED_BIOMES } from "../../../../config/compiled/content";
 import type { Biome, BiomeId } from "./types";
 
 /**

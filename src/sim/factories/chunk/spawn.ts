@@ -1,12 +1,20 @@
-import { CHUNK_HEIGHT_METERS } from "@/sim/chunk";
+import { CHUNK_HEIGHT_METERS } from "@/sim/factories/chunk";
 import { createRng } from "@/sim/rng";
 import { clamp, round } from "@/sim/_shared/math";
 import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
-import { biomeById } from "@/sim/world/biomes";
-import type { Chunk } from "@/sim/world/types";
+import { biomeById } from "@/sim/factories/region/biomes";
+import type { Chunk } from "@/sim/factories/region/types";
 import type { ViewportDimensions } from "@/sim/dive/types";
-import type { ModeSlots } from "@/sim/dive/modeSlots";
-import { CREATURE_COLORS, type Creature, type CreatureType, type Anomaly, type AnomalyType, type Predator, type Pirate } from "./types";
+import type { ModeSlots } from "@/sim/factories/dive/slots";
+import {
+  CREATURE_COLORS,
+  type Creature,
+  type CreatureType,
+  type Anomaly,
+  type AnomalyType,
+  type Predator,
+  type Pirate,
+} from "@/sim/entities/types";
 
 /**
  * Spawn pattern — the *shape* of a chunk's threat layout. A slot value on

@@ -1,4 +1,4 @@
-import type { Chunk } from "@/sim/world/types";
+import type { Chunk } from "@/sim/factories/region/types";
 
 /**
  * Chunk lifecycle delta.

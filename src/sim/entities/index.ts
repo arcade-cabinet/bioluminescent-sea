@@ -10,7 +10,7 @@
  */
 
 export * from "./types";
-export * from "./factory";
+export * from "@/sim/factories/actor";
 export {
   CREATURE_ANCHORS,
   TOTAL_BEACONS,

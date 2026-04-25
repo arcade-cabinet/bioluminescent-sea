@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { chunkAt } from "@/sim/chunk";
+import { chunkAt } from "@/sim/factories/chunk";
 import {
   BASE_CREATURES_PER_CHUNK,
   estimateWorldYMeters,
   spawnCreaturesForChunk,
   spawnCreaturesForChunks,
-} from "./chunked-spawn";
+} from "./spawn";
 
 const viewport = { width: 1280, height: 720 };
 

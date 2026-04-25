@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { Chunk } from "@/sim/world/types";
-import { spawnPredatorsForChunk } from "../chunked-spawn";
+import type { Chunk } from "@/sim/factories/region/types";
+import { spawnPredatorsForChunk } from "./spawn";
 
 /**
  * Patterns shape the chunk-level threat layout. The test asserts

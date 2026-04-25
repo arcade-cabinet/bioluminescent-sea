@@ -1,4 +1,10 @@
-import { chunkLifecycleDelta, chunksInWindow } from "@/sim/chunk";
+import { chunkLifecycleDelta, chunksInWindow } from "@/sim/factories/chunk";
+import {
+  spawnAnomaliesForChunk,
+  spawnCreaturesForChunk,
+  spawnPiratesForChunk,
+  spawnPredatorsForChunk,
+} from "@/sim/factories/chunk/spawn";
 import { advanceScene } from "@/sim/dive/advance";
 import { resolveDiveThreatImpact } from "@/sim/dive/impact";
 import type {
@@ -7,13 +13,7 @@ import type {
   SceneState,
   ViewportDimensions,
 } from "@/sim/dive/types";
-import {
-  spawnAnomaliesForChunk,
-  spawnCreaturesForChunk,
-  spawnPiratesForChunk,
-  spawnPredatorsForChunk,
-} from "@/sim/entities/chunked-spawn";
-import { getModeSlots } from "@/sim/dive/modeSlots";
+import { getModeSlots } from "@/sim/factories/dive/slots";
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
 import { DiveRoot } from "./traits";
 import {

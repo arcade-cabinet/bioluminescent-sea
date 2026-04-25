@@ -4,7 +4,7 @@ import {
   advancePlayer,
   createInitialPlayer,
 } from "@/sim/entities";
-import { CHUNK_HEIGHT_METERS } from "@/sim/chunk";
+import { CHUNK_HEIGHT_METERS } from "@/sim/factories/chunk";
 import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
 import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { getDiveModeTuning } from "./mode";

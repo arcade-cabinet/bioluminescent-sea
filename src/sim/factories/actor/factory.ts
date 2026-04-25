@@ -6,7 +6,7 @@ import type {
   Pirate,
   Player,
   Predator,
-} from "../types";
+} from "@/sim/entities/types";
 import {
   type ActorArchetype,
   type AnomalyArchetype,

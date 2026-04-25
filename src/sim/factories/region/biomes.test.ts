@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BIOMES, biomeAtDepth, biomeById, nextBiome } from "../biomes";
+import { BIOMES, biomeAtDepth, biomeById, nextBiome } from "./biomes";
 
 describe("BIOMES", () => {
   it("covers a contiguous depth range starting at 0", () => {

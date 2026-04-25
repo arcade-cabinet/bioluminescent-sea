@@ -1,5 +1,5 @@
 import type { SessionMode } from "@/sim/_shared/sessionMode";
-import { GAME_DURATION } from "./constants";
+import { GAME_DURATION } from "@/sim/dive/constants";
 
 /**
  * Single declarative source of truth for what makes a dive mode different.

@@ -1,6 +1,6 @@
 import { EntityManager, Time, AlignmentBehavior, CohesionBehavior, SeparationBehavior } from "yuka";
 import type { Player, Predator, Pirate, Creature } from "@/sim/entities/types";
-import { getArchetype } from "@/sim/entities/factory";
+import { getArchetype } from "@/sim/factories/actor";
 import {
   EnemySubHuntBehavior,
   GameVehicle,
