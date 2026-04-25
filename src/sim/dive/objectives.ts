@@ -1,4 +1,4 @@
-import type { BiomeId } from "@/sim/world";
+import type { BiomeId } from "@/sim/factories/region";
 
 export function describeDiveObjective(
   remainingCreatures: number,

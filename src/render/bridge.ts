@@ -104,6 +104,41 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
       if (!playerValue) return;
 
+      // Lateral follow-cam. The sim lives on a wider-than-viewport play
+      // band (see sim/_shared/playBand) so the viewport can scroll
+      // laterally without running out of world. By default the camera
+      // centers on the player's world-x; when the active chunk's
+      // archetype is locked-room the camera clamps to the chunk's
+      // horizontal bounds so a bullet-hell encounter doesn't let the
+      // player swim away from it.
+      const targetScrollX = playerValue.x - v.widthPx * 0.5;
+      const cameraTravel = root?.cameraTravel ?? "open";
+      let nextScrollX = targetScrollX;
+      if (cameraTravel === "locked-room" && root) {
+        const minScrollX = root.activeChunkBoundsLeftPx;
+        const maxScrollX = root.activeChunkBoundsRightPx - v.widthPx;
+        nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
+      } else if (cameraTravel === "corridor" && root) {
+        // Corridor narrows lateral motion to a band centered on the
+        // chunk's mid-x rather than the player's current x. The
+        // chunk bounds define the world extent of the corridor; the
+        // camera tracks the player inside it but can't wander past
+        // 40% of the corridor width either side of the corridor
+        // center, so you get the forward-pointing "glide down the
+        // channel" feel without losing contact with the chunk edges.
+        const corridorCenterX =
+          (root.activeChunkBoundsLeftPx + root.activeChunkBoundsRightPx) * 0.5 -
+          v.widthPx * 0.5;
+        const corridorHalfWidth = v.widthPx * 0.4;
+        const minScrollX = corridorCenterX - corridorHalfWidth;
+        const maxScrollX = corridorCenterX + corridorHalfWidth;
+        nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
+      }
+      // Ease toward the target so the camera glides instead of
+      // snapping when the player changes direction.
+      const easedScrollX = camera.scrollXPx + (nextScrollX - camera.scrollXPx) * 0.18;
+      camera.setScrollXPx(easedScrollX);
+
       const anomalies = collectTraitValues(
         world.anomalyEntities,
         AnomalyEntity,

@@ -18,7 +18,7 @@ import type {
  *
  * ## Trait ↔ Archetype mapping
  *
- * Every archetype produced by `src/sim/entities/factory` materialises
+ * Every archetype produced by `src/sim/factories/actor` materialises
  * onto exactly one of these traits. Archetypes are the *content
  * identity* (what spawns, with what stats, under what AI profile);
  * traits are the *runtime shape* (what the renderer + AI manager see).
@@ -87,4 +87,39 @@ export const DiveRoot = trait({
    * can read scene-wide depth without walking back to the sim.
    */
   depthTravelMeters: 0,
+  /**
+   * The active chunk's travel policy — "open", "locked-room", or
+   * "corridor". Resolved by the ECS action layer every frame from the
+   * dive archetype + current chunk and surfaced here so the render
+   * bridge's camera can pick follow-cam vs clamp-to-chunk without
+   * having to re-derive it. Mirror of the chunk archetype's
+   * `ChunkSlots.travel`.
+   */
+  cameraTravel: "open" as "open" | "locked-room" | "corridor",
+  /**
+   * The active chunk's horizontal bounds in world-pixels. The render
+   * bridge clamps `scrollXPx` to `[leftPx, rightPx - viewportWidth]`
+   * when `cameraTravel === "locked-room"` and follows the player
+   * freely otherwise. Split into primitive fields because Koota's
+   * trait schema rejects nested object literals.
+   */
+  activeChunkBoundsLeftPx: 0,
+  activeChunkBoundsRightPx: 0,
+  /**
+   * Serialized JSON of the SceneState.objectiveQueue. Koota's trait
+   * schema rejects arbitrary nested-object arrays, so we carry the
+   * live queue on DiveRoot as a string and decode on read. The bridge
+   * writes after each advance; the HUD reads at render time. Starts
+   * empty until `createInitialScene` seeds it and the first ECS
+   * advance copies it through.
+   */
+  objectiveQueueJson: "[]",
+  /**
+   * Monotonic counter for locked-room chunks the player has cleared.
+   * Ticks up once per chunk the first time its threats hit zero. The
+   * engine's "clear-regions" objective reads this via the scene bridge
+   * to drive progress. Stored on DiveRoot (not SceneState) so resume
+   * preserves lifetime progress across reloads.
+   */
+  chunksClearedCount: 0,
 });

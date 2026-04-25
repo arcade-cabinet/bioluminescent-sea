@@ -16,6 +16,10 @@ export default defineConfig({
       enabled: true,
       headless: true,
       provider: playwright(),
+      // Pin a desktop-class viewport so the inline HUD renders (not the
+      // compact hamburger variant). The GOAP-bot tests query inline HUD
+      // testids like `hud-stat-score` directly.
+      viewport: { width: 1280, height: 720 },
       instances: [{ browser: "chromium" }],
     },
   },

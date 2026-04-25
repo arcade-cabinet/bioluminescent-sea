@@ -23,7 +23,7 @@ import {
   resetAIManager,
   type SceneState,
 } from "@/sim/dive";
-import { getModeSlots } from "@/sim/dive/modeSlots";
+import { getModeSlots } from "@/sim/factories/dive/slots";
 import {
   createCollectBeaconsProfile,
   createGoapBrainOwner,

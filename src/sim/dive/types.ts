@@ -1,4 +1,4 @@
-import type { BiomeId } from "@/sim/world/types";
+import type { BiomeId } from "@/sim/factories/region/types";
 import type {
   Anomaly,
   Creature,
@@ -31,11 +31,17 @@ export interface SceneState {
    * monotonically as the dive advances. This is the real depth — the
    * sub is actually *moving downward* through the column. Renderer
    * camera and audio ambient filter both read this directly.
-   *
-   * Groundwork for PR F.2 chunking. Entity world-Y + chunk spawn/retire
-   * lands in the follow-up.
    */
   depthTravelMeters: number;
+  /**
+   * Per-mode objective queue with live progress. The active objective
+   * is the first entry with `completed === false`; entries before it
+   * are complete, entries after are queued. The engine's
+   * `advanceObjectiveQueue` rebuilds this every frame; the HUD panel
+   * reads it to render the progress list. Seeded from
+   * `createObjectiveQueue(mode)` at dive start.
+   */
+  objectiveQueue: import("@/sim/factories/dive").ObjectiveProgress[];
 }
 
 export interface CreatureCollectionResult {

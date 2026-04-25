@@ -21,11 +21,24 @@ one of:
   player what the trench wants them to do right now.
 
 The three dive modes — **exploration**, **descent**, **arena** — are
-compositions of a single **slot system** (`src/sim/dive/modeSlots.ts`).
-Every gameplay knob (vertical movement lock, completion condition,
-respawn pressure, collision-ends-dive, difficulty curve) is a named
-slot a mode chooses values for. Add a mode by adding a `ModeSlots`
-entry, not by adding a branch.
+compositions in the top layer of a **factory pyramid**
+(`src/sim/factories/{dive,region,chunk,actor}`). Every level of the
+world rides the same `archetypes.ts + slots.ts + factory.ts` triplet:
+
+- A **DiveArchetype** (top) picks the mode's ModeSlots + a sequence
+  of region archetypes.
+- Each **RegionArchetype** (meso) paints a biome and declares a
+  weighted chunk-archetype pool.
+- Each **ChunkArchetype** (micro) carries slots for travel
+  (`open` / `locked-room` / `corridor`), threat pattern, creature /
+  predator density, anomaly + pirate gating.
+- Each **ActorArchetype** (leaf) describes a spawnable creature,
+  predator, pirate, leviathan, enemy sub, anomaly, or the player,
+  with a Yuka behaviour profile the AI manager reads.
+
+Every gameplay knob is a named slot a mode/region/chunk/actor
+chooses values for. Adding a variant means adding an archetype entry,
+not adding a branch.
 
 Oxygen is the timer. The trench loops infinitely past the Living Map;
 running out of oxygen surfaces the sub with a partial chart.
@@ -56,12 +69,12 @@ running out of oxygen surfaces the sub with a partial chart.
    understand the goal within 15 seconds of landing. If that breaks,
    fix it before anything else. See
    [STANDARDS.md](./STANDARDS.md) § Player-journey gate.
-9. **One factory, one slot record.** Every spawnable actor (fish,
-   predators, pirates, enemy subs, leviathans, anomalies, player)
-   comes from `src/sim/entities/factory`. Every gameplay rule that
-   varies by mode lives in `src/sim/dive/modeSlots.ts`. If you're
-   about to write `if (mode === "arena")` outside that file, stop
-   and add a slot.
+9. **Factory pyramid everywhere.** Every spawnable actor comes from
+   `src/sim/factories/actor`. Every chunk, region, and dive goes
+   through its own archetype + slot factory at
+   `src/sim/factories/{chunk,region,dive}`. Every gameplay rule
+   belongs on one of those slot records. If you're about to write
+   `if (mode === "arena")` outside a slot file, stop and add a slot.
 10. **GOAP governs the player sub the same way it governs enemy subs.**
     `src/sim/ai/goap` is a TS port of Yuka's `Goal/CompositeGoal/
     Think/GoalEvaluator`. `PlayerSubController` accepts a
@@ -99,13 +112,20 @@ Short version:
 - `src/sim/` — pure engine. No DOM.
   - `_shared/sessionMode.ts` — SessionMode enum + MODE_METADATA.
   - `rng/` — seeded PRNG, codenames, blurbs.
-  - `world/` — biome table, depth→biome mapping.
-  - `chunk/` — infinite world chunking.
-  - `entities/` — entity types + advance functions.
-    - `entities/factory/` — JSON-style archetype catalogue +
-      `createActor(archetype, ctx)` dispatch + higher-order composites.
-  - `dive/` — scene advance, telemetry, collection, impact, mode
-    composition. `modeSlots.ts` is the single source of truth.
+  - `factories/` — the pyramid. Each level owns
+    `archetypes.ts + slots.ts + factory.ts`:
+    - `dive/` — DiveArchetype catalogue, ModeSlots, ObjectiveSet
+      recipes.
+    - `region/` — RegionArchetype catalogue, RegionSlots, biome table.
+    - `chunk/` — ChunkArchetype catalogue, ChunkSlots (travel +
+      threat + density), infinite chunk lifecycle, spawn dispatch.
+    - `actor/` — ActorArchetype catalogue, `createActor(archetype, ctx)`
+      + higher-order composites (spawnFlock, spawnLeviathanEscort).
+  - `engine/` — per-frame runtime: advance, telemetry, collection,
+    impact, mode adapter, objective tracking.
+  - `entities/` — entity types + advance functions. Re-exports from
+    `factories/actor`.
+  - `dive/` — public barrel + dive-local types/constants.
   - `ai/` — AIManager (Yuka steering) + `goap/` (Goal/CompositeGoal/
     Think/GoalEvaluator) + `PlayerSubController` (input provider).
   - `meta/` — persistent Lux + upgrade costs.
@@ -122,9 +142,14 @@ Short version:
     DiveScreen (runtime host), SeedPickerOverlay (Radix Dialog),
     CompletionBackdrop.
   - `shell/` — LandingHero, GameViewport, GameOverScreen, DrydockScreen.
-  - `hud/` — HUD component, biome + landmark chips, mute button.
+  - `hud/` — HudShell (adaptive per device class + hamburger
+    slide-out), CompactPrimary (oxygen/score/chain on phones), HUD
+    (full stat cluster + biome + landmark), ObjectivePanel (progress
+    bars on the slide-out).
   - `hooks/` — useGameLoop, useSearchParamSeed, useTouchInput,
-    useMetaProgression.
+    useMetaProgression, useDeviceClass (phone-portrait /
+    phone-landscape / tablet / desktop + Capacitor detect),
+    useDevFastDive (dev-only oxygen-burn multiplier).
 - `src/platform/` — Capacitor bridges.
 - `src/data/` — Zod schemas + compiled content importers.
 - `config/raw/` — authored JSON (biomes, creatures, landmarks).

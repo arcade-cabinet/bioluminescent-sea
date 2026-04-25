@@ -46,7 +46,13 @@ export interface DiveWorld {
 export function createDiveWorld(scene: SceneState, masterSeed = 0): DiveWorld {
   const world = createWorld();
 
-  const rootEntity = world.spawn(DiveRoot({ totalTime: 0, threatFlashAlpha: 0 }));
+  const rootEntity = world.spawn(
+    DiveRoot({
+      totalTime: 0,
+      threatFlashAlpha: 0,
+      objectiveQueueJson: JSON.stringify(scene.objectiveQueue),
+    }),
+  );
   const playerEntity = world.spawn(PlayerAvatar({ value: scene.player }));
 
   const creatureEntities = scene.creatures.map((c) =>
@@ -117,7 +123,18 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
     }),
     player,
     depthTravelMeters: root?.depthTravelMeters ?? 0,
+    objectiveQueue: parseObjectiveQueueJson(root?.objectiveQueueJson),
   };
+}
+
+function parseObjectiveQueueJson(json: string | undefined): SceneState["objectiveQueue"] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? (parsed as SceneState["objectiveQueue"]) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**

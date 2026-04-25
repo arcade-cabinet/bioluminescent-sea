@@ -26,7 +26,7 @@ export function cloneSceneState(scene: SceneState): SceneState {
 
 function isSceneSnapshot(scene: unknown): scene is SceneState {
   const value = scene as Partial<SceneState> | undefined;
-  return Boolean(
+  const baseOk = Boolean(
     value &&
       typeof value === "object" &&
       value.player &&
@@ -37,6 +37,14 @@ function isSceneSnapshot(scene: unknown): scene is SceneState {
       Array.isArray(value.pirates) &&
       Array.isArray(value.particles),
   );
+  if (!baseOk) return false;
+  // Older saves predate the objective-queue refactor. Treat a missing
+  // queue as empty rather than failing the load — the first frame of
+  // the resumed dive seeds it from the mode.
+  if (!Array.isArray(value?.objectiveQueue)) {
+    (value as SceneState).objectiveQueue = [];
+  }
+  return true;
 }
 
 function isDeepSeaSnapshot(snapshot: unknown): snapshot is DeepSeaRunSnapshot {

@@ -1,5 +1,5 @@
 import * as Tone from "tone";
-import type { BiomeId } from "@/sim/world";
+import type { BiomeId } from "@/sim/factories/region";
 import { isMuted, onMuteChange } from "./mixer";
 
 /**

@@ -14,16 +14,21 @@ is in [TESTING.md](./TESTING.md). Deployment is in
 
 ## Four anchors the rest of the code hangs from
 
-1. **Mode slot system** (`src/sim/dive/modeSlots.ts`). The only file
-   that differentiates dive modes. Every gameplay rule that varies
-   by mode is a named slot on `ModeSlots`. Modes are compositions
-   of slot values, not branches. Adding a mode is one entry; adding
-   a dimension is one slot plus one branch where it's read.
+1. **Factory pyramid** (`src/sim/factories/{dive,region,chunk,actor}/`).
+   Every level of the world runs on the same `archetypes.ts +
+   slots.ts + factory.ts` triplet. A dive archetype declares its
+   region sequence and mode slots; each region picks from a weighted
+   chunk-archetype pool; each chunk carries its own `travel` /
+   threat / density slots; each actor is an ActorArchetype dispatched
+   by `createActor`. No `if (mode === "...")` branches — every level
+   reads from its slot record. Adding a mode, region, chunk type,
+   or actor is one archetype entry.
 
-2. **Actor factory** (`src/sim/entities/factory/`). Every spawnable
-   actor is an `ActorArchetype`. `createActor(archetype, ctx)` is
-   the single dispatch. Higher-order composites (`spawnFlock`,
-   `spawnLeviathanEscort`) layer on top. PRNG-seeded throughout.
+2. **Engine** (`src/sim/engine/`). The per-frame runtime that
+   consumes scenes + slots and mutates them: `advance`, `telemetry`,
+   `collection`, `impact`, `mode`, `objective`. Pure TypeScript with
+   no React, DOM, pixi, or Koota imports. The factory layer is
+   purely data + pure builders; the engine is the consumer.
 
 3. **GOAP brain layer** (`src/sim/ai/goap/`). A TS port of Yuka's
    `Goal/CompositeGoal/Think/GoalEvaluator`, generic over owner
@@ -31,11 +36,13 @@ is in [TESTING.md](./TESTING.md). Deployment is in
    production pipes human input, integration tests pipe a GOAP
    profile. Same governance enemy subs use.
 
-4. **Fluidic rendering layer** (`src/render/layers/water.ts`). Sits
-   between backdrop and parallax. Carries the water cues —
-   `GodrayFilter` for volumetric light shafts, procedural caustics
-   tied to biome tint + depth, and `AdjustmentFilter` for
-   atmospheric desaturation as the dive descends.
+4. **Fluidic rendering layer** (`src/render/layers/water.ts` +
+   `src/render/bridge.ts`). Water cues (`GodrayFilter`, procedural
+   caustics, `AdjustmentFilter`) sit between backdrop and parallax.
+   The bridge owns the camera: it reads `DiveRoot.cameraTravel` from
+   the ECS to pick between follow-cam (open chunks), clamp-to-chunk
+   (locked-room), or corridor-band, so open-world traversal and
+   arena room-lock coexist without branching by mode.
 
 ## 3D world, 2D canvas
 
@@ -78,11 +85,16 @@ are not collidable with the player.
 │  far → water → mid → near → fx → overlay           │
 │  (water = GodrayFilter + caustics + depth tint)    │
 ├───────────────────────────────────────────────────┤
-│                 Simulation engine                  │
-│  src/sim/rng, src/sim/world, src/sim/chunk,        │
-│  src/sim/dive (+modeSlots), src/sim/meta,          │
-│  src/sim/entities (+factory),                      │
-│  src/sim/ai (Yuka steering + goap/ brain)          │
+│                   Sim engine                       │
+│  src/sim/rng, src/sim/meta, src/sim/entities,      │
+│  src/sim/ai (Yuka steering + goap/ brain),         │
+│  src/sim/engine (advance, telemetry, collection,   │
+│                  impact, mode, objective),         │
+│  src/sim/factories/                                │
+│    ├── dive/   (archetypes + slots + objective)    │
+│    ├── region/ (archetypes + slots + biome data)   │
+│    ├── chunk/  (archetypes + slots + spawn + lifecycle) │
+│    └── actor/  (archetypes + createActor)          │
 ├───────────────────────────────────────────────────┤
 │                    Audio stack                     │
 │  Tone.js ambient, Howler SFX, depth-keyed mixer    │
@@ -231,7 +243,7 @@ else who loaded that URL at the same commit.
 
 - Target 60 FPS on mid-tier mobile (iPhone 12, Pixel 6).
 - PixiJS ticker drives renderer; entity count budget per chunk is
-  tracked in `src/sim/world/chunks.ts` constants (PR F).
+  tracked in `src/sim/factories/chunk/chunk.ts` constants.
 - If a frame drops below 50 FPS on mobile, cull entities outside the
   current chunk window before the renderer runs.
 - Tone.js ambient synth uses a single low-pass polyphonic pad; CPU

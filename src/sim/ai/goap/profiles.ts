@@ -1,4 +1,4 @@
-import { findNearestThreatDistance } from "@/sim/dive/collection";
+import { findNearestThreatDistance } from "@/sim/engine/collection";
 import type { Creature, Player } from "@/sim/entities/types";
 import type { GoapBrainOwner } from "../PlayerSubController";
 import { Goal } from "./Goal";

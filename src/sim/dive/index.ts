@@ -1,27 +1,24 @@
 /**
- * Dive lifecycle — the top-level engine API.
+ * Dive lifecycle — the top-level public API.
  *
- * Public surface: types, constants, mode tuning, scene advance,
- * collection mechanics, telemetry, objective copy, impact resolution.
- *
- * PRs E + F add `createDive(seed, config)` / `advanceDive(state, …)`
- * as the seeded, chunked replacement for the current viewport-scoped
- * `createInitialScene` / `advanceScene`. Both APIs coexist during
- * the transition.
+ * Re-exports from the runtime (engine/), the slot factory
+ * (factories/dive/), and the dive-local types/constants/objective copy.
+ * Other layers import from here so the refactor seam stays in one
+ * place.
  */
 
 export * from "./types";
 export { GAME_DURATION, MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
-export { getDiveDurationSeconds, getDiveModeTuning } from "./mode";
-export { MODE_SLOTS, getModeSlots, type ModeSlots } from "./modeSlots";
-export { advanceScene, createInitialScene, resetAIManager } from "./advance";
+export { getDiveDurationSeconds, getDiveModeTuning } from "@/sim/engine/mode";
+export { MODE_SLOTS, getModeSlots, type ModeSlots } from "@/sim/factories/dive/slots";
+export { advanceScene, createInitialScene, resetAIManager } from "@/sim/engine/advance";
 export {
   calculateMultiplier,
   collectCreatures,
   findNearestBeaconVector,
   findNearestThreatDistance,
   hasPredatorCollision,
-} from "./collection";
+} from "@/sim/engine/collection";
 export {
   ROUTE_LANDMARKS,
   getDiveCompletionCelebration,
@@ -29,6 +26,6 @@ export {
   getDiveRunSummary,
   getDiveTelemetry,
   isDiveComplete,
-} from "./telemetry";
+} from "@/sim/engine/telemetry";
 export { describeDiveObjective, getPressureLabel } from "./objectives";
-export { resolveDiveThreatImpact } from "./impact";
+export { resolveDiveThreatImpact } from "@/sim/engine/impact";
