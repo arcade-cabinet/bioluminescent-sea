@@ -218,6 +218,23 @@ test.describe("Bioluminescent Sea — identity contract", () => {
     expect(tooBleached).toBeNull();
   });
 
+  test("the dive objective banner is not a bordered chip pill", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByTestId("mode-card-descent").click();
+    await page.getByTestId("begin-dive-button").click();
+    const banner = page.getByTestId("objective-banner");
+    await expect(banner).toBeVisible({ timeout: 10_000 });
+    const styles = await banner.evaluate((el) => {
+      const cs = window.getComputedStyle(el);
+      return { bg: cs.backgroundColor, border: cs.borderTopWidth };
+    });
+    // Identity: no chip background, no border.
+    expect(styles.bg).toBe("rgba(0, 0, 0, 0)");
+    expect(styles.border).toBe("0px");
+  });
+
   test("the seed picker dialog has no opaque abyss tile", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("mode-card-descent").click();

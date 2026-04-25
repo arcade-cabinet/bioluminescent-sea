@@ -659,13 +659,22 @@ export function DiveScreen({
         />
       )}
       <AnimatePresence>
+        {/* Oxygen + impact pulses — text-on-water beats, no chip
+         *   pills. The brand identity rule: any HUD floats in the
+         *   trench, no rectangular badge ever. */}
         {oxygenPulse && (
           <motion.div
             key={oxygenPulse.id}
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            className="pointer-events-none absolute left-1/2 top-24 z-20 -translate-x-1/2 rounded-md border border-glow bg-deep/85 px-4 py-2 font-body text-sm font-semibold uppercase tracking-[0.1em] text-glow shadow-[0_0_18px_rgba(107,230,193,0.35)]"
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            className="bs-label pointer-events-none absolute left-1/2 top-20 z-20 -translate-x-1/2 text-glow"
+            style={{
+              fontSize: "0.85rem",
+              filter: "url(#bs-soft-glow)",
+              textShadow:
+                "0 0 16px rgba(107,230,193,0.6), 0 0 30px rgba(107,230,193,0.3), 0 0 6px rgba(2,6,17,0.95)",
+            }}
           >
             Oxygen +{oxygenPulse.bonusSeconds}s
           </motion.div>
@@ -673,10 +682,16 @@ export function DiveScreen({
         {impactPulse && (
           <motion.div
             key={impactPulse.id}
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            className="pointer-events-none absolute left-1/2 top-36 z-20 -translate-x-1/2 rounded-md border border-warn bg-[rgba(80,18,18,0.85)] px-4 py-2 font-body text-sm font-semibold uppercase tracking-[0.1em] text-warn shadow-[0_0_18px_rgba(255,107,107,0.35)]"
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            className="bs-label pointer-events-none absolute left-1/2 top-32 z-20 -translate-x-1/2 text-warn"
+            style={{
+              fontSize: "0.95rem",
+              filter: "url(#bs-warm-glow)",
+              textShadow:
+                "0 0 18px rgba(255,107,107,0.65), 0 0 32px rgba(255,107,107,0.3), 0 0 6px rgba(2,6,17,0.95)",
+            }}
           >
             Hull Shock −{impactPulse.penaltySeconds}s
           </motion.div>
@@ -712,11 +727,22 @@ export function DiveScreen({
       />
       <div
         className="pointer-events-none absolute left-4 right-4 z-10 flex justify-center"
-        style={{ bottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+        style={{ bottom: "max(env(safe-area-inset-bottom), 1.25rem)" }}
       >
+        {/* Objective banner — type-on-water like every other HUD
+         *   readout. The previous bordered pill broke the identity
+         *   contract (no boxy chips on the dive playfield). */}
         <div
           data-testid="objective-banner"
-          className="max-w-[60ch] rounded-full border border-glow/25 bg-abyss/75 px-5 py-2.5 text-center font-body text-sm font-medium text-fg shadow-[0_4px_18px_rgba(5,10,20,0.45)] backdrop-blur-md"
+          className="max-w-[64ch] text-center italic text-fg"
+          style={{
+            fontFamily: "var(--font-body)",
+            fontWeight: 300,
+            fontSize: "1rem",
+            filter: "url(#bs-soft-glow)",
+            textShadow:
+              "0 0 14px rgba(2,6,17,0.95), 0 0 28px rgba(2,6,17,0.6), 0 1px 0 rgba(2,6,17,0.5)",
+          }}
         >
           {telemetry.objective}
         </div>
