@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.6.0...v0.6.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **bs:** every dive ended in 3-10s — predators spawned on the player ([#85](https://github.com/arcade-cabinet/bioluminescent-sea/issues/85)) ([1d63029](https://github.com/arcade-cabinet/bioluminescent-sea/commit/1d63029d50017bb94c0240f985ad1c24d4a53e57))
+* **bs:** visual QA — caustic discs, lamp cone, sub scale ([#87](https://github.com/arcade-cabinet/bioluminescent-sea/issues/87)) ([a49afc8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a49afc8d8baad063182bfc110a961e361858b55e))
+
 ## [0.6.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.5.0...v0.6.0) (2026-04-25)
 
 
