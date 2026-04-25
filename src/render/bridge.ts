@@ -54,6 +54,13 @@ export interface RenderFrameInput {
    * transitions are visible without overwhelming the identity.
    */
   biomeTintHex?: string;
+  /**
+   * Positions where the lamp cone is currently hitting a predator.
+   * The FX layer reads these as ephemeral spark-scatter sources so
+   * the player sees their lamp burning predators every frame the
+   * cone overlaps, not just on the 1.2s damage tick.
+   */
+  lampScatterPoints?: readonly { x: number; y: number }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -123,7 +130,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -244,6 +251,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         bursts,
         threatFlashAlpha,
         viewport: v,
+        lampScatterPoints: lampScatterPoints ?? [],
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

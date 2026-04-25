@@ -371,6 +371,10 @@ export function advanceScene(
     threatIntensity,
     predatorPackCallThisFrame,
     predatorKillsThisFrame,
+    // Snapshot the scatter buffer — AIManager mutates the same array
+    // on the next frame so we have to copy here. Most frames the
+    // array is empty so the spread is cheap.
+    lampScatterPoints: [...ai.lastLampScatterPoints],
   };
 }
 

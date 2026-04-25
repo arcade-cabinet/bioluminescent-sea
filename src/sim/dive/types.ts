@@ -136,6 +136,13 @@ export interface SceneAdvanceResult {
    * THIS frame. Runtime plays `predator-kill` SFX once per kill.
    */
   predatorKillsThisFrame: number;
+  /**
+   * Positions where the lamp cone hit a predator THIS frame. Used
+   * by the renderer's FX layer to emit spark-scatter particles at
+   * each contact point — visible "the lamp is working" feedback
+   * even before damage cooldown allows another HP tick.
+   */
+  lampScatterPoints: readonly { x: number; y: number }[];
 }
 
 export interface DiveModeTuning {
