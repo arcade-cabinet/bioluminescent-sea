@@ -5,6 +5,7 @@ import {
   resolveRegionForChunk,
 } from "@/sim/factories/chunk";
 import {
+  spawnAmbientFishForChunk,
   spawnAnomaliesForChunk,
   spawnCreaturesForChunk,
   spawnPiratesForChunk,
@@ -130,7 +131,14 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
       // Chunk-level creatureDensity scales the count up or down; a
       // density of 0 suppresses entirely (used by arena rooms).
       const keep = Math.round(baseSpawn.length * archetype.slots.creatureDensity);
-      return baseSpawn.slice(0, Math.max(0, keep));
+      const beacons = baseSpawn.slice(0, Math.max(0, keep));
+      // Ambient fish are atmosphere only — they bypass collection
+      // (Creature.ambient = true) and don't scale with the chunk's
+      // creatureDensity slot. Every chunk gets the same baseline so
+      // the trench feels populated even in low-density biomes or
+      // arena rooms where beacons are suppressed.
+      const ambient = spawnAmbientFishForChunk(chunk, viewportOnly);
+      return [...beacons, ...ambient];
     });
     nextWorld = appendCreaturesToWorld(nextWorld, newCreatures);
 
