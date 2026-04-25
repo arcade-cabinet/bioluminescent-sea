@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.12.0...v0.13.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** denser descent — swarm pattern + flock-scale creature density ([#133](https://github.com/arcade-cabinet/bioluminescent-sea/issues/133)) ([461da83](https://github.com/arcade-cabinet/bioluminescent-sea/commit/461da83738b5dbefdaa723a6448752b48b0eb6fa))
+
+
+### Bug Fixes
+
+* **bs:** drop filterArea pinning + explicit per-filter 'inherit' ([#131](https://github.com/arcade-cabinet/bioluminescent-sea/issues/131)) ([308e25f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/308e25f3aec2c675c4cc9b52f5808a7ede5d8248))
+* **bs:** kill upper-left quadrant artifact (Filter.defaultOptions.resolution = 'inherit') ([#128](https://github.com/arcade-cabinet/bioluminescent-sea/issues/128)) ([a15378e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a15378e99dc5d21a08df89d963afea3629bf310b))
+* **bs:** the actual upper-left quadrant artifact (bridge.ts double-divided by resolution) ([#132](https://github.com/arcade-cabinet/bioluminescent-sea/issues/132)) ([27a4b76](https://github.com/arcade-cabinet/bioluminescent-sea/commit/27a4b767afb915c8b70920c4d445f2a59fc9e520))
+* **bs:** widen oxygen-depletion e2e timeout for seed-derived duration ([#130](https://github.com/arcade-cabinet/bioluminescent-sea/issues/130)) ([3f99bc5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/3f99bc5fa707f6912d8f994be9094ffcab66be0a))
+
 ## [0.12.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.11.0...v0.12.0) (2026-04-25)
 
 
