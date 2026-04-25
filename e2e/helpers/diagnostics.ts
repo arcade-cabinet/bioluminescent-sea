@@ -104,13 +104,21 @@ export async function probeElements(
             rect.width === 0 ||
             rect.height === 0;
 
-          // Elements inside a horizontally scroll-snapping container
-          // (carousel slides) legitimately extend past the viewport
-          // — that's the contract. Walk up looking for an ancestor
-          // whose computed overflow-x permits scrolling and treat
-          // off-screen children of that ancestor as intentional.
+          // Elements inside a carousel viewport legitimately extend
+          // past the visible window — that's the carousel contract.
+          // Match either pattern:
+          //   1. Ancestor with `overflow-x: auto/scroll` (CSS-snap
+          //      carousel that uses scrollLeft)
+          //   2. Ancestor with `data-bs-carousel="viewport"` (the
+          //      framer-motion <Carousel/> primitive — slides
+          //      translateX past the visible window with
+          //      overflow:hidden)
           let inHorizontalScroller = false;
           for (let p = node.parentElement; p; p = p.parentElement) {
+            if (p.getAttribute("data-bs-carousel") === "viewport") {
+              inHorizontalScroller = true;
+              break;
+            }
             const ps = window.getComputedStyle(p);
             if (ps.overflowX === "auto" || ps.overflowX === "scroll") {
               inHorizontalScroller = true;
