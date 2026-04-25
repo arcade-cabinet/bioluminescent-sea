@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.18.0...v0.19.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** player damage feedback + pack-call & kill SFX ([#144](https://github.com/arcade-cabinet/bioluminescent-sea/issues/144)) ([5598cf4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/5598cf48eca93c7b119a5322148f6c75b4827eba))
+
 ## [0.18.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.17.0...v0.18.0) (2026-04-25)
 
 
