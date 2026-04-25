@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { TRANSITION_BUDGET_MS } from "./helpers/budget";
 import {
   attachCollector,
   dumpBeat,
@@ -63,25 +64,19 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
     await page.getByTestId("mode-card-exploration").click();
     await expect(page.getByTestId("seed-picker-overlay")).toBeVisible({ timeout: 2000 });
 
-    // Beat 4 — click Begin Dive, assert transition lands inside a
-    // generous budget. Locally the transition is 400-700ms; on GitHub
-    // Actions' shared runners the first Pixi warm-up + font load can
-    // push it over 3s. Use a 5s ceiling so CI doesn't flake while the
-    // ideal target (~600ms) is still called out in the message.
-    const isCI = Boolean(
-      (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CI,
-    );
-    const transitionBudgetMs = isCI ? 5000 : 2500;
+    // Beat 4 — click Begin Dive, assert transition lands inside the
+    // CI-aware budget (see e2e/helpers/budget.ts). Ideal target is
+    // ~600ms locally; CI gets headroom for headed-Chromium warm-up.
     const startedAt = Date.now();
     await page.getByTestId("begin-dive-button").click();
     await expect(page.getByTestId("playing-screen")).toBeVisible({
-      timeout: transitionBudgetMs,
+      timeout: TRANSITION_BUDGET_MS,
     });
     const transitionMs = Date.now() - startedAt;
     expect(
       transitionMs,
-      `landing → playing transition took ${transitionMs}ms (budget ${transitionBudgetMs}ms — PRD says 600ms ideal)`
-    ).toBeLessThan(transitionBudgetMs);
+      `landing → playing transition took ${transitionMs}ms (budget ${TRANSITION_BUDGET_MS}ms — PRD says 600ms ideal)`
+    ).toBeLessThan(TRANSITION_BUDGET_MS);
 
     // Beat 4 — first gameplay frame. The compact HUD on phone viewports
     // collapses everything except the primary cluster (oxygen, score,

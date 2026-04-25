@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
 
 test.describe("Bioluminescent Sea — golden path", () => {
   test("landing renders title, tagline, mode triptych without console errors", async ({ page }, testInfo) => {
@@ -38,7 +39,7 @@ test.describe("Bioluminescent Sea — golden path", () => {
     // Canvas playfield must mount — aria-label selector avoids depending on
     // implicit role (canvas has no default role).
     await expect(page.locator('canvas[aria-label*="playfield" i]')).toBeVisible({
-      timeout: 2000,
+      timeout: CANVAS_MOUNT_BUDGET_MS,
     });
   });
 

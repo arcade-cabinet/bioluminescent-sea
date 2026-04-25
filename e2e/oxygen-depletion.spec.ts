@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
 
 /**
  * Oxygen-depletion smoke. With `?devFastDive=80` the dive's oxygen
@@ -18,7 +19,7 @@ test.describe("Oxygen depletion", () => {
     await page.getByTestId("begin-dive-button").click();
 
     await expect(page.locator('canvas[aria-label*="playfield" i]')).toBeVisible({
-      timeout: 4000,
+      timeout: CANVAS_MOUNT_BUDGET_MS,
     });
 
     // With 80× burn, the dive's 600s of oxygen drains in roughly 7.5s.

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
 
 /**
  * Refresh persistence smoke. Start a dive on seed A, wait for the
@@ -19,7 +20,7 @@ test.describe("Mid-dive refresh persistence", () => {
     await expect(page.getByTestId("seed-picker-overlay")).toBeVisible();
     await page.getByTestId("begin-dive-button").click();
     await expect(page.locator('canvas[aria-label*="playfield" i]')).toBeVisible({
-      timeout: 4000,
+      timeout: CANVAS_MOUNT_BUDGET_MS,
     });
 
     // Seed A — what the snapshot will store.
@@ -40,7 +41,7 @@ test.describe("Mid-dive refresh persistence", () => {
     await expect(page.getByTestId("seed-picker-overlay")).toBeVisible();
     await page.getByTestId("begin-dive-button").click();
     await expect(page.locator('canvas[aria-label*="playfield" i]')).toBeVisible({
-      timeout: 4000,
+      timeout: CANVAS_MOUNT_BUDGET_MS,
     });
 
     // The resumed dive must run on seed A, not seed B — and Game's
