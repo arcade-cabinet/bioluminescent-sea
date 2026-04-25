@@ -22,9 +22,11 @@ test.describe("Oxygen depletion", () => {
       timeout: CANVAS_MOUNT_BUDGET_MS,
     });
 
-    // With 80× burn, the dive's 600s of oxygen drains in roughly 7.5s.
-    // Allow a 15s budget for the gameover transition.
-    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: 15_000 });
+    // With 80× burn, the dive's seed-resolved oxygen budget (Descent
+    // ranges 600–780s) drains in 7.5–9.75s wall clock. Add headroom
+    // for gameover transition + slow CI containers (tablet-portrait
+    // ran 18s on the run that flaked this test). 30s is the budget.
+    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: 30_000 });
 
     // Final score + stats grid should be present on the surfaced screen.
     await expect(page.getByTestId("gameover-stats")).toBeVisible();
