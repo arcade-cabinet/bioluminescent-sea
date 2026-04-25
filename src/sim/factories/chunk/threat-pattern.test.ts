@@ -24,9 +24,12 @@ describe("threat pattern dispatch in spawnPredatorsForChunk", () => {
   test("scattered spreads predators across the play band", () => {
     const predators = spawnPredatorsForChunk(makeChunk(), viewport, "scattered");
     expect(predators.length).toBeGreaterThan(0);
-    // No marauder subs in scattered.
+    // No marauder subs in scattered. The chunk picks one of three
+    // species prefixes (predator / torpedo-eel / shadow-octopus)
+    // for visual variety.
+    const allowedPrefixes = /^(predator|torpedo-eel|shadow-octopus)-/;
     for (const p of predators) {
-      if (!p.isLeviathan) expect(p.id).toMatch(/^predator-/);
+      if (!p.isLeviathan) expect(p.id).toMatch(allowedPrefixes);
     }
   });
 

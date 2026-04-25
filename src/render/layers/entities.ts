@@ -115,8 +115,15 @@ function syncAnomalies(
       });
     }
 
-    g.circle(0, 0, a.size * 0.5 * pulse).fill({ color, alpha: 0.9 });
-    g.circle(0, 0, a.size * 0.5 * pulse).stroke({ color: 0xffffff, width: 2, alpha: 0.5 });
+    const coreR = a.size * 0.5 * pulse;
+    g.circle(0, 0, coreR).fill({ color, alpha: 0.9 });
+    g.circle(0, 0, coreR).stroke({ color: 0xffffff, width: 2, alpha: 0.5 });
+
+    // Glyph inside the core — distinguishes the buff types beyond
+    // colour alone, since color-blind players + low-saturation
+    // backdrops can't always read the colour. Each glyph echoes the
+    // buff's effect.
+    drawAnomalyGlyph(g, a.type, coreR);
   }
 
   for (const [id, g] of cache) {
@@ -199,6 +206,10 @@ function syncPredators(
     // src/sim/ai/manager.ts — entity ids start with "marauder-sub-".
     if (p.id.startsWith("marauder-sub")) {
       drawEnemySub(g, p.size, totalTime, p.noiseOffset);
+    } else if (p.id.startsWith("torpedo-eel")) {
+      drawTorpedoEel(g, p.size, totalTime, p.noiseOffset);
+    } else if (p.id.startsWith("shadow-octopus")) {
+      drawShadowOctopus(g, p.size, totalTime, p.noiseOffset);
     } else if (p.isLeviathan) {
       const sway = Math.sin(totalTime * 1.5 + p.noiseOffset) * p.size * 0.05;
       
@@ -338,6 +349,105 @@ function parseHex(input: string): number {
 }
 
 /**
+ * Draws a small white glyph inside the anomaly core that echoes the
+ * buff's effect. Players learn the glyphs and read them at a glance
+ * even when colour is washed out by depth tint.
+ *
+ *   repel       diamond ward  (4 outward rays)
+ *   overdrive   forward chevron (speed)
+ *   breath      lung wedge (oxygen)
+ *   lure        inward arrows (collectibles drawn in)
+ *   lamp-flare  starburst (radiating spokes)
+ */
+function drawAnomalyGlyph(
+  g: Graphics,
+  type: Anomaly["type"],
+  r: number,
+): void {
+  const white = 0xffffff;
+  const a = 0.95;
+  const w = Math.max(1, r * 0.18);
+  switch (type) {
+    case "repel": {
+      // Diamond ward
+      const d = r * 0.4;
+      g.moveTo(0, -d);
+      g.lineTo(d, 0);
+      g.lineTo(0, d);
+      g.lineTo(-d, 0);
+      g.lineTo(0, -d);
+      g.stroke({ color: white, alpha: a, width: w });
+      break;
+    }
+    case "overdrive": {
+      // Forward chevron (>>)
+      const dx = r * 0.3;
+      const dy = r * 0.32;
+      for (const off of [-dx * 0.4, dx * 0.4]) {
+        g.moveTo(off - dx * 0.3, -dy);
+        g.lineTo(off + dx * 0.3, 0);
+        g.lineTo(off - dx * 0.3, dy);
+        g.stroke({ color: white, alpha: a, width: w });
+      }
+      break;
+    }
+    case "breath": {
+      // Stylised lung wedge — two arcs meeting at the centerline
+      const d = r * 0.42;
+      g.moveTo(0, -d);
+      g.bezierCurveTo(d, -d * 0.5, d, d * 0.5, 0, d);
+      g.bezierCurveTo(-d, d * 0.5, -d, -d * 0.5, 0, -d);
+      g.stroke({ color: white, alpha: a, width: w });
+      // Center line
+      g.moveTo(0, -d * 0.7);
+      g.lineTo(0, d * 0.7);
+      g.stroke({ color: white, alpha: a, width: w });
+      break;
+    }
+    case "lure": {
+      // Four inward-pointing arrows around the centre
+      const d = r * 0.5;
+      const tip = r * 0.18;
+      for (const angle of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+        const sx = Math.cos(angle) * d;
+        const sy = Math.sin(angle) * d;
+        const ex = Math.cos(angle) * tip;
+        const ey = Math.sin(angle) * tip;
+        g.moveTo(sx, sy);
+        g.lineTo(ex, ey);
+        // Arrow head
+        const headSize = r * 0.12;
+        const headA = Math.atan2(sy - ey, sx - ex);
+        g.lineTo(
+          ex + Math.cos(headA + 0.5) * headSize,
+          ey + Math.sin(headA + 0.5) * headSize,
+        );
+        g.moveTo(ex, ey);
+        g.lineTo(
+          ex + Math.cos(headA - 0.5) * headSize,
+          ey + Math.sin(headA - 0.5) * headSize,
+        );
+        g.stroke({ color: white, alpha: a, width: w });
+      }
+      break;
+    }
+    case "lamp-flare": {
+      // Eight-pointed radiating starburst
+      const longR = r * 0.5;
+      const shortR = r * 0.18;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const len = i % 2 === 0 ? longR : shortR;
+        g.moveTo(0, 0);
+        g.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+        g.stroke({ color: white, alpha: a, width: w });
+      }
+      break;
+    }
+  }
+}
+
+/**
  * Enemy submarine silhouette. Mirrors the player's articulated sub
  * shape (hull bezier + dome + lamp cone) but in adversary palette:
  * grungy iron hull, warn-red running lights, hostile cone in
@@ -436,3 +546,121 @@ function drawEnemySub(
     g.stroke({ color: 0xff6b6b, alpha: 0.45, width: 1.5 });
   }
 }
+
+/**
+ * Torpedo-eel: long sinusoidal body that *charges* on a line. The
+ * forward third is a glowing red maw with twin headlights; the back
+ * two-thirds is a wavering tail that ripples on a higher-frequency
+ * sine than other predators so it reads as agile + tense.
+ */
+function drawTorpedoEel(
+  g: Graphics,
+  size: number,
+  totalTime: number,
+  noiseOffset: number,
+): void {
+  const segments = 9;
+  const s = size / 32;
+  // Tail ribbon — drawn back-to-front so the spine sits above the
+  // wavering body.
+  for (let i = segments; i >= 1; i--) {
+    const t = i / segments;
+    const x = -size * 0.6 * t;
+    const wave = Math.sin(totalTime * 4.5 + i * 0.6 + noiseOffset) * size * 0.18 * t;
+    const r = size * 0.18 * (1 - t * 0.7);
+    g.circle(x, wave, r).fill({ color: 0x1a0408, alpha: 0.85 });
+    g.circle(x, wave, r).stroke({
+      color: 0xff5a3c,
+      alpha: 0.45 * (1 - t * 0.5),
+      width: 1.2,
+    });
+  }
+  // Forward maw + skull
+  g.ellipse(size * 0.18, 0, size * 0.32, size * 0.22).fill({
+    color: 0x1a0408,
+    alpha: 0.95,
+  });
+  g.ellipse(size * 0.18, 0, size * 0.32, size * 0.22).stroke({
+    color: 0xff5a3c,
+    alpha: 0.85,
+    width: 1.6,
+  });
+  // Twin red headlight eyes
+  const eyePulse = 0.6 + 0.4 * Math.sin(totalTime * 3 + noiseOffset);
+  g.circle(size * 0.28, -size * 0.07, size * 0.07).fill({
+    color: 0xff7a5a,
+    alpha: eyePulse,
+  });
+  g.circle(size * 0.28, size * 0.07, size * 0.07).fill({
+    color: 0xff7a5a,
+    alpha: eyePulse,
+  });
+  // Open jaw — small triangular fang line
+  g.moveTo(size * 0.4, -size * 0.05);
+  g.lineTo(size * 0.5, 0);
+  g.lineTo(size * 0.4, size * 0.05);
+  g.stroke({ color: 0xff5a3c, alpha: 0.8, width: 1.5 });
+  void s;
+}
+
+/**
+ * Shadow-octopus: a bulb body with eight slowly-curling tentacles.
+ * Body alpha breathes on a slow sine — at the troughs the creature
+ * almost disappears, sells "flickers in/out of view" without an
+ * actual visibility toggle.
+ */
+function drawShadowOctopus(
+  g: Graphics,
+  size: number,
+  totalTime: number,
+  noiseOffset: number,
+): void {
+  const flicker = 0.45 + 0.45 * Math.sin(totalTime * 0.9 + noiseOffset);
+  // Mantle bulb
+  g.ellipse(0, -size * 0.05, size * 0.45, size * 0.55).fill({
+    color: 0x100618,
+    alpha: 0.9 * flicker,
+  });
+  g.ellipse(0, -size * 0.05, size * 0.45, size * 0.55).stroke({
+    color: 0x8b5cf6,
+    alpha: 0.55 * flicker,
+    width: 1.4,
+  });
+  // Two glowing eye-pits high on the bulb
+  const eyeAlpha = 0.7 * flicker;
+  g.circle(-size * 0.14, -size * 0.18, size * 0.06).fill({
+    color: 0xc4b5fd,
+    alpha: eyeAlpha,
+  });
+  g.circle(size * 0.14, -size * 0.18, size * 0.06).fill({
+    color: 0xc4b5fd,
+    alpha: eyeAlpha,
+  });
+  // Eight tentacles curling outward from the bulb base
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + noiseOffset * 0.1;
+    const baseX = Math.cos(a) * size * 0.32;
+    const baseY = size * 0.35 + Math.abs(Math.sin(a)) * size * 0.05;
+    const curl = Math.sin(totalTime * 1.4 + i + noiseOffset) * 0.6;
+    const tipLen = size * 0.55;
+    const tipX = baseX + Math.cos(a + curl) * tipLen;
+    const tipY = baseY + Math.sin(a + curl) * tipLen;
+    const midX = (baseX + tipX) * 0.5 + Math.cos(a + Math.PI / 2) * size * 0.1 * curl;
+    const midY = (baseY + tipY) * 0.5 + Math.sin(a + Math.PI / 2) * size * 0.1 * curl;
+    g.moveTo(baseX, baseY);
+    g.bezierCurveTo(
+      baseX + (midX - baseX) * 0.5,
+      baseY + (midY - baseY) * 0.5,
+      midX,
+      midY,
+      tipX,
+      tipY,
+    );
+    g.stroke({
+      color: 0x8b5cf6,
+      alpha: 0.5 * flicker,
+      width: 2 + (i % 2 ? 0 : 1),
+    });
+  }
+}
+

@@ -205,6 +205,21 @@ export function spawnPredatorsForChunk(
   const baseSize = clamp(640 * 0.14, 54, 94);
   const results: Predator[] = [];
 
+  // Each chunk picks ONE predator species so the player reads
+  // "this pocket has eels, that one has shadow-octopi" instead of
+  // a homogeneous fish-shape soup. Probability weighting is
+  // tuned so abyssal-predator stays the most common.
+  // Note: id prefix here drives the renderer's branch in
+  // src/render/layers/entities.ts. AI manager keeps reading
+  // generic StalkAndDash for now.
+  const predatorRoll = rng.next();
+  const idPrefix =
+    predatorRoll < 0.55
+      ? "predator"
+      : predatorRoll < 0.8
+        ? "torpedo-eel"
+        : "shadow-octopus";
+
   switch (pattern) {
     case "swarm": {
       // Two tight clusters; everybody orbits an anchor.
@@ -218,7 +233,7 @@ export function spawnPredatorsForChunk(
         const theta = rng.range(0, Math.PI * 2);
         results.push({
           angle: round(theta, 3),
-          id: `predator-c${chunk.index}-${i}`,
+          id: `${idPrefix}-c${chunk.index}-${i}`,
           noiseOffset: round(rng.range(0, 1000), 2),
           size: round(baseSize * rng.range(0.8, 1.0), 2),
           speed: round(rng.range(0.55, 0.85), 3),
@@ -294,7 +309,7 @@ export function spawnPredatorsForChunk(
         const y = round(predatorYForChunk(chunk.index, height, rng), 2);
         results.push({
           angle: round(rng.range(-Math.PI, Math.PI), 3),
-          id: `predator-c${chunk.index}-${i}`,
+          id: `${idPrefix}-c${chunk.index}-${i}`,
           noiseOffset: round(rng.range(0, 1000), 2),
           size: round(baseSize * rng.range(0.85, 1.05), 2),
           speed: round(rng.range(0.5, 0.75), 3),
