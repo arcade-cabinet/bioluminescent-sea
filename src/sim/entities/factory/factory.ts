@@ -302,6 +302,11 @@ export function spawnLeviathanEscort(ctx: CompositeSpawnContext): SpawnedActor[]
       idPrefix: ctx.idPrefix,
       x: ctx.centerX + dir * ctx.radius,
       y: ctx.centerY + rng.range(-ctx.radius * 0.4, ctx.radius * 0.4),
+      // Predator records don't carry worldYMeters today (unlike creatures
+      // and anomalies) but the spawner anchors them at the same depth as
+      // the leviathan they escort. Forward the meter for parity if the
+      // shape grows that field later.
+      worldYMeters: ctx.worldYMeters,
       rng,
     }),
   );

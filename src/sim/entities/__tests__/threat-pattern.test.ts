@@ -61,22 +61,25 @@ describe("threat pattern dispatch in spawnPredatorsForChunk", () => {
     );
   });
 
-  test("stygian leviathan still spawns regardless of pattern", () => {
-    // A deterministic-seeded stygian chunk carries a leviathan in at
-    // least one of the 5 seeded variants below. We loop over seeds to
-    // avoid locking the test to a single RNG arrangement.
-    let sawLeviathan = false;
-    for (let seed = 0; seed < 20 && !sawLeviathan; seed++) {
-      const chunk: Chunk = {
-        biome: "stygian-abyss",
-        index: seed,
-        seed: seed * 1000 + 17,
-        yTopMeters: 3400,
-        yBottomMeters: 3600,
-      };
-      const pred = spawnPredatorsForChunk(chunk, viewport, "scattered");
-      if (pred.some((p) => p.isLeviathan)) sawLeviathan = true;
-    }
-    expect(sawLeviathan).toBe(true);
-  });
+  test.each(["scattered", "swarm", "bullet-hell"] as const)(
+    "stygian leviathan still spawns under %s pattern",
+    (pattern) => {
+      // The leviathan is a named boss spawned independently of the
+      // pattern. Verify across all three patterns: in at least one
+      // seeded variant, the chunk should carry a leviathan.
+      let sawLeviathan = false;
+      for (let seed = 0; seed < 20 && !sawLeviathan; seed++) {
+        const chunk: Chunk = {
+          biome: "stygian-abyss",
+          index: seed,
+          seed: seed * 1000 + 17,
+          yTopMeters: 3400,
+          yBottomMeters: 3600,
+        };
+        const pred = spawnPredatorsForChunk(chunk, viewport, pattern);
+        if (pred.some((p) => p.isLeviathan)) sawLeviathan = true;
+      }
+      expect(sawLeviathan).toBe(true);
+    },
+  );
 });

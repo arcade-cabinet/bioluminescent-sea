@@ -98,17 +98,18 @@ export function mountWater(parent: Container): WaterController {
     draw({ widthPx, heightPx, totalTime, depthMeters, biomeTintHex }) {
       // Update fullscreen geometry.
       surface.filterArea = new Rectangle(0, 0, widthPx, heightPx);
+      // Godray attenuation: shafts ride on `time` and fade with depth.
+      const depthFade = Math.max(0, 1 - depthMeters / GODRAY_MAX_DEPTH);
       surfaceRect.clear();
+      // The GodrayFilter multiplies this rect's pixel values with the
+      // noise pattern; the rect's alpha must fade with depth too,
+      // otherwise the surface tint persists into the abyss even after
+      // the rays themselves go to zero.
       surfaceRect
         .rect(0, 0, widthPx, heightPx)
-        // The GodrayFilter multiplies this rect's pixel values with the
-        // noise pattern; a near-transparent midtone keeps the rest of the
-        // scene visible through the shafts.
-        .fill({ color: 0x6be6c1, alpha: 0.055 });
+        .fill({ color: 0x6be6c1, alpha: 0.055 * depthFade });
 
-      // Godray attenuation: shafts ride on `time` and fade with depth.
       godray.time = totalTime;
-      const depthFade = Math.max(0, 1 - depthMeters / GODRAY_MAX_DEPTH);
       godray.gain = 0.36 * depthFade;
       godray.lacunarity = 2.75;
 

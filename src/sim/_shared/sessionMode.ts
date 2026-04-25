@@ -34,6 +34,13 @@ export function getSessionRecoveryScale(mode: SessionMode): number {
  * Authored copy + identity for each dive mode. Pure data — consumed by the
  * landing triptych, the seed-picker overlay header, and any analytics surface
  * that needs human-readable labels. No React, no styles.
+ *
+ * `accentHex` is provided as a hex string for use cases that need to do
+ * pixel math (canvas tints, additive blends, gradient interpolation),
+ * but every accent value MUST be one of the palette colours documented
+ * in `docs/DESIGN.md`. The corresponding CSS custom property is in
+ * `accentVar` for callers that can use a variable directly. Keep both
+ * in sync when adding modes.
  */
 export interface SessionModeMetadata {
   id: SessionMode;
@@ -42,8 +49,10 @@ export interface SessionModeMetadata {
   tagline: string;
   /** Longer copy shown in the seed-picker overlay header. */
   description: string;
-  /** Hex of the accent that paints corners/borders on the card. */
+  /** Hex form of the accent — must match a palette colour. */
   accentHex: string;
+  /** CSS custom property reference for the same accent. */
+  accentVar: string;
   /** Single glyph rendered in the card's icon slot. */
   glyph: string;
   /** Short pace label, used by HUDs and summaries. */
@@ -57,7 +66,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
     tagline: "Drift the photic shelf. No deadlines, gentle threats.",
     description:
       "A slow survey of the upper trench. Long oxygen, soft predators, free vertical movement — the chart is yours to read.",
+    // Soft variant of --color-glow used for the meditative mode tile.
     accentHex: "#a4d8c5",
+    accentVar: "var(--color-glow-soft, #a4d8c5)",
     glyph: "◐",
     paceLabel: "Meditative",
   },
@@ -68,6 +79,7 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
     description:
       "The classic dive. Oxygen ticks, the trench pulls you down, beacons mark the route. Surface breathing easier than when you started.",
     accentHex: "#6be6c1",
+    accentVar: "var(--color-glow)",
     glyph: "↓",
     paceLabel: "Balanced",
   },
@@ -78,6 +90,7 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
     description:
       "Each chunk locks until the threats are cleared. Free movement, sharp predators, no impact grace — every contact ends the dive.",
     accentHex: "#ff6b6b",
+    accentVar: "var(--color-warn)",
     glyph: "⌖",
     paceLabel: "Sharp",
   },

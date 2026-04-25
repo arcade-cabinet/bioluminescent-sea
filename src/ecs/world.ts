@@ -90,7 +90,11 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
   if (!player) throw new Error("readSceneFromWorld: player entity missing PlayerAvatar");
   const root = w.rootEntity.get(DiveRoot);
   return {
-    anomalies: [], // Placeholder until ECS anomaly sync is written
+    anomalies: w.anomalyEntities.map((e) => {
+      const t = e.get(AnomalyEntity);
+      if (!t) throw new Error("Anomaly entity missing trait");
+      return t.value;
+    }),
     creatures: w.creatureEntities.map((e) => {
       const t = e.get(CreatureEntity);
       if (!t) throw new Error("Creature entity missing trait");

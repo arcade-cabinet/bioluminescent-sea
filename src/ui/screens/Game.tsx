@@ -39,14 +39,20 @@ export interface GameProps {
   inputProvider?: PlayerInputProvider;
   /**
    * Test seam: when set, the game starts directly in the dive with this
-   * mode + a deterministic seed, skipping the landing + seed picker.
-   * Useful for per-mode browser tests.
+   * mode, skipping the landing + seed picker. Pair with `autoStartSeed`
+   * for fully deterministic browser tests; otherwise the dive falls
+   * back to today's daily seed which drifts over time.
    */
   autoStartMode?: SessionMode;
+  /**
+   * Test seam: explicit numeric seed used when `autoStartMode` is
+   * present. Without it the test would drift on the daily-seed clock.
+   */
+  autoStartSeed?: number;
 }
 
 export default function Game(props: GameProps = {}) {
-  const { inputProvider, autoStartMode } = props;
+  const { inputProvider, autoStartMode, autoStartSeed } = props;
   const [gameState, setGameState] = useState<GameState>(
     autoStartMode ? "playing" : "landing",
   );
@@ -65,7 +71,9 @@ export default function Game(props: GameProps = {}) {
   //   1. `?seed=<codename>` in the URL (shared trench)
   //   2. Today's daily seed (a familiar default for repeat visitors)
   const urlSeed = useSearchParamSeed();
-  const [previewSeed, setPreviewSeed] = useState<number>(() => urlSeed ?? dailySeed());
+  const [previewSeed, setPreviewSeed] = useState<number>(
+    () => autoStartSeed ?? urlSeed ?? dailySeed(),
+  );
   useEffect(() => {
     if (urlSeed !== null) setPreviewSeed(urlSeed);
   }, [urlSeed]);
@@ -83,9 +91,23 @@ export default function Game(props: GameProps = {}) {
     );
   const completionCelebration = getDiveCompletionCelebration(displaySummary);
 
+  // Record the score on transition into a terminal state, *not* during
+  // render. Side effects in render fire on every commit (including
+  // StrictMode double-invokes) — we only want to write best once per
+  // dive-end. `bestScore` is the stable value the GameOverScreen reads.
+  const [bestScore, setBestScore] = useState<number>(() => recordScoreIfBest(0));
+  useEffect(() => {
+    if (gameState === "gameover" || gameState === "complete") {
+      setBestScore(recordScoreIfBest(finalScore));
+    }
+  }, [gameState, finalScore]);
+
   const startDive = (seed: number) => {
     const snapshot = resolveDeepSeaSnapshot();
-    const nextSeed = snapshot ? activeSeed : seed;
+    // Resume the snapshot's *original* seed if present so the world
+    // matches the saved entities. Older snapshots (pre seed-storage)
+    // don't carry a seed; in that case fall back to the picker's seed.
+    const nextSeed = snapshot?.seed ?? seed;
     setActiveSeed(nextSeed);
     pushSeedToUrl(nextSeed);
     setInitialSnapshot(snapshot);
@@ -101,7 +123,7 @@ export default function Game(props: GameProps = {}) {
   };
 
   return (
-    <GameViewport background="#050d15" data-browser-screenshot-mode="page">
+    <GameViewport background="var(--color-bg)" data-browser-screenshot-mode="page">
       <AnimatePresence mode="wait">
         {gameState === "landing" && (
           <LandingScreen
@@ -140,6 +162,9 @@ export default function Game(props: GameProps = {}) {
               upgrades={upgrades}
               inputProvider={inputProvider}
               onComplete={(s, summary) => {
+                // Drop the persisted snapshot on terminal states so a
+                // subsequent dive doesn't resurrect the finished run.
+                clearDeepSeaSnapshot();
                 setInitialSnapshot(null);
                 setFinalScore(s);
                 setFinalSummary(summary);
@@ -147,6 +172,7 @@ export default function Game(props: GameProps = {}) {
                 setGameState("complete");
               }}
               onGameOver={(s, summary) => {
+                clearDeepSeaSnapshot();
                 setInitialSnapshot(null);
                 setFinalScore(s);
                 setFinalSummary(summary);
@@ -173,7 +199,7 @@ export default function Game(props: GameProps = {}) {
               }
               stats={[
                 { label: "Score", value: finalScore },
-                { label: "Best", value: recordScoreIfBest(finalScore) },
+                { label: "Best", value: bestScore },
                 { label: "Depth", value: `${displaySummary.depthMeters}m` },
                 { label: "Lux earned", value: `+${finalScore}`, accent: true },
               ]}
@@ -201,7 +227,7 @@ export default function Game(props: GameProps = {}) {
               subtitle={`${completionCelebration.message} ${completionCelebration.replayPrompt}`}
               stats={[
                 { label: "Score", value: finalScore },
-                { label: "Best", value: recordScoreIfBest(finalScore) },
+                { label: "Best", value: bestScore },
                 { label: "Oxygen banked", value: `${displaySummary.timeLeft}s` },
                 { label: "Lux earned", value: `+${finalScore}`, accent: true },
               ]}

@@ -45,7 +45,12 @@ trap 'rm -f "$TMP"' EXIT
   echo "[autopilot] Brief acknowledgement — do not stop."
   echo ""
   if [ -f "$REPO/docs/PRODUCTION.md" ]; then
-    OPEN=$(grep -c '^\- \[ \]' "$REPO/docs/PRODUCTION.md" 2>/dev/null || echo 0)
+    # `grep -c` exits non-zero on zero matches; under `set -euo pipefail`
+    # a `|| echo 0` fallback runs in addition to grep's "0" output and
+    # produces "0\n0". Use `|| true` and clamp to a single value so the
+    # variable is always a single integer.
+    OPEN=$(grep -c '^\- \[ \]' "$REPO/docs/PRODUCTION.md" 2>/dev/null || true)
+    OPEN=${OPEN:-0}
     echo "$OPEN docs/PRODUCTION.md items still open."
     echo ""
     grep '^\- \[ \]' "$REPO/docs/PRODUCTION.md" | head -5

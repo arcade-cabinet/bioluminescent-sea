@@ -83,6 +83,7 @@ export class EnemySubHuntBehavior extends SteeringBehavior {
   private state: "patrol" | "pursue" | "cooldown" = "patrol";
   private stateElapsed = 0;
   private patrolAnchor: Vector3;
+  private patrolAnchorInitialized = false;
   private patrolPhase: number;
   private rng: Rng;
 
@@ -101,9 +102,12 @@ export class EnemySubHuntBehavior extends SteeringBehavior {
 
   calculate(vehicle: Vehicle, force: Vector3, delta: number): Vector3 {
     this.stateElapsed += delta;
-    if (this.patrolAnchor.squaredLength() === 0) {
+    if (!this.patrolAnchorInitialized) {
       // First call — anchor the patrol around the sub's spawn position.
+      // A boolean flag avoids the false-positive when a sub legitimately
+      // spawns at world origin (squaredLength() === 0).
       this.patrolAnchor.copy(vehicle.position);
+      this.patrolAnchorInitialized = true;
     }
 
     const toTarget = new Vector3().subVectors(this.target, vehicle.position);

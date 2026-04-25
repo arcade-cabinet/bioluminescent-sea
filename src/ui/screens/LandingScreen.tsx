@@ -135,7 +135,11 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay }: ModeCardProps)
         className="group h-auto w-full justify-start whitespace-normal p-0 text-left"
         data-testid={`mode-card-${meta.id}`}
       >
-        <button type="button" onClick={onSelect}>
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-label={`Begin ${meta.label} dive — ${meta.tagline}`}
+        >
           <Card
             className="group relative w-full overflow-hidden border-deep/70 bg-abyss/80 p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-glow/50 group-hover:shadow-[0_0_32px_rgba(107,230,193,0.18)]"
             style={{
