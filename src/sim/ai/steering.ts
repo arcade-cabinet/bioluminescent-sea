@@ -173,11 +173,12 @@ export class StalkAndDashBehavior extends SteeringBehavior {
     this.dashDistance = 240; // Starts dash when close
     this.stalkDistance = 450; // Slows down to match speed when in this band
     // Beyond this radius the predator drifts on its own loop instead
-    // of beelining toward the player. Gives the player a window to
-    // react after spawn — without it, a predator at y=0.08 of the
-    // viewport immediately heads for y=0.54 and the chunk-0 carve-out
-    // is defeated by global pursuit.
-    this.detectionRadius = 700;
+    // of beelining toward the player. Tightened to 380px after live-
+    // QA showed 700 still pulled chunk-0 spawns into immediate
+    // pursuit on small viewports. 380 ≈ half a phone-portrait
+    // viewport height; the chunk-0 carve-out (30% of height away
+    // from the player) keeps fresh spawns out of range.
+    this.detectionRadius = 380;
     // Seed the wander phase off the predator's spawn-time speed so
     // each predator drifts on a different orbit. Avoids Math.random()
     // (the sim layer must stay deterministic) without needing a full
