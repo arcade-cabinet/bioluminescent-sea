@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.10.0...v0.11.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** biome-keyed species palettes — kelp glowfish, dragonfish, vent-fish ([#122](https://github.com/arcade-cabinet/bioluminescent-sea/issues/122)) ([9b8b198](https://github.com/arcade-cabinet/bioluminescent-sea/commit/9b8b1987f5b4e7d6a4baf74f9bbd0e8638b94ebe))
+* **bs:** enemy-sub gets a sub silhouette instead of fish-shape ([#120](https://github.com/arcade-cabinet/bioluminescent-sea/issues/120)) ([71459c5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/71459c5e8135930953853761af8fdbf18a3364bb))
+* **bs:** visual polish batch — buff diversity, lure mechanic, anomaly glow ([#123](https://github.com/arcade-cabinet/bioluminescent-sea/issues/123)) ([4e6ea6d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/4e6ea6dce615212cac19707ee01fbe6acc74057f))
+
 ## [0.10.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.9.2...v0.10.0) (2026-04-25)
 
 
