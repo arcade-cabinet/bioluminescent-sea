@@ -116,16 +116,16 @@ describe("per-mode browser integration (GOAP bot drives the live game)", () => {
       );
       expect(ready, "playing-screen should mount").toBe(true);
 
-      // Arena collisions end the dive instantly. Bullet-hell pattern
-      // produces a dense grid of marauder subs near the player; the
-      // ram bot drives toward whichever one is nearest. Within 8s we
-      // expect the gameover screen to mount.
+      // Arena collisions end the dive instantly. The shoal-press
+      // pattern pushes a dense shoal of marauder subs in on the
+      // player; the ram bot drives toward whichever one is nearest.
+      // Within 8s we expect the gameover screen to mount.
       const ended = await waitFor(
         () => host.querySelector('[data-testid="gameover-screen"]') !== null,
         12_000,
       );
       // If the bot somehow survives, that's still a coherent outcome
-      // (the bullet-hell grid might not have caught the player yet);
+      // (the shoal-press might not have caught the player yet);
       // the assertion is that the terminal screen shows up *or* that
       // the dive is at least progressing. Soft-asserting here so this
       // test isn't flaky in CI. Hard-asserting on the contract via the

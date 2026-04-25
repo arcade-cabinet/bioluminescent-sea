@@ -280,7 +280,7 @@ export function retireChunkPredators(
   const kept: Entity[] = [];
   // chunked spawner ids for predators:
   //   predator-c<idx>-<n>
-  //   marauder-sub-c<idx>-<n>   (bullet-hell enemy subs)
+  //   marauder-sub-c<idx>-<n>   (shoal-press enemy subs)
   //   leviathan-c<idx>          (stygian boss)
   const pattern = /^(?:predator|marauder-sub|leviathan)-c(\d+)(?:-\d+)?$/;
   for (const entity of w.predatorEntities) {

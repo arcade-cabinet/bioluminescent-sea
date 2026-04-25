@@ -15,13 +15,15 @@ The progression model relies on collecting "Lux" (bioluminescence score) to purc
 
 ## Dive modes
 
-Three modes — **Exploration**, **Descent**, **Arena** — compose from the same slot system in `src/sim/dive/modeSlots.ts`. Each reads as a distinct *way* to be in the trench, not just a difficulty dial.
+Three modes — **Exploration**, **Descent**, **Arena** — compose from the same slot system in `src/sim/factories/dive/slots.ts`. Each reads as a distinct *way* to be in the trench, not just a difficulty dial.
 
-| Mode        | Vertical   | Collision rule   | Completion     | Feel                                                                              |
-| ----------- | ---------- | ---------------- | -------------- | --------------------------------------------------------------------------------- |
-| Exploration | free       | oxygen penalty   | infinite       | Drift the photic shelf. No deadlines, soft threats, oxygen to burn.               |
-| Descent     | forced     | oxygen penalty   | infinite       | The classic dive. Gravity pulls you down, beacons mark the route, oxygen ticks.   |
-| Arena       | free       | **ends the dive**| clear-room     | Bullet-hell at a fixed depth. Clear the chunk or die; advance, repeat, intensify. |
+| Mode        | Lateral | Vertical | Collision rule   | Completion   | Feel                                                                        |
+| ----------- | ------- | -------- | ---------------- | ------------ | --------------------------------------------------------------------------- |
+| Exploration | free    | free     | oxygen penalty   | infinite     | Drift the photic shelf. No deadlines, soft currents, chart the reef.        |
+| Descent     | locked  | free     | oxygen penalty   | depth-goal   | A straight plunge. Lateral current pins you; pick your sink rate; reach the floor. |
+| Arena       | free    | free     | **ends the dive**| infinite     | Push through contested reef pockets. Clear each shoal to unlock the next.   |
+
+Arena's clear-to-advance behaviour lives on the **chunk archetype** (`travel: "locked-room"` in `src/sim/factories/chunk/slots.ts`), not the dive slot. The dive is infinite — the only way out is a collision.
 
 Adding a fourth mode is one record in `MODE_SLOTS` plus one `SessionModeMetadata` entry in `sessionMode.ts`. No renderer, sim, or HUD branches move.
 

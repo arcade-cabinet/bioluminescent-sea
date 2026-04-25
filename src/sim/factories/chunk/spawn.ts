@@ -19,12 +19,8 @@ import {
 /**
  * Spawn pattern — the *shape* of a chunk's threat layout. A slot value on
  * `ModeSlots`, consumed here and only here. Adding a new pattern is a
- * switch arm, not a cross-cutting rewrite.
- *
- *   scattered   — baseline. Random positions across the play band.
- *   swarm       — tight clusters around a few anchors per chunk.
- *   bullet-hell — dense grid of small fast predators. Used by arena mode
- *                 to produce clear-room encounters.
+ * switch arm, not a cross-cutting rewrite. See `./slots.ts` for the
+ * canonical union and player-facing rationale.
  */
 export type { ThreatPattern };
 
@@ -88,12 +84,12 @@ export function spawnPredatorsForChunk(
   const biome = biomeById(chunk.biome);
   const isStygian = chunk.biome === "stygian-abyss";
   const baseCount = Math.round(biome.predatorDensity * 3);
-  // Pattern scales the raw count: swarm doubles, bullet-hell triples,
+  // Pattern scales the raw count: swarm doubles, shoal-press triples,
   // scattered stays at biome density. This keeps each chunk's pressure
   // tuneable from the mode slot alone.
   const patternScale =
-    pattern === "bullet-hell" ? 3 : pattern === "swarm" ? 2 : 1;
-  const count = clamp(baseCount * patternScale, 0, pattern === "bullet-hell" ? 24 : 10);
+    pattern === "shoal-press" ? 3 : pattern === "swarm" ? 2 : 1;
+  const count = clamp(baseCount * patternScale, 0, pattern === "shoal-press" ? 24 : 10);
 
   if (count === 0 && !isStygian) return [];
 
@@ -125,8 +121,9 @@ export function spawnPredatorsForChunk(
       }
       break;
     }
-    case "bullet-hell": {
-      // Tight grid of small fast marauders. Forms the room in arena mode.
+    case "shoal-press": {
+      // Tight grid of small fast marauders pressing in from every
+      // edge of the pocket. Forms the arena-mode encounter.
       const cols = 6;
       const rows = Math.max(1, Math.ceil(count / cols));
       const cellW = playBandWidth(width) / (cols + 1);
@@ -139,7 +136,7 @@ export function spawnPredatorsForChunk(
         const isMarauder = rng.next() > 0.4;
         results.push({
           angle: round(rng.range(-Math.PI, Math.PI), 3),
-          // Bullet-hell mode uses the marauder-sub archetype so the AI
+          // Shoal-press uses the marauder-sub archetype so the AI
           // manager can route a hunting behaviour via id prefix.
           id: isMarauder
             ? `marauder-sub-c${chunk.index}-${i}`

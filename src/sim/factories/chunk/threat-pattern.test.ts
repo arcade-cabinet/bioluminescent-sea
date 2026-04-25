@@ -36,32 +36,32 @@ describe("threat pattern dispatch in spawnPredatorsForChunk", () => {
     expect(swarm.length).toBeGreaterThan(scattered.length);
   });
 
-  test("bullet-hell produces many small fast predators and seeds marauder-subs", () => {
-    const bh = spawnPredatorsForChunk(makeChunk(), viewport, "bullet-hell");
-    expect(bh.length).toBeGreaterThan(0);
-    // Bullet-hell predators are smaller and faster than scattered.
+  test("shoal-press produces many small fast predators and seeds marauder-subs", () => {
+    const sp = spawnPredatorsForChunk(makeChunk(), viewport, "shoal-press");
+    expect(sp.length).toBeGreaterThan(0);
+    // Shoal-press predators are smaller and faster than scattered.
     const scattered = spawnPredatorsForChunk(makeChunk(), viewport, "scattered");
-    const bhAvgSize =
-      bh.reduce((s, p) => s + p.size, 0) / bh.length;
+    const spAvgSize =
+      sp.reduce((s, p) => s + p.size, 0) / sp.length;
     const scAvgSize =
       scattered.reduce((s, p) => s + p.size, 0) / scattered.length;
-    expect(bhAvgSize).toBeLessThan(scAvgSize);
+    expect(spAvgSize).toBeLessThan(scAvgSize);
     // At least one marauder-sub archetype spawned (archetype id prefix
     // lets AIManager route the enemy-sub-hunt steering).
-    const marauders = bh.filter((p) => p.id.startsWith("marauder-sub-"));
+    const marauders = sp.filter((p) => p.id.startsWith("marauder-sub-"));
     expect(marauders.length).toBeGreaterThan(0);
   });
 
   test("pattern dispatch is deterministic per seed", () => {
-    const a = spawnPredatorsForChunk(makeChunk(), viewport, "bullet-hell");
-    const b = spawnPredatorsForChunk(makeChunk(), viewport, "bullet-hell");
+    const a = spawnPredatorsForChunk(makeChunk(), viewport, "shoal-press");
+    const b = spawnPredatorsForChunk(makeChunk(), viewport, "shoal-press");
     expect(a.map((p) => p.id)).toEqual(b.map((p) => p.id));
     expect(a.map((p) => ({ x: p.x, y: p.y }))).toEqual(
       b.map((p) => ({ x: p.x, y: p.y })),
     );
   });
 
-  test.each(["scattered", "swarm", "bullet-hell"] as const)(
+  test.each(["scattered", "swarm", "shoal-press"] as const)(
     "stygian leviathan still spawns under %s pattern",
     (pattern) => {
       // The leviathan is a named boss spawned independently of the
