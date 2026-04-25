@@ -141,6 +141,13 @@ export interface Player {
     /** Doubles lampScale + collection radius while > totalTime. */
     lampFlareUntil: number;
   };
+  /**
+   * Wall-time seconds when the player last took an impact. Drives
+   * a hull flicker + warm-stroke flash in the renderer for ~0.6s
+   * after a hit so impacts feel decisive instead of "I think I
+   * lost oxygen?". -Infinity = no recent impact.
+   */
+  lastImpactSeconds?: number;
 }
 
 export const CREATURE_TYPES: CreatureType[] = ["jellyfish", "plankton", "fish"];

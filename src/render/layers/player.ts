@@ -177,8 +177,19 @@ export function mountPlayer(parent: Container): PlayerController {
       hull.lineTo(-24 * s, 3 * s);
       hull.bezierCurveTo(-22 * s, 8 * s, -16 * s, 14 * s, 0, 14 * s);
       hull.bezierCurveTo(14 * s, 14 * s, 28 * s, 10 * s, 28 * s, 0);
+      // Impact flicker — strokes the hull warm-red for ~0.6s after a
+      // hit, with a high-frequency oscillation so the player feels
+      // "this is bad" without a full-screen flash overlay. After the
+      // window the stroke returns to the standard mint.
+      const sinceImpact = totalTime - (player.lastImpactSeconds ?? -Infinity);
+      const inImpactWindow = sinceImpact >= 0 && sinceImpact < 0.6;
+      const impactT = inImpactWindow ? 1 - sinceImpact / 0.6 : 0;
+      const impactFlicker = inImpactWindow ? 0.5 + 0.5 * Math.sin(totalTime * 50) : 1;
+      const hullStrokeColor = inImpactWindow ? 0xff6b6b : 0x6be6c1;
+      const hullStrokeAlpha = 0.9 * (1 - impactT * 0.4) * impactFlicker;
+      const hullStrokeWidth = 1.5 + impactT * 1.4; // pop wider on hit
       hull.fill({ color: 0x0e4f55, alpha: 1 });
-      hull.stroke({ color: 0x6be6c1, alpha: 0.9, width: 1.5 });
+      hull.stroke({ color: hullStrokeColor, alpha: hullStrokeAlpha, width: hullStrokeWidth });
 
       // Riveted hull plating — three faint horizontal lines at the
       // mid-line read as paneling under the mint stroke.

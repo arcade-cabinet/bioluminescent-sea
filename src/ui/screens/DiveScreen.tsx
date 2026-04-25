@@ -563,6 +563,20 @@ export function DiveScreen({
       }
       previousStrikeNearRef.current = result.predatorStrikeNearPlayer;
 
+      // Pack-call SFX: a predator radioed packmates this frame. The
+      // sim already cooldown-gates broadcasts (1.5s) so this won't
+      // spam.
+      if (result.predatorPackCallThisFrame) {
+        void playSfx("pack-call");
+      }
+      // Predator-kill SFX: hollow whoomph for each lamp kill this
+      // frame. Multiple kills in one frame are rare enough that we
+      // don't bother de-duping — if it happens, the player gets a
+      // satisfying double-thunk.
+      for (let i = 0; i < result.predatorKillsThisFrame; i++) {
+        void playSfx("predator-kill");
+      }
+
       if (result.collidedWithPredator) {
         const impact = resolveDiveThreatImpact({
           collided: result.collidedWithPredator,
