@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.6.1...v0.7.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** balance pass — predator AI state machine + mode tunings (PR B) ([#94](https://github.com/arcade-cabinet/bioluminescent-sea/issues/94)) ([53311e5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/53311e55739835a7f44ea2e3b6b653e01456e83e))
+* **bs:** brand identity + visual overhaul of full player journey (PR A) ([#93](https://github.com/arcade-cabinet/bioluminescent-sea/issues/93)) ([6cc8d14](https://github.com/arcade-cabinet/bioluminescent-sea/commit/6cc8d1402c1c4c996cdca467b525f2d38c93067d))
+
+
+### Bug Fixes
+
+* **bs:** ambient fish visibility + predator detection radius ([#90](https://github.com/arcade-cabinet/bioluminescent-sea/issues/90)) ([126c8c9](https://github.com/arcade-cabinet/bioluminescent-sea/commit/126c8c9aa683add3a5211e8f9af56908e16369b6))
+* **bs:** Arena dives don't end at frame 1 (shoal-press spawn carve-out) ([#98](https://github.com/arcade-cabinet/bioluminescent-sea/issues/98)) ([52191e2](https://github.com/arcade-cabinet/bioluminescent-sea/commit/52191e2462b8272650234e91f8246b126ac0f873))
+* **bs:** instant game-over loop — snapshot resurrect after dive end ([#88](https://github.com/arcade-cabinet/bioluminescent-sea/issues/88)) ([f0044e7](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f0044e797167a5da57b86cfa4e0591f4285b97c6))
+* **bs:** objective banner type-on-water + predators read warm/red ([#97](https://github.com/arcade-cabinet/bioluminescent-sea/issues/97)) ([484467a](https://github.com/arcade-cabinet/bioluminescent-sea/commit/484467a86221f294a28b7c64a92edbc76a39e514))
+* **bs:** real carousel + identity tests ([#95](https://github.com/arcade-cabinet/bioluminescent-sea/issues/95)) ([69256c5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/69256c5ae6ab0ad7426673b9e1a2f7392750f7a5))
+* **bs:** the dive playfield was permanently washed red ([#96](https://github.com/arcade-cabinet/bioluminescent-sea/issues/96)) ([81e8f1b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/81e8f1b17e330614e8d9f124315f7a211ebc3904))
+* **bs:** tighten predator detection radius to 380px ([#92](https://github.com/arcade-cabinet/bioluminescent-sea/issues/92)) ([bcbba83](https://github.com/arcade-cabinet/bioluminescent-sea/commit/bcbba83e46b71eee8697fc9d3354444248655228))
+* **bs:** wire spawnAmbientFishForChunk into the actual chunk lifecycle ([#91](https://github.com/arcade-cabinet/bioluminescent-sea/issues/91)) ([81c3844](https://github.com/arcade-cabinet/bioluminescent-sea/commit/81c3844cd3e510709bc131e7c5751699b53380fd))
+
 ## [0.6.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.6.0...v0.6.1) (2026-04-25)
 
 
