@@ -204,7 +204,7 @@ function spawnPlayer(
       glowIntensity: 1,
       speedScale: 1,
       lampScale: 1,
-      activeBuffs: { repelUntil: 0, overdriveUntil: 0 },
+      activeBuffs: { repelUntil: 0, overdriveUntil: 0, lureUntil: 0, lampFlareUntil: 0 },
     },
   };
 }

@@ -501,9 +501,13 @@ export function DiveScreen({
         setMultiplier(result.collection.multiplier);
         setScore(scoreRef.current);
 
-        if (result.collection.oxygenBonusSeconds > 0) {
+        // Combined bonus = creature collection (multiplier-aware,
+        // tuning-scaled) + breath anomaly pickups (raw +30s each).
+        const totalBonus =
+          result.collection.oxygenBonusSeconds + result.oxygenBonusSeconds;
+        if (totalBonus > 0) {
           const cappedBonus = Math.min(
-            result.collection.oxygenBonusSeconds,
+            totalBonus,
             Math.max(0, durationSeconds - newTimeLeft),
           );
 

@@ -1,6 +1,11 @@
 export type CreatureType = "jellyfish" | "plankton" | "fish";
 
-export type AnomalyType = "repel" | "overdrive";
+export type AnomalyType =
+  | "repel"        // ward predators away from the sub for N seconds
+  | "overdrive"    // 2.5× sub speed scale for N seconds
+  | "breath"       // instant +30s oxygen burst (no duration)
+  | "lure"         // pulls collectibles toward the sub for N seconds
+  | "lamp-flare";  // 2× lamp scale + extends collection radius for N seconds
 
 export interface Anomaly {
   id: string;
@@ -82,6 +87,10 @@ export interface Player {
   activeBuffs: {
     repelUntil: number;
     overdriveUntil: number;
+    /** Pulls collectibles toward the sub while > totalTime. */
+    lureUntil: number;
+    /** Doubles lampScale + collection radius while > totalTime. */
+    lampFlareUntil: number;
   };
 }
 

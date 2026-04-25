@@ -89,10 +89,30 @@ export function advanceScene(
   ai.syncCreatures(scene.creatures);
   ai.update(deltaTime);
 
+  // Lure buff: collectibles within the lure radius drift toward the
+  // player. Only acts on non-ambient creatures (scoring beacons) so
+  // ambient atmosphere doesn't get sucked in. Strength scales with
+  // distance — close beacons snap, far beacons gently nudge.
+  const isLureActive = player.activeBuffs.lureUntil > totalTime;
+  const lureRadius = 300;
+  const lurePullPerSecond = 240; // px/s at the inside edge
+
   const creatures = scene.creatures.map((creature) => {
     const base = advanceCreature(creature, dimensions, totalTime, deltaTime);
     const flocking = ai.readCreature(base);
-    return { ...base, x: flocking.x, y: flocking.y };
+    let nx = flocking.x;
+    let ny = flocking.y;
+    if (isLureActive && !creature.ambient) {
+      const dx = player.x - nx;
+      const dy = player.y - ny;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 1 && dist < lureRadius) {
+        const strength = (1 - dist / lureRadius) * lurePullPerSecond * deltaTime;
+        nx += (dx / dist) * strength;
+        ny += (dy / dist) * strength;
+      }
+    }
+    return { ...base, x: nx, y: ny };
   });
 
   const predators = scene.predators.map((p) => {
@@ -122,10 +142,16 @@ export function advanceScene(
   // Apply buffs
   let activeRepel = player.activeBuffs.repelUntil;
   let activeOverdrive = player.activeBuffs.overdriveUntil;
-  
+  let activeLure = player.activeBuffs.lureUntil;
+  let activeLampFlare = player.activeBuffs.lampFlareUntil;
+  let breathBonus = 0;
+
   for (const collected of anomalyCollection.collected) {
-    if (collected.type === "repel") activeRepel = totalTime + 15; // 15 seconds
-    if (collected.type === "overdrive") activeOverdrive = totalTime + 10; // 10 seconds
+    if (collected.type === "repel") activeRepel = totalTime + 15;
+    if (collected.type === "overdrive") activeOverdrive = totalTime + 10;
+    if (collected.type === "lure") activeLure = totalTime + 12;
+    if (collected.type === "lamp-flare") activeLampFlare = totalTime + 14;
+    if (collected.type === "breath") breathBonus += 30;
   }
 
   // Calculate speed multiplier from overdrive
@@ -213,9 +239,21 @@ export function advanceScene(
     );
   }
 
-  const nextPlayer = { 
-    ...player, 
-    activeBuffs: { repelUntil: activeRepel, overdriveUntil: activeOverdrive } 
+  // Lamp-flare temporarily doubles the lamp scale for bigger
+  // collection radius + brighter cone. Falls back to per-upgrade
+  // baseline (player.lampScale) when the buff expires.
+  const isLampFlare = activeLampFlare > totalTime;
+  const lampScaleNext = isLampFlare ? player.lampScale * 2 : player.lampScale;
+
+  const nextPlayer = {
+    ...player,
+    lampScale: lampScaleNext,
+    activeBuffs: {
+      repelUntil: activeRepel,
+      overdriveUntil: activeOverdrive,
+      lureUntil: activeLure,
+      lampFlareUntil: activeLampFlare,
+    },
   };
 
   const nextSceneBase: SceneState = {
@@ -259,5 +297,6 @@ export function advanceScene(
     collidedWithPredator: isCollision,
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
+    oxygenBonusSeconds: breathBonus,
   };
 }
