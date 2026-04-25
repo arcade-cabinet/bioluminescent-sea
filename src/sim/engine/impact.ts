@@ -5,12 +5,14 @@ export function resolveDiveThreatImpact({
   collided,
   lastImpactTimeSeconds,
   mode,
+  seed,
   timeLeft,
   totalTimeSeconds,
 }: {
   collided: boolean;
   lastImpactTimeSeconds: number;
   mode: string | null | undefined;
+  seed: number;
   timeLeft: number;
   totalTimeSeconds: number;
 }): DiveThreatImpactResult {
@@ -23,7 +25,7 @@ export function resolveDiveThreatImpact({
     };
   }
 
-  const tuning = getDiveModeTuning(mode);
+  const tuning = getDiveModeTuning(mode, seed);
   if (
     tuning.impactGraceSeconds > 0 &&
     totalTimeSeconds - lastImpactTimeSeconds < tuning.impactGraceSeconds

@@ -60,6 +60,7 @@ function playMode(
   bot: PlayerInputProvider,
   framesToRun = 600,
   deltaTime = 1 / 30,
+  seed = 0xCAFE,
 ): PlayResult {
   resetAIManager();
   const scene0 = createInitialScene(dimensions);
@@ -69,14 +70,14 @@ function playMode(
   let multiplier = 1;
   let lastImpactTime = 0;
   let totalTime = 0;
-  let timeLeft = getDiveDurationSeconds(mode);
+  let timeLeft = getDiveDurationSeconds(mode, seed);
   let outcome: PlayResult["outcome"] = "still-running";
 
   for (let frame = 0; frame < framesToRun; frame++) {
     totalTime += deltaTime;
     const tickedTimeLeft = Math.max(
       0,
-      Math.floor(getDiveDurationSeconds(mode) - totalTime),
+      Math.floor(getDiveDurationSeconds(mode, seed) - totalTime),
     );
     timeLeft = tickedTimeLeft;
     if (tickedTimeLeft <= 0) {
@@ -118,6 +119,7 @@ function playMode(
       multiplier,
       timeLeft,
       mode,
+      seed,
     );
     scene = result.scene;
     score += result.collection.scoreDelta;
@@ -131,6 +133,7 @@ function playMode(
         collided: true,
         lastImpactTimeSeconds: lastImpactTime,
         mode,
+        seed,
         timeLeft,
         totalTimeSeconds: totalTime,
       });
@@ -173,7 +176,7 @@ function makeBot(
 
 describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
   test("exploration: idle bot survives a long run; oxygen ticks generously", () => {
-    const slots = getModeSlots("exploration");
+    const slots = getModeSlots("exploration", 0xCAFE);
     expect(slots.collisionEndsDive).toBe(false);
     expect(slots.collectionOxygenScale).toBeGreaterThan(1);
     // Run 5 seconds (150 frames at dt=1/30). Exploration's 900s budget
@@ -191,7 +194,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     // dive where the player doesn't touch the screen doesn't sit at
     // 0m while predators burn the oxygen budget. A seeking bot would
     // drive depth toward the target faster.
-    const slots = getModeSlots("descent");
+    const slots = getModeSlots("descent", 0xCAFE);
     expect(slots.lateralMovement).toBe("locked");
     expect(slots.verticalMovement).toBe("free");
     expect(slots.completionCondition).toBe("depth_goal");
@@ -224,6 +227,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         1,
         480,
         "descent",
+        0xCAFE,
       );
       cur = r.scene;
     }
@@ -250,6 +254,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         1,
         480,
         "exploration",
+        0xCAFE,
       );
       cur = r.scene;
     }
@@ -257,7 +262,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
   });
 
   test("arena: collisionEndsDive is true; the moment the bot reaches a predator the run ends", () => {
-    const slots = getModeSlots("arena");
+    const slots = getModeSlots("arena", 0xCAFE);
     expect(slots.collisionEndsDive).toBe(true);
     expect(slots.impactGraceSeconds).toBe(0);
 
@@ -292,6 +297,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       1,
       480,
       "arena",
+      0xCAFE,
     );
 
     expect(result.collidedWithPredator).toBe(true);
@@ -300,6 +306,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       collided: true,
       lastImpactTimeSeconds: -100,
       mode: "arena",
+      seed: 0xCAFE,
       timeLeft: 480,
       totalTimeSeconds: 0,
     });
@@ -311,7 +318,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     // gate lives on the chunk archetype's locked-room travel slot
     // (encounter pockets). We assert the gate clamps depth to the
     // current chunk floor while a chunk-tagged predator is alive.
-    expect(getModeSlots("arena").completionCondition).toBe("infinite");
+    expect(getModeSlots("arena", 0xCAFE).completionCondition).toBe("infinite");
 
     resetAIManager();
     const scene = createInitialScene(dimensions);
@@ -348,6 +355,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         1,
         480,
         "arena",
+        0xCAFE,
       );
       cur = r.scene;
     }
@@ -377,6 +385,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       1,
       480,
       "arena",
+      0xCAFE,
     ).scene;
     expect(after1.clearedChunks ?? []).toContain(0);
 
@@ -410,6 +419,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       1,
       480,
       "arena",
+      0xCAFE,
     ).scene;
     expect(after2.depthTravelMeters).toBeGreaterThan(200);
 
@@ -443,6 +453,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         1,
         480,
         "arena",
+        0xCAFE,
       );
       cur = r.scene;
     }
@@ -468,6 +479,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         1,
         480,
         "arena",
+        0xCAFE,
       );
       cur = r.scene;
     }
@@ -482,12 +494,13 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
   test("descent: oxygen-penalty impact does NOT kill the dive", () => {
     // Same construction as arena, but in descent the slot says
     // collisionEndsDive: false → impact is recoverable.
-    expect(getModeSlots("descent").collisionEndsDive).toBe(false);
+    expect(getModeSlots("descent", 0xCAFE).collisionEndsDive).toBe(false);
 
     const impact = resolveDiveThreatImpact({
       collided: true,
       lastImpactTimeSeconds: -100,
       mode: "descent",
+      seed: 0xCAFE,
       timeLeft: 600,
       totalTimeSeconds: 90,
     });

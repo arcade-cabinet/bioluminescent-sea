@@ -1,4 +1,5 @@
 import type { SessionMode } from "@/sim/_shared/sessionMode";
+import { type Numeric, resolveNumeric } from "@/sim/_shared/variance";
 import { GAME_DURATION } from "@/sim/dive/constants";
 
 /**
@@ -7,9 +8,23 @@ import { GAME_DURATION } from "@/sim/dive/constants";
  * the player controller — reads from this record. Modes are *compositions*
  * of slot values, not nests of `if mode === "arena"` branches.
  *
- * Adding a new mode means adding a `ModeSlots` entry. Adding a new gameplay
- * dimension means adding a slot here and a single branch where it's read.
+ * **Numeric variance.** Per-dive challenge variety comes from the seed,
+ * not from authored constants. Numeric balance knobs are declared as
+ * `[min, max]` ranges in `MODE_TEMPLATES`. `resolveModeSlots(mode, seed)`
+ * realises the template into concrete `ModeSlots` by drawing each value
+ * from its range with a tagged subseed of the dive seed. Two dives with
+ * the same seed always resolve to identical slots; two dives with
+ * different seeds always sample independently.
+ *
+ * Categorical knobs (movement, completion condition, threat pattern,
+ * etc.) stay authored — they're the mode's *contract*, not its
+ * difficulty. Numeric knobs are the difficulty.
+ *
+ * **No fallback seed.** Every caller MUST pass a real dive seed. There
+ * is no default. If a caller can't produce a seed, that's a bug at the
+ * call site, not something this module papers over.
  */
+
 export interface ModeSlots {
   // ── Player movement ──────────────────────────────────────────────────────
   /** False = the sub is dragged downward by the trench at a fixed pace. */
@@ -57,16 +72,41 @@ export interface ModeSlots {
 }
 
 /**
- * Authored slot values per mode. This is the *only* place each mode is
- * defined. The legacy `DiveModeTuning` shape is derived from this record so
- * callers built before the slot split keep working without churn.
+ * Authored shape — every numeric balance knob may be a range. Fields
+ * that are load-bearing for the mode's contract (e.g. Arena's
+ * `impactOxygenPenaltySeconds: 0` — there's no grace, contact ends the
+ * dive) stay as fixed numbers; making them ranges would break the
+ * mode's identity, not its difficulty.
  */
-export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
+interface ModeSlotsTemplate
+  extends Omit<
+    ModeSlots,
+    | "targetDepthMeters"
+    | "depthCeilingMeters"
+    | "impactGraceSeconds"
+    | "impactOxygenPenaltySeconds"
+    | "threatRadiusScale"
+    | "collectionOxygenScale"
+    | "predatorSpeedScale"
+    | "pirateSpeedScale"
+    | "durationSeconds"
+  > {
+  targetDepthMeters: Numeric | null;
+  depthCeilingMeters: Numeric | null;
+  impactGraceSeconds: Numeric;
+  impactOxygenPenaltySeconds: Numeric;
+  threatRadiusScale: Numeric;
+  collectionOxygenScale: Numeric;
+  predatorSpeedScale: Numeric;
+  pirateSpeedScale: Numeric;
+  durationSeconds: Numeric;
+}
+
+const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
   exploration: {
-    // Exploration's contract is "drift, observe, breathe." Numbers
-    // here lean toward forgiveness: long grace between hits, small
-    // penalty when one lands, threats patrol slowly and disengage
-    // quickly, oxygen budget is the longest of the three modes.
+    // Exploration's contract is "drift, observe, breathe." Numeric
+    // variance keeps each chart feeling like a different mood, not a
+    // different game.
     verticalMovement: "free",
     lateralMovement: "free",
     completionCondition: "infinite",
@@ -77,51 +117,42 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     respawnThreats: false,
     threatPattern: "scattered",
     collisionEndsDive: false,
-    impactGraceSeconds: 8,
-    impactOxygenPenaltySeconds: 8,
-    threatRadiusScale: 0.65,
-    collectionOxygenScale: 1.6,
-    predatorSpeedScale: 0.55,
-    pirateSpeedScale: 0.55,
-    durationSeconds: 900,
+    impactGraceSeconds: [6, 10],
+    impactOxygenPenaltySeconds: [6, 10],
+    threatRadiusScale: [0.55, 0.75],
+    collectionOxygenScale: [1.4, 1.8],
+    predatorSpeedScale: [0.5, 0.65],
+    pirateSpeedScale: [0.5, 0.65],
+    durationSeconds: [780, 1020],
   },
   descent: {
-    // Descent is a vertical-only dive: player can freely pick how fast
-    // to sink (including stop), but the trench current holds them on a
-    // fixed lateral heading. Threats escalate logarithmically with
-    // depth until the player touches the floor.
-    //
-    // Penalty was 45s — cripplingly punitive given a single missed
-    // dodge in a lateral-locked sub. Cut to 25s with longer grace
-    // (6s) so the player feels pressure but a slip doesn't end the
-    // dive.
+    // Descent: a vertical-only sounding to a depth picked per dive.
+    // Target depth especially — every codename names a different
+    // challenge depth so 'Ember Hyacinth Halocline' might want 1820m
+    // while 'Ash Coral Plateau' wants 1280m.
     verticalMovement: "free",
     lateralMovement: "locked",
     completionCondition: "depth_goal",
-    targetDepthMeters: 1500,
+    targetDepthMeters: [1200, 2400],
     depthCeilingMeters: null,
     scoringModel: "depth-multiplied",
     difficultyScaling: "logarithmic",
     respawnThreats: true,
     threatPattern: "scattered",
     collisionEndsDive: false,
-    impactGraceSeconds: 6,
-    impactOxygenPenaltySeconds: 25,
-    threatRadiusScale: 0.9,
-    collectionOxygenScale: 1.1,
-    predatorSpeedScale: 1,
-    pirateSpeedScale: 1,
-    // Single source of truth: pull from GAME_DURATION so tuning that
-    // constant flows through cleanly. The mode.ts adapter no longer
-    // overrides this.
-    durationSeconds: GAME_DURATION,
+    impactGraceSeconds: [4, 8],
+    impactOxygenPenaltySeconds: [18, 30],
+    threatRadiusScale: [0.75, 1.05],
+    collectionOxygenScale: [0.95, 1.25],
+    predatorSpeedScale: [0.85, 1.15],
+    pirateSpeedScale: [0.85, 1.15],
+    durationSeconds: [GAME_DURATION - 60, GAME_DURATION + 120],
   },
   arena: {
-    // Arena strings together clear-to-advance pockets: each locked-
-    // room chunk traps the player until the shoal is thinned, then the
-    // direction they swim (any edge) unlocks the adjacent pocket.
-    // Infinite traversal; difficulty climbs logarithmically. The dive
-    // is "done" only when a collision ends it — no finish line.
+    // Arena strings together clear-to-advance pockets. Per-dive
+    // variance lives in threat geometry and oxygen pace; the
+    // collision-ends-dive contract + zero grace + zero penalty are
+    // the *definition* of Arena and stay fixed.
     verticalMovement: "free",
     lateralMovement: "free",
     completionCondition: "infinite",
@@ -134,14 +165,87 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     collisionEndsDive: true,
     impactGraceSeconds: 0,
     impactOxygenPenaltySeconds: 0,
-    threatRadiusScale: 1.3,
-    collectionOxygenScale: 0.75,
-    predatorSpeedScale: 1.25,
-    pirateSpeedScale: 1.25,
-    durationSeconds: 480,
+    threatRadiusScale: [1.15, 1.45],
+    collectionOxygenScale: [0.6, 0.9],
+    predatorSpeedScale: [1.1, 1.4],
+    pirateSpeedScale: [1.1, 1.4],
+    durationSeconds: [420, 540],
   },
 };
 
-export function getModeSlots(mode: SessionMode): ModeSlots {
-  return MODE_SLOTS[mode];
+/**
+ * Resolve a mode's authored template into concrete `ModeSlots` for a
+ * specific dive seed. Categorical fields pass through unchanged;
+ * numeric fields with `[min, max]` ranges are sampled with a per-knob
+ * tagged subseed so draws are stable and independent.
+ */
+export function resolveModeSlots(mode: SessionMode, seed: number): ModeSlots {
+  const t = MODE_TEMPLATES[mode];
+  return {
+    verticalMovement: t.verticalMovement,
+    lateralMovement: t.lateralMovement,
+    completionCondition: t.completionCondition,
+    targetDepthMeters:
+      t.targetDepthMeters === null
+        ? null
+        : resolveNumeric(t.targetDepthMeters, seed, `${mode}:targetDepth`, true),
+    depthCeilingMeters:
+      t.depthCeilingMeters === null
+        ? null
+        : resolveNumeric(t.depthCeilingMeters, seed, `${mode}:depthCeiling`, true),
+    scoringModel: t.scoringModel,
+    difficultyScaling: t.difficultyScaling,
+    respawnThreats: t.respawnThreats,
+    threatPattern: t.threatPattern,
+    collisionEndsDive: t.collisionEndsDive,
+    impactGraceSeconds: resolveNumeric(
+      t.impactGraceSeconds,
+      seed,
+      `${mode}:impactGrace`,
+    ),
+    impactOxygenPenaltySeconds: resolveNumeric(
+      t.impactOxygenPenaltySeconds,
+      seed,
+      `${mode}:impactPenalty`,
+    ),
+    threatRadiusScale: resolveNumeric(
+      t.threatRadiusScale,
+      seed,
+      `${mode}:threatRadius`,
+    ),
+    collectionOxygenScale: resolveNumeric(
+      t.collectionOxygenScale,
+      seed,
+      `${mode}:collectionOxygen`,
+    ),
+    predatorSpeedScale: resolveNumeric(
+      t.predatorSpeedScale,
+      seed,
+      `${mode}:predatorSpeed`,
+    ),
+    pirateSpeedScale: resolveNumeric(
+      t.pirateSpeedScale,
+      seed,
+      `${mode}:pirateSpeed`,
+    ),
+    durationSeconds: Math.round(
+      resolveNumeric(t.durationSeconds, seed, `${mode}:duration`),
+    ),
+  };
 }
+
+/**
+ * The only public API. Call sites that don't know a seed at the moment
+ * they need slot values are wrong — fix the call site, don't add a
+ * fallback here.
+ */
+export const getModeSlots = resolveModeSlots;
+
+/**
+ * The authored templates are exported for tests + tooling that needs to
+ * inspect the *envelope* of legal values per mode (e.g. asserting that
+ * for any seed, Descent's resolved oxygen budget falls inside the
+ * authored range). Production code should call `resolveModeSlots(mode,
+ * seed)` and read the resolved values, not poke at templates.
+ */
+export { MODE_TEMPLATES };

@@ -62,8 +62,12 @@ export function getDiveTelemetry(
   };
 }
 
-export function isDiveComplete(scene: SceneState, mode: string | null | undefined): boolean {
-  const tuning = getDiveModeTuning(mode);
+export function isDiveComplete(
+  scene: SceneState,
+  mode: string | null | undefined,
+  seed: number,
+): boolean {
+  const tuning = getDiveModeTuning(mode, seed);
   if (tuning.completionCondition === "infinite") return false;
   return scene.depthTravelMeters >= (tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS);
 }

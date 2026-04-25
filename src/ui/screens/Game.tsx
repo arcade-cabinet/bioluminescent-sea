@@ -80,13 +80,14 @@ export default function Game(props: GameProps = {}) {
   // The seed used by the currently-playing dive; frozen at Begin Dive.
   const [activeSeed, setActiveSeed] = useState<number>(previewSeed);
 
+  const displaySummaryDuration = getDiveDurationSeconds(sessionMode, activeSeed);
   const displaySummary =
     finalSummary ??
     getDiveRunSummary(
       { ...createInitialScene({ height: 600, width: 800 }), creatures: [], anomalies: [] },
       finalScore,
-      getDiveDurationSeconds(sessionMode),
-      getDiveDurationSeconds(sessionMode),
+      displaySummaryDuration,
+      displaySummaryDuration,
     );
   const completionCelebration = getDiveCompletionCelebration(displaySummary);
 

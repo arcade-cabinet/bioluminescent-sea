@@ -134,3 +134,26 @@ export const DiveRoot = trait({
    */
   chunksClearedCount: 0,
 });
+
+/**
+ * Resolved per-dive bundle of seed-derived gameplay parameters.
+ * Computed ONCE at dive start (`resolveDiveBundle(mode, seed)`) and
+ * written into this trait. Every per-frame consumer that previously
+ * called `resolveModeSlots(mode, seed)` reads it here instead — so the
+ * draw lives in exactly one place per dive instead of inside every
+ * `advanceScene` / `getDiveModeTuning` call.
+ *
+ * Koota's trait schema rejects deeply-nested objects, so we serialise
+ * the resolved record as JSON and decode on read. The serialised shape
+ * matches `ModeSlots`. The bundle is also persisted to SQLite keyed by
+ * `(mode, seed)` so a reload of the same trench resolves instantly
+ * from the DB instead of re-running the resolver.
+ */
+export const DiveSeedDerived = trait({
+  /** The dive seed this bundle was resolved against. */
+  seed: 0,
+  /** The mode that produced this bundle. */
+  mode: "descent" as "exploration" | "descent" | "arena",
+  /** JSON-serialised `ModeSlots`. Decoded by callers via `JSON.parse`. */
+  modeSlotsJson: "{}",
+});

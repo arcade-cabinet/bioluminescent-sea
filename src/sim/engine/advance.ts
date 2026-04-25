@@ -12,7 +12,6 @@ import { advanceObjectiveQueue, tallyBeaconCharted } from "./objective";
 import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
 import {
   DESCENT_SPEED_METERS_PER_SECOND,
-  GAME_DURATION,
   TRENCH_FLOOR_METERS,
 } from "@/sim/dive/constants";
 import { getDiveModeTuning } from "./mode";
@@ -64,10 +63,11 @@ export function advanceScene(
   deltaTime: number,
   lastCollectTime: number,
   multiplier: number,
-  timeLeft = GAME_DURATION,
-  mode: string | null | undefined = "standard"
+  timeLeft: number,
+  mode: string | null | undefined,
+  seed: number,
 ): SceneAdvanceResult {
-  const tuning = getDiveModeTuning(mode);
+  const tuning = getDiveModeTuning(mode, seed);
   
   if (!aiManager) {
     aiManager = new AIManager(dimensions);

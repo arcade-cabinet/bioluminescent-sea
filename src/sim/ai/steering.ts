@@ -183,20 +183,32 @@ export class StalkAndDashBehavior extends SteeringBehavior {
   // the player before it changes course.
   private state: "patrol" | "alert" | "commit" | "cooldown" = "patrol";
   private stateElapsed = 0;
-  // Tunable durations.
-  private static readonly COMMIT_SECONDS = 1.6;
-  private static readonly COOLDOWN_SECONDS = 3.5;
-  // After this much elapsed in alert, escalate to commit.
-  private static readonly ALERT_TO_COMMIT_SECONDS = 0.6;
+  // Per-instance tuning. Populated from seeded RNG ranges in the
+  // constructor so two predators in the same dive don't move in
+  // lockstep — and two dives with different seeds don't share their
+  // hunting cadence at all. Exposed read-only so tests can drive the
+  // state machine for the exact duration this instance picked.
+  readonly commitSeconds: number;
+  readonly cooldownSeconds: number;
+  readonly alertToCommitSeconds: number;
 
-  constructor(target: Vector3, baseSpeed: number) {
+  /**
+   * @param target  Player vehicle's position vector (live ref, not snapshot)
+   * @param baseSpeed  Per-instance base swim speed
+   * @param seed  Predator's individual seed (subseeded from chunk + index)
+   */
+  constructor(target: Vector3, baseSpeed: number, seed: number) {
     super();
     this.target = target;
     this.baseSpeed = baseSpeed;
-    this.dashSpeed = baseSpeed * 2.4;
-    this.dashDistance = 180;
-    this.detectionRadius = 380;
-    this.wanderSeed = (baseSpeed * 7919) % (Math.PI * 2);
+    const rng = createRng(seed);
+    this.dashSpeed = baseSpeed * rng.range(2.0, 2.8);
+    this.dashDistance = rng.range(140, 220);
+    this.detectionRadius = rng.range(320, 440);
+    this.commitSeconds = rng.range(1.2, 2.0);
+    this.cooldownSeconds = rng.range(2.8, 4.2);
+    this.alertToCommitSeconds = rng.range(0.4, 0.8);
+    this.wanderSeed = rng.range(0, Math.PI * 2);
   }
 
   calculate(vehicle: Vehicle, force: Vector3, delta: number): Vector3 {
@@ -216,19 +228,19 @@ export class StalkAndDashBehavior extends SteeringBehavior {
         if (dist > this.detectionRadius * 1.3) {
           this.state = "patrol";
           this.stateElapsed = 0;
-        } else if (this.stateElapsed >= StalkAndDashBehavior.ALERT_TO_COMMIT_SECONDS) {
+        } else if (this.stateElapsed >= this.alertToCommitSeconds) {
           this.state = "commit";
           this.stateElapsed = 0;
         }
         break;
       case "commit":
-        if (this.stateElapsed >= StalkAndDashBehavior.COMMIT_SECONDS) {
+        if (this.stateElapsed >= this.commitSeconds) {
           this.state = "cooldown";
           this.stateElapsed = 0;
         }
         break;
       case "cooldown":
-        if (this.stateElapsed >= StalkAndDashBehavior.COOLDOWN_SECONDS) {
+        if (this.stateElapsed >= this.cooldownSeconds) {
           this.state = "patrol";
           this.stateElapsed = 0;
         }

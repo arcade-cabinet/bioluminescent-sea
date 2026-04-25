@@ -1,6 +1,7 @@
 export {
-  MODE_SLOTS,
+  MODE_TEMPLATES,
   getModeSlots,
+  resolveModeSlots,
   type ModeSlots,
 } from "./slots";
 

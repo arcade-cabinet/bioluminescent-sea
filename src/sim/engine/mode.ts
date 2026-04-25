@@ -27,12 +27,25 @@ function tuningFromSlots(slots: ModeSlots): DiveModeTuning {
   };
 }
 
+/**
+ * Resolve mode tuning for a specific dive seed.
+ *
+ * Numeric balance knobs (depth target, oxygen budget, impact penalties,
+ * threat scales, speed scales) are seed-derived — same seed always
+ * produces the same tuning, different seeds always produce
+ * independently-sampled tunings within the mode's authored envelope.
+ *
+ * The `seed` parameter is required. Earlier versions accepted no seed
+ * and resolved against a hardcoded `MODE_SLOTS` constant; that path is
+ * gone. Every dive must pass its real seed.
+ */
 export function getDiveModeTuning(
   mode: string | null | undefined,
+  seed: number,
   upgrades?: SubUpgrades,
 ): DiveModeTuning {
   const sessionMode = normalizeSessionMode(mode);
-  const slots = getModeSlots(sessionMode);
+  const slots = getModeSlots(sessionMode, seed);
   const base = tuningFromSlots(slots);
   if (!upgrades) return base;
 
@@ -50,7 +63,8 @@ export function getDiveModeTuning(
 
 export function getDiveDurationSeconds(
   mode: string | null | undefined,
+  seed: number,
   upgrades?: SubUpgrades,
 ): number {
-  return getDiveModeTuning(mode, upgrades).durationSeconds;
+  return getDiveModeTuning(mode, seed, upgrades).durationSeconds;
 }
