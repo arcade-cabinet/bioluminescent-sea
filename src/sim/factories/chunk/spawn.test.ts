@@ -79,10 +79,13 @@ describe("spawnCreaturesForChunk", () => {
   });
 
   it("produces a bounded count (no runaway densities)", () => {
+    // BASE * 1.3 * biomeDensity, where biomeDensity tops out around 1.4
+    // for the densest biome — so the ceiling is BASE * 1.3 * 1.4 ≈
+    // BASE * 1.9. Rounded up + a small grace margin.
+    const ceiling = Math.ceil(BASE_CREATURES_PER_CHUNK * 1.9) + 2;
     for (let i = 0; i < 16; i++) {
       const creatures = spawnCreaturesForChunk(chunkAt(i, 42), viewport);
-      // 1.3 × density × BASE, with density ≤ 1 → max is BASE + 1 at most.
-      expect(creatures.length).toBeLessThanOrEqual(BASE_CREATURES_PER_CHUNK + 2);
+      expect(creatures.length).toBeLessThanOrEqual(ceiling);
     }
   });
 });

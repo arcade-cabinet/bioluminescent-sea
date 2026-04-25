@@ -26,6 +26,9 @@ export interface DeviceClassInfo {
   isNative: boolean;
   /** True for any "phone" variant — i.e. compact HUD + hamburger. */
   isCompact: boolean;
+  /** True when portrait: height > width. Useful for tablet layouts
+   * that need to branch on orientation independent of klass. */
+  isPortrait: boolean;
 }
 
 function detectIsNative(): boolean {
@@ -67,10 +70,11 @@ export function useDeviceClass(): DeviceClassInfo {
 
 function readInfo(): DeviceClassInfo {
   if (typeof window === "undefined") {
-    return { klass: "desktop", isNative: false, isCompact: false };
+    return { klass: "desktop", isNative: false, isCompact: false, isPortrait: false };
   }
   const klass = classify(window.innerWidth, window.innerHeight);
   const isNative = detectIsNative();
   const isCompact = klass === "phone-portrait" || klass === "phone-landscape";
-  return { klass, isNative, isCompact };
+  const isPortrait = window.innerHeight > window.innerWidth;
+  return { klass, isNative, isCompact, isPortrait };
 }

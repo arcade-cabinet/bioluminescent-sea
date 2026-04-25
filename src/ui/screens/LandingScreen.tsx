@@ -27,8 +27,14 @@ const MODE_ICONS: Record<SessionMode, ComponentType<{ className?: string }>> = {
 };
 
 export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingScreenProps) {
-  const { klass } = useDeviceClass();
+  const { klass, isPortrait } = useDeviceClass();
   const isPhoneLandscape = klass === "phone-landscape";
+  const isPhonePortrait = klass === "phone-portrait";
+  const isTabletPortrait = klass === "tablet" && isPortrait;
+  // Compact layouts get the triptych pinned to viewport-bottom so the
+  // three mode cards are always above the fold — the top half is the
+  // hero + title. Desktop + tablet-landscape keep the natural flow.
+  const pinTriptychToBottom = isPhonePortrait || isPhoneLandscape || isTabletPortrait;
   return (
     <motion.div
       data-testid="landing-screen"
@@ -36,7 +42,16 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="absolute inset-0 flex flex-col items-stretch justify-between overflow-hidden bg-bg text-fg"
+      className={
+        pinTriptychToBottom
+          ? // Compact layouts: header + title flow top-down; triptych is
+            // absolutely pinned to viewport-bottom by the section below.
+            "absolute inset-0 flex flex-col items-stretch justify-start overflow-hidden bg-bg text-fg"
+          : // Desktop + tablet-landscape: space header / title / triptych
+            // evenly down the viewport so the title centers and the
+            // triptych sits in the lower third.
+            "absolute inset-0 flex flex-col items-stretch justify-between overflow-hidden bg-bg text-fg"
+      }
     >
       <LandingHero />
 
@@ -57,12 +72,17 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
         </button>
       </header>
 
-      {/* Title + tagline */}
+      {/* Title + tagline — tighter sizing across compact viewports so
+       * the hero doesn't eat the fold. Tagline only renders when there's
+       * room (desktop + tablet-landscape) and sits on a dark scrim so
+       * the god-ray beams underneath can't bleach the body text. */}
       <div
         className={
           isPhoneLandscape
             ? "relative flex flex-col items-center justify-center px-4 pb-0 pt-1 text-center"
-            : "relative flex flex-col items-center justify-center px-6 pb-2 pt-4 text-center"
+            : isPhonePortrait
+              ? "relative flex flex-col items-center justify-start px-4 pb-2 pt-10 text-center"
+              : "relative flex flex-col items-center justify-center px-6 pb-2 pt-4 text-center"
         }
       >
         <motion.h1
@@ -71,7 +91,11 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
           transition={{ delay: 0.2, duration: 0.8 }}
           className="bs-display m-0 font-medium text-glow"
           style={{
-            fontSize: isPhoneLandscape ? "1.5rem" : "clamp(2.5rem, 9vw, 5rem)",
+            fontSize: isPhoneLandscape
+              ? "1.5rem"
+              : isPhonePortrait
+                ? "clamp(2rem, 10vw, 2.75rem)"
+                : "clamp(2.5rem, 9vw, 5rem)",
             textShadow:
               "0 0 24px rgba(107, 230, 193, 0.45), 0 0 48px rgba(107, 230, 193, 0.18)",
             letterSpacing: "0.01em",
@@ -80,15 +104,20 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
           Bioluminescent Sea
         </motion.h1>
 
-        {!isPhoneLandscape && (
+        {!isPhoneLandscape && !isPhonePortrait && (
           <motion.p
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.88 }}
+            animate={{ opacity: 0.95 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="m-0 mt-3 max-w-[44ch] text-fg-muted"
+            className="m-0 mt-3 max-w-[44ch] rounded-lg text-fg-muted"
             style={{
               fontSize: "clamp(0.95rem, 2.4vw, 1.05rem)",
               lineHeight: 1.55,
+              padding: "0.5rem 1rem",
+              background:
+                "color-mix(in srgb, var(--color-bg) 68%, transparent)",
+              backdropFilter: "blur(3px)",
+              WebkitBackdropFilter: "blur(3px)",
             }}
           >
             Sink into an abyssal trench. Trace glowing routes past landmark
@@ -97,29 +126,29 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
         )}
       </div>
 
-      {/* Mode triptych — phone-landscape pins it to viewport bottom so the
-       * three cards always render on-screen regardless of hero/title size.
-       * Tablet/desktop keeps the natural document flow with breathing room. */}
+      {/* Mode triptych — every compact viewport pins it to the bottom so
+       * the three mode cards are always above the fold. Desktop +
+       * tablet-landscape get natural document flow. */}
       <motion.section
-        initial={isPhoneLandscape ? { opacity: 0 } : { opacity: 0, y: 16 }}
-        animate={isPhoneLandscape ? { opacity: 1 } : { opacity: 1, y: 0 }}
+        initial={pinTriptychToBottom ? { opacity: 0 } : { opacity: 0, y: 16 }}
+        animate={pinTriptychToBottom ? { opacity: 1 } : { opacity: 1, y: 0 }}
         transition={{ delay: 0.75, duration: 0.7 }}
         className={
-          isPhoneLandscape
-            ? "absolute inset-x-0 bottom-2 z-10 mx-auto w-full max-w-5xl px-3"
+          pinTriptychToBottom
+            ? "absolute inset-x-0 bottom-3 z-10 mx-auto w-full max-w-5xl px-3"
             : "relative mx-auto w-full max-w-5xl px-6 pb-10"
         }
         aria-label="Choose dive mode"
         data-testid="mode-triptych"
       >
-        {!isPhoneLandscape && (
+        {!pinTriptychToBottom && (
           <p className="mb-3 text-center text-[0.7rem] uppercase tracking-[0.18em] text-fg-muted">
             Choose your descent
           </p>
         )}
         <div
           className={
-            isPhoneLandscape
+            pinTriptychToBottom
               ? "grid grid-cols-3 gap-2"
               : "grid grid-cols-1 gap-3 sm:grid-cols-3"
           }
@@ -131,7 +160,7 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
               icon={MODE_ICONS[mode]}
               onSelect={() => onPickMode(mode)}
               animationDelay={0.8 + index * 0.08}
-              compact={isPhoneLandscape}
+              compact={pinTriptychToBottom}
             />
           ))}
         </div>
@@ -182,11 +211,17 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeC
           >
             <CardCorners color={meta.accentHex} />
 
-            <div className={compact ? "flex items-center gap-2" : "flex items-start gap-3"}>
+            <div
+              className={
+                compact
+                  ? "flex flex-col items-center gap-1.5"
+                  : "flex items-start gap-3"
+              }
+            >
               <div
                 className={
                   compact
-                    ? "flex size-7 shrink-0 items-center justify-center rounded border bg-bg/40"
+                    ? "flex size-8 shrink-0 items-center justify-center rounded-full border bg-bg/40"
                     : "flex size-10 shrink-0 items-center justify-center rounded-md border bg-bg/40"
                 }
                 style={{
@@ -194,9 +229,15 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeC
                   color: meta.accentHex,
                 }}
               >
-                <Icon className={compact ? "size-3.5" : "size-5"} />
+                <Icon className={compact ? "size-4" : "size-5"} />
               </div>
-              <div className="flex flex-col gap-0.5">
+              <div
+                className={
+                  compact
+                    ? "flex flex-col items-center gap-0"
+                    : "flex flex-col gap-0.5"
+                }
+              >
                 {!compact && (
                   <span className="text-[0.65rem] uppercase tracking-[0.14em] text-fg-muted">
                     {meta.paceLabel}
@@ -205,7 +246,7 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeC
                 <h3
                   className={
                     compact
-                      ? "bs-display m-0 text-sm font-medium leading-none"
+                      ? "bs-display m-0 text-xs font-medium uppercase tracking-[0.08em] leading-tight"
                       : "bs-display m-0 text-2xl font-medium leading-tight"
                   }
                   style={{ color: meta.accentHex }}

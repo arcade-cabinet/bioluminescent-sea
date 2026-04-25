@@ -28,7 +28,12 @@ import {
  */
 export type { ThreatPattern };
 
-export const BASE_CREATURES_PER_CHUNK = 3;
+// Base count for a chunk's charted creatures (the objective-relevant
+// beacons). The play band is 2.4× the viewport wide; at the previous
+// value of 3 the world looked empty on every viewport. 10 gives a
+// continuous field of bioluminescent targets across the band without
+// crowding — biome multipliers still scale densities from 0.7 to 1.4.
+export const BASE_CREATURES_PER_CHUNK = 10;
 
 export function spawnCreaturesForChunk(
   chunk: Chunk,
