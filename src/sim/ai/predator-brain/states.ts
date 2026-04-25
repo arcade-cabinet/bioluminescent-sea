@@ -98,6 +98,11 @@ export class StalkState extends TimedState {
 
   execute(owner: PredatorBrain): void {
     this.tickElapsed(owner);
+    // If the brain entered stalk via a flank telegram, hold the
+    // offset until it arrives — then drop to direct pursuit so the
+    // commit comes from the flank position, not the original spawn
+    // angle.
+    owner.maintainFlankApproach();
 
     if (!owner.hasMemoryOfPlayer()) {
       owner.stateMachine.changeTo(PATROL);

@@ -98,8 +98,6 @@ interface PredatorSteeringSlots {
   alignment: AlignmentBehavior;
 }
 
-const _scratch = new Vector3();
-
 export class PredatorBrain extends Vehicle {
   public readonly profile: PredatorArchetypeProfile;
   public readonly stateMachine: StateMachine<PredatorBrain>;
@@ -120,6 +118,14 @@ export class PredatorBrain extends Vehicle {
   /** When the brain last took damage. Drives flee transitions + the
    *  fuzzy desirability "recent pain" axis. */
   private lastDamageTime = -Infinity;
+
+  /**
+   * When set, StalkState seeks this position instead of pursuing the
+   * player directly. Cleared on transition out of stalk. Used by the
+   * pack-flank telegram so recipients close from an offset angle
+   * rather than mirroring the engager's vector.
+   */
+  private flankPosition: Vector3 | null = null;
 
   /** All packmates in the same chunk. Wired by AIManager so flank
    *  broadcasts don't have to walk the whole entity manager. */
@@ -257,14 +263,43 @@ export class PredatorBrain extends Vehicle {
 
   activateStalkBehaviour(): void {
     this.maxSpeed = this.profile.stalkMaxSpeed;
-    if (this.playerRef) this.slots.pursue.evader = this.playerRef;
-    // Alignment lets a pack converge with shared heading — packmates
-    // visibly orient toward the player together rather than each
-    // independently corkscrewing in.
-    this._setActive({ pursue: true, separation: true, alignment: true });
+    if (this.flankPosition) {
+      // Flanker: seek the pre-computed offset position so the pack
+      // closes from multiple angles instead of mirroring one vector.
+      // Once arrived (handled by tick logic), the brain falls back to
+      // direct pursuit — the flank gets you in position, then the
+      // commit comes from there.
+      this.slots.seek.target.copy(this.flankPosition);
+      this._setActive({ seek: true, separation: true, alignment: true });
+    } else {
+      if (this.playerRef) this.slots.pursue.evader = this.playerRef;
+      // Alignment lets a pack converge with shared heading — packmates
+      // visibly orient toward the player together rather than each
+      // independently corkscrewing in.
+      this._setActive({ pursue: true, separation: true, alignment: true });
+    }
   }
   deactivateStalkBehaviour(): void {
-    this._setActive({ pursue: false, alignment: false });
+    this._setActive({ pursue: false, seek: false, alignment: false });
+    // Clear flank target on exit — next stalk entry decides afresh
+    // whether it's pursuing directly or flanking.
+    this.flankPosition = null;
+  }
+
+  /**
+   * Called by StalkState.execute each tick. If the brain is flanking
+   * and has reached the flank position, swap to direct pursuit so it
+   * can actually engage rather than holding the offset forever.
+   */
+  maintainFlankApproach(): void {
+    if (!this.flankPosition || !this.playerRef) return;
+    const distToFlank = this.position.distanceTo(this.flankPosition);
+    if (distToFlank < this.profile.commitRadiusPx * 0.8) {
+      // Reached flank; drop offset and switch to direct pursuit.
+      this.flankPosition = null;
+      this.slots.pursue.evader = this.playerRef;
+      this._setActive({ seek: false, pursue: true });
+    }
   }
 
   activateChargeBehaviour(target: Vector3): void {
@@ -281,11 +316,14 @@ export class PredatorBrain extends Vehicle {
   activateStrikeBehaviour(direction: Vector3): void {
     this.maxSpeed = this.profile.strikeMaxSpeed;
     // Project the strike target far enough that velocity points
-    // through the player and out the other side.
-    _scratch
-      .copy(this.position)
-      .add(_scratch.copy(direction).multiplyScalar(400));
-    this.slots.seek.target.copy(_scratch);
+    // through the player and out the other side. Use a dedicated
+    // local Vector3 — the previous code aliased `_scratch` as both
+    // receiver and argument of `.add()`, which doubled the offset
+    // (CodeRabbit caught this on the first review).
+    this.slots.seek.target
+      .copy(direction)
+      .multiplyScalar(400)
+      .add(this.position);
     this._setActive({ seek: true });
   }
   deactivateStrikeBehaviour(): void {
@@ -359,11 +397,30 @@ export class PredatorBrain extends Vehicle {
   broadcastEngage(): void {
     if (this.currentTime - this.lastBroadcastTime < 1.5) return;
     this.lastBroadcastTime = this.currentTime;
+    if (!this.playerRef) return;
+    // Compute the flank vector once: from player to this brain. Each
+    // packmate rotates this vector by ±flankAngleOffset so they pinch
+    // in from different sides instead of stacking on the engager's
+    // approach line.
+    const playerPos = this.playerRef.position;
+    const baseDx = this.position.x - playerPos.x;
+    const baseDy = this.position.y - playerPos.y;
+    const baseAngle = Math.atan2(baseDy, baseDx);
+    const baseDist = Math.hypot(baseDx, baseDy);
+    let mateIndex = 0;
     for (const mate of this.packMates) {
       if (mate === this) continue;
       const distance = this.position.distanceTo(mate.position);
       if (distance < this.profile.detectionRadiusPx * 1.5) {
-        this.sendMessage(mate, TELEGRAM_FLANK, 0, { sourcePosition: this.position.clone() });
+        // Alternate sides per mate so a pack of 3 splits into ±offset.
+        const sign = mateIndex % 2 === 0 ? 1 : -1;
+        const ringIndex = Math.floor(mateIndex / 2) + 1;
+        const flankAngle = baseAngle + sign * mate.profile.flankAngleOffset * ringIndex;
+        const flankX = playerPos.x + Math.cos(flankAngle) * baseDist;
+        const flankY = playerPos.y + Math.sin(flankAngle) * baseDist;
+        const flankTarget = new Vector3(flankX, flankY, 0);
+        this.sendMessage(mate, TELEGRAM_FLANK, 0, { flankTarget });
+        mateIndex++;
       }
     }
   }
@@ -372,10 +429,13 @@ export class PredatorBrain extends Vehicle {
   // GameEntity.handleMessage takes a Yuka Telegram with message: string.
   override handleMessage(telegram: Telegram): boolean {
     if (telegram.message === TELEGRAM_FLANK) {
-      // Pickup: assume a flanking position around the engager's target.
-      // Force a transition into stalk if currently patrolling so the
-      // pack visibly converges.
-      if (this.currentAiState === "patrol" && this.playerRef) {
+      const data = telegram.data as { flankTarget?: Vector3 } | null;
+      const flankTarget = data?.flankTarget;
+      // Pickup: assume a flanking position. Set the flankPosition so
+      // StalkState's enter() activates seek toward that offset rather
+      // than direct pursuit.
+      if (this.currentAiState === "patrol" && this.playerRef && flankTarget) {
+        this.flankPosition = flankTarget.clone();
         // Refresh memory so canSeePlayer-or-memory checks pass and
         // stalk-state can run.
         const record = this.memorySystem.getRecord(this.playerRef);

@@ -104,14 +104,23 @@ export class AIManager {
       }
     }
 
-    // Prune brains whose entity is no longer in the predators list
-    // (chunk retired, predator destroyed). Without this, old brains
-    // pile up in the entity manager forever.
+    // Prune predators (both organic brains and marauder-sub vehicles)
+    // whose entity is no longer in the live list. Without this, old
+    // entities pile up in the entity manager and keep updating
+    // off-screen forever — costing CPU and producing ghost steering
+    // forces. CodeRabbit caught the missing marauder-sub branch on
+    // PR #134's first review.
     const liveIds = new Set(predators.map((p) => p.id));
     for (const [id, brain] of this.predatorBrainMap.entries()) {
       if (!liveIds.has(id)) {
         this.entityManager.remove(brain);
         this.predatorBrainMap.delete(id);
+      }
+    }
+    for (const [id, vehicle] of this.vehicleMap.entries()) {
+      if (id.startsWith("marauder-sub") && !liveIds.has(id)) {
+        this.entityManager.remove(vehicle);
+        this.vehicleMap.delete(id);
       }
     }
 

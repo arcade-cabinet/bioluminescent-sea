@@ -206,9 +206,9 @@ function syncPredators(
     if (p.id.startsWith("marauder-sub")) {
       drawEnemySub(g, p.size, totalTime, p.noiseOffset);
     } else if (p.id.startsWith("torpedo-eel")) {
-      drawTorpedoEel(g, p.size, totalTime, p.noiseOffset);
+      drawTorpedoEel(g, p.size, totalTime, p.noiseOffset, p.aiState, p.stateProgress);
     } else if (p.id.startsWith("shadow-octopus")) {
-      drawShadowOctopus(g, p.size, totalTime, p.noiseOffset);
+      drawShadowOctopus(g, p.size, totalTime, p.noiseOffset, p.aiState, p.stateProgress);
     } else if (p.isLeviathan) {
       const sway = Math.sin(totalTime * 1.5 + p.noiseOffset) * p.size * 0.05;
       
@@ -498,13 +498,74 @@ function drawEnemySub(
  * forward third is a glowing red maw with twin headlights; the back
  * two-thirds is a wavering tail that ripples on a higher-frequency
  * sine than other predators so it reads as agile + tense.
+ *
+ * Posture responds to AI state. Stalk + charge tighten the tail
+ * undulation and brighten the headlights; strike straightens the
+ * spine and opens the maw; recover dims everything; flee whips the
+ * tail at maximum amplitude.
  */
 function drawTorpedoEel(
   g: Graphics,
   size: number,
   totalTime: number,
   noiseOffset: number,
+  aiState?: import("@/sim/entities/types").PredatorAiState,
+  stateProgress?: number,
 ): void {
+  const state = aiState ?? "patrol";
+  const progress = stateProgress ?? 0;
+  // Tail amplitude + frequency are state-driven so an eel reads as
+  // calm-coiled (patrol), tense-coiled (stalk/charge), straight-line
+  // (strike), and panicked-thrashing (flee).
+  let tailFreq = 4.5;
+  let tailAmp = 0.18;
+  let eyeColor = 0xff7a5a;
+  let eyeAlpha = 0.6 + 0.4 * Math.sin(totalTime * 3 + noiseOffset);
+  let strokeAlpha = 0.85;
+  let mawOpen = 0;
+  switch (state) {
+    case "stalk":
+      tailFreq = 5.5;
+      tailAmp = 0.16;
+      eyeColor = 0xff9f4a;
+      strokeAlpha = 0.95;
+      break;
+    case "charge":
+      tailFreq = 6.5;
+      tailAmp = 0.1 + 0.06 * (1 - progress); // tail stiffens as charge peaks
+      eyeColor = 0xff5a3a;
+      eyeAlpha = 0.95;
+      strokeAlpha = 1;
+      mawOpen = progress * 0.7;
+      break;
+    case "strike":
+      tailFreq = 7.5;
+      tailAmp = 0.04; // straight as a torpedo
+      eyeColor = 0xff3a2a;
+      eyeAlpha = 1;
+      strokeAlpha = 1;
+      mawOpen = 1;
+      break;
+    case "recover":
+      tailFreq = 2.5;
+      tailAmp = 0.08;
+      eyeColor = 0x7a4520;
+      eyeAlpha = 0.35;
+      strokeAlpha = 0.4;
+      break;
+    case "flee":
+      tailFreq = 8;
+      tailAmp = 0.28;
+      eyeColor = 0xfff2c4;
+      eyeAlpha = 1;
+      strokeAlpha = 0.6;
+      break;
+    case "patrol":
+    default:
+      // Defaults already set
+      break;
+  }
+
   const segments = 9;
   const s = size / 32;
   // Tail ribbon — drawn back-to-front so the spine sits above the
@@ -512,7 +573,7 @@ function drawTorpedoEel(
   for (let i = segments; i >= 1; i--) {
     const t = i / segments;
     const x = -size * 0.6 * t;
-    const wave = Math.sin(totalTime * 4.5 + i * 0.6 + noiseOffset) * size * 0.18 * t;
+    const wave = Math.sin(totalTime * tailFreq + i * 0.6 + noiseOffset) * size * tailAmp * t;
     const r = size * 0.18 * (1 - t * 0.7);
     g.circle(x, wave, r).fill({ color: 0x1a0408, alpha: 0.85 });
     g.circle(x, wave, r).stroke({
@@ -528,19 +589,48 @@ function drawTorpedoEel(
   });
   g.ellipse(size * 0.18, 0, size * 0.32, size * 0.22).stroke({
     color: 0xff5a3c,
-    alpha: 0.85,
+    alpha: strokeAlpha,
     width: 1.6,
   });
   // Twin red headlight eyes
-  const eyePulse = 0.6 + 0.4 * Math.sin(totalTime * 3 + noiseOffset);
   g.circle(size * 0.28, -size * 0.07, size * 0.07).fill({
-    color: 0xff7a5a,
-    alpha: eyePulse,
+    color: eyeColor,
+    alpha: eyeAlpha,
   });
   g.circle(size * 0.28, size * 0.07, size * 0.07).fill({
-    color: 0xff7a5a,
-    alpha: eyePulse,
+    color: eyeColor,
+    alpha: eyeAlpha,
   });
+  // Eye glow halo during charge/strike
+  if (state === "charge" || state === "strike") {
+    const haloR = size * 0.18 * (1 + 0.4 * progress);
+    g.circle(size * 0.28, 0, haloR).fill({
+      color: eyeColor,
+      alpha: 0.18 * eyeAlpha,
+    });
+  }
+  // State-driven maw opening — additive to the existing fang line so
+  // the eel reads as gaping during charge/strike.
+  if (mawOpen > 0.05) {
+    const mawHeight = size * 0.14 * mawOpen;
+    g.moveTo(size * 0.42, -mawHeight);
+    g.lineTo(size * 0.58, 0);
+    g.lineTo(size * 0.42, mawHeight);
+    g.fill({ color: 0x2a0410, alpha: 0.95 });
+    // Fangs in the maw
+    for (let i = 0; i < 3; i++) {
+      const fx = size * 0.44 + i * size * 0.05;
+      const fy = -mawHeight * (1 - i / 3);
+      g.moveTo(fx, fy);
+      g.lineTo(fx + size * 0.02, fy + mawHeight * 0.4);
+      g.lineTo(fx + size * 0.04, fy);
+      g.fill({ color: 0xfff2c4, alpha: 0.85 });
+      g.moveTo(fx, -fy);
+      g.lineTo(fx + size * 0.02, -fy - mawHeight * 0.4);
+      g.lineTo(fx + size * 0.04, -fy);
+      g.fill({ color: 0xfff2c4, alpha: 0.85 });
+    }
+  }
   // Open jaw — small triangular fang line
   g.moveTo(size * 0.4, -size * 0.05);
   g.lineTo(size * 0.5, 0);
@@ -560,35 +650,122 @@ function drawShadowOctopus(
   size: number,
   totalTime: number,
   noiseOffset: number,
+  aiState?: import("@/sim/entities/types").PredatorAiState,
+  stateProgress?: number,
 ): void {
-  const flicker = 0.45 + 0.45 * Math.sin(totalTime * 0.9 + noiseOffset);
-  // Mantle bulb
-  g.ellipse(0, -size * 0.05, size * 0.45, size * 0.55).fill({
+  const state = aiState ?? "patrol";
+  const progress = stateProgress ?? 0;
+  // State-driven posture for the octopus:
+  // - patrol: slow flicker, soft purple eyes, tentacles drift
+  // - stalk: bulb solid, eyes brighten, tentacles flex inward (preparing
+  //   to envelop)
+  // - charge: tentacles snap into striking pose, eyes blaze white-violet
+  // - strike: tentacles fully extended forward, mantle stretched
+  // - recover: bulb deflates (small), eyes dim, tentacles dragging
+  // - flee: tentacles curl inward defensively, body propels backward
+  let flickerAmp = 0.45;
+  let eyeColor = 0xc4b5fd;
+  let eyeAlpha = 0.7;
+  let strokeAlpha = 0.55;
+  let tentacleCurlBias = 0;
+  let tentacleSpeed = 1.4;
+  let bulbScale = 1;
+  let mantleStretch = 1;
+  switch (state) {
+    case "stalk":
+      flickerAmp = 0.15; // less flickering, more solid
+      eyeColor = 0xddd0ff;
+      eyeAlpha = 0.95;
+      strokeAlpha = 0.85;
+      tentacleCurlBias = -0.3; // tentacles flex inward
+      tentacleSpeed = 2.2;
+      break;
+    case "charge":
+      flickerAmp = 0.1;
+      eyeColor = 0xfff8c4;
+      eyeAlpha = 1;
+      strokeAlpha = 1;
+      tentacleCurlBias = -0.55 - 0.3 * progress; // snap into strike pose
+      tentacleSpeed = 3 + progress * 2;
+      bulbScale = 1 + 0.08 * progress;
+      mantleStretch = 1 + 0.1 * progress;
+      break;
+    case "strike":
+      flickerAmp = 0;
+      eyeColor = 0xffffff;
+      eyeAlpha = 1;
+      strokeAlpha = 1;
+      tentacleCurlBias = -0.9; // fully extended forward
+      tentacleSpeed = 5;
+      bulbScale = 1.05;
+      mantleStretch = 1.2;
+      break;
+    case "recover":
+      flickerAmp = 0.6;
+      eyeColor = 0x7d6db8;
+      eyeAlpha = 0.3;
+      strokeAlpha = 0.2;
+      tentacleCurlBias = 0.4; // dragging
+      tentacleSpeed = 0.6;
+      bulbScale = 0.85;
+      break;
+    case "flee":
+      flickerAmp = 0.3;
+      eyeColor = 0xfff2c4;
+      eyeAlpha = 0.9;
+      strokeAlpha = 0.55;
+      tentacleCurlBias = 0.7; // curl inward defensively
+      tentacleSpeed = 4;
+      bulbScale = 0.9;
+      break;
+    case "patrol":
+    default:
+      // Defaults already set
+      break;
+  }
+
+  const flicker = (1 - flickerAmp) + flickerAmp * Math.sin(totalTime * 0.9 + noiseOffset);
+  // Mantle bulb (state-scaled)
+  g.ellipse(0, -size * 0.05, size * 0.45 * bulbScale, size * 0.55 * mantleStretch).fill({
     color: 0x100618,
     alpha: 0.9 * flicker,
   });
-  g.ellipse(0, -size * 0.05, size * 0.45, size * 0.55).stroke({
+  g.ellipse(0, -size * 0.05, size * 0.45 * bulbScale, size * 0.55 * mantleStretch).stroke({
     color: 0x8b5cf6,
-    alpha: 0.55 * flicker,
+    alpha: strokeAlpha * flicker,
     width: 1.4,
   });
   // Two glowing eye-pits high on the bulb
-  const eyeAlpha = 0.7 * flicker;
-  g.circle(-size * 0.14, -size * 0.18, size * 0.06).fill({
-    color: 0xc4b5fd,
-    alpha: eyeAlpha,
+  const finalEyeAlpha = eyeAlpha * flicker;
+  g.circle(-size * 0.14, -size * 0.18, size * 0.06 * bulbScale).fill({
+    color: eyeColor,
+    alpha: finalEyeAlpha,
   });
-  g.circle(size * 0.14, -size * 0.18, size * 0.06).fill({
-    color: 0xc4b5fd,
-    alpha: eyeAlpha,
+  g.circle(size * 0.14, -size * 0.18, size * 0.06 * bulbScale).fill({
+    color: eyeColor,
+    alpha: finalEyeAlpha,
   });
-  // Eight tentacles curling outward from the bulb base
+  // Eye glow halo during charge/strike
+  if (state === "charge" || state === "strike") {
+    const haloR = size * 0.16 * (1 + 0.4 * progress);
+    g.circle(-size * 0.14, -size * 0.18, haloR).fill({
+      color: eyeColor,
+      alpha: 0.16 * finalEyeAlpha,
+    });
+    g.circle(size * 0.14, -size * 0.18, haloR).fill({
+      color: eyeColor,
+      alpha: 0.16 * finalEyeAlpha,
+    });
+  }
+  // Eight tentacles curling outward from the bulb base. State-driven
+  // curl bias rotates the curl from "drifting outward" (positive bias)
+  // through "neutral" (0) to "snapping forward" (negative bias).
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2 + noiseOffset * 0.1;
     const baseX = Math.cos(a) * size * 0.32;
     const baseY = size * 0.35 + Math.abs(Math.sin(a)) * size * 0.05;
-    const curl = Math.sin(totalTime * 1.4 + i + noiseOffset) * 0.6;
-    const tipLen = size * 0.55;
+    const curl = Math.sin(totalTime * tentacleSpeed + i + noiseOffset) * 0.6 + tentacleCurlBias;
+    const tipLen = size * 0.55 * mantleStretch;
     const tipX = baseX + Math.cos(a + curl) * tipLen;
     const tipY = baseY + Math.sin(a + curl) * tipLen;
     const midX = (baseX + tipX) * 0.5 + Math.cos(a + Math.PI / 2) * size * 0.1 * curl;
@@ -604,7 +781,7 @@ function drawShadowOctopus(
     );
     g.stroke({
       color: 0x8b5cf6,
-      alpha: 0.5 * flicker,
+      alpha: strokeAlpha * flicker,
       width: 2 + (i % 2 ? 0 : 1),
     });
   }
