@@ -61,7 +61,16 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   const water: WaterController = mountWater(stage.layers.water);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
   const entities: EntityController = mountEntities(stage.layers.near);
-  const player: PlayerController = mountPlayer(stage.layers.near);
+  // The player sub used to live on the `near` layer, but that layer
+  // also carries the refraction `DisplacementFilter` (added later for
+  // marine snow / entity wobble). The combined filter stack rendered
+  // the sub silhouette invisible in production despite `near`-layer
+  // entities rendering correctly — a Pixi v8 quirk we couldn't pin
+  // down beyond "the sub vanishes". Mounting on `fx` instead keeps
+  // the sub above entities (correct visual stacking), avoids the
+  // displacement filter entirely, and shares its transform with the
+  // sonar circle so they always render at the same position.
+  const player: PlayerController = mountPlayer(stage.layers.fx);
   const fx: FxController = mountFx(stage.layers.fx);
   // Refraction wobble: targets the mid + near containers so marine snow
   // and entities feel observed through moving water. Backdrop, water,
