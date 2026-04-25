@@ -428,6 +428,46 @@ export class AIManager {
    * One-frame edge detection is the caller's job: pass the previous
    * frame's value alongside this and only fire on the rising edge.
    */
+  /**
+   * Bearings (radians) + intensity (0..1) of every active threat
+   * within `range` of the given point. Returns one entry per
+   * stalk/charge/strike predator brain. Used by the FX layer's
+   * sonar ring to paint directional arcs that warn the player about
+   * threats outside the current viewport — the trench is wider than
+   * the visible play band so packs often press in from off-screen.
+   *
+   * - bearing: atan2(dy, dx) so 0 = +x axis, +π/2 = +y (down)
+   * - intensity: 1.0 for striking, 0.7 for charging, 0.4 for stalking
+   * - distance: 0..1 normalised inside `range` so far threats produce
+   *   a thinner arc than near ones
+   */
+  threatBearings(
+    x: number,
+    y: number,
+    range: number,
+  ): { bearing: number; intensity: number; nearness: number }[] {
+    const out: { bearing: number; intensity: number; nearness: number }[] = [];
+    const rangeSq = range * range;
+    for (const brain of this.predatorBrainMap.values()) {
+      const state = brain.currentAiState;
+      if (state !== "stalk" && state !== "charge" && state !== "strike") continue;
+      if (brain.isDying()) continue;
+      const dx = brain.position.x - x;
+      const dy = brain.position.y - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > rangeSq) continue;
+      const dist = Math.sqrt(distSq);
+      const intensity =
+        state === "strike" ? 1 : state === "charge" ? 0.7 : 0.4;
+      out.push({
+        bearing: Math.atan2(dy, dx),
+        intensity,
+        nearness: 1 - dist / range,
+      });
+    }
+    return out;
+  }
+
   anyPredatorStrikingNear(x: number, y: number, radiusPx: number): boolean {
     const radiusSq = radiusPx * radiusPx;
     for (const brain of this.predatorBrainMap.values()) {

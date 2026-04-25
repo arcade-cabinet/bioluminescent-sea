@@ -375,6 +375,9 @@ export function advanceScene(
     // on the next frame so we have to copy here. Most frames the
     // array is empty so the spread is cheap.
     lampScatterPoints: [...ai.lastLampScatterPoints],
+    // 800px radar — covers ~2× viewport so threats pressing in from
+    // off-screen show up as arcs before they cross the edge.
+    threatBearings: ai.threatBearings(player.x, player.y, 800),
   };
 }
 
