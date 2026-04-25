@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.11.0...v0.12.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** threat archetypes + anomaly glyphs (visual polish batch) ([#127](https://github.com/arcade-cabinet/bioluminescent-sea/issues/127)) ([e2c6a52](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e2c6a52bd004e2cbf187b22c19ca52c7e4cc9044))
+
+
+### Bug Fixes
+
+* **bs:** explicit filter resolution at construction (FilterSystem patch was tree-shaken) ([#124](https://github.com/arcade-cabinet/bioluminescent-sea/issues/124)) ([b3c6eb4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b3c6eb4c952ce0d38975de33bfd791d332c19889))
+* **bs:** guarantee 10+ minute floor on every mode ([#126](https://github.com/arcade-cabinet/bioluminescent-sea/issues/126)) ([393eeef](https://github.com/arcade-cabinet/bioluminescent-sea/commit/393eeef5ab643f30f6522fe84817fc2e96d22495))
+
 ## [0.11.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.10.0...v0.11.0) (2026-04-25)
 
 
