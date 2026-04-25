@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.22.0...v0.23.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** predator collision impact ripples ([#154](https://github.com/arcade-cabinet/bioluminescent-sea/issues/154)) ([54cb75c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/54cb75ce4ecdf58ca2718a21ec453d87ac2c658d))
+* **bs:** threat-bearing radar arcs on the sonar ring ([#151](https://github.com/arcade-cabinet/bioluminescent-sea/issues/151)) ([a64c6c7](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a64c6c7014196becf6cf3e6febf9b405138c2e81))
+
 ## [0.22.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.21.0...v0.22.0) (2026-04-25)
 
 
