@@ -109,8 +109,8 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       // laterally without running out of world. By default the camera
       // centers on the player's world-x; when the active chunk's
       // archetype is locked-room the camera clamps to the chunk's
-      // horizontal bounds so a bullet-hell encounter doesn't let the
-      // player swim away from it.
+      // horizontal bounds so a shoal-press pocket doesn't let the
+      // player swim away from the encounter.
       const targetScrollX = playerValue.x - v.widthPx * 0.5;
       const cameraTravel = root?.cameraTravel ?? "open";
       let nextScrollX = targetScrollX;

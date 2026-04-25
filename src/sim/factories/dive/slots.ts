@@ -33,7 +33,7 @@ export interface ModeSlots {
   /** Do new threats spawn as chunks load? */
   respawnThreats: boolean;
   /** Pattern factory the spawner picks per chunk. */
-  threatPattern: "scattered" | "swarm" | "bullet-hell";
+  threatPattern: "scattered" | "swarm" | "shoal-press";
 
   // ── Survivability ────────────────────────────────────────────────────────
   /** True = a single contact ends the dive (arena rules). */
@@ -82,10 +82,14 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     durationSeconds: 900,
   },
   descent: {
-    verticalMovement: "forced-descent",
-    lateralMovement: "free",
-    completionCondition: "infinite",
-    targetDepthMeters: null,
+    // Descent is a vertical-only dive: player can freely pick how fast
+    // to sink (including stop), but the trench current holds them on a
+    // fixed lateral heading. Threats escalate logarithmically with
+    // depth until the player touches the floor — that's the win.
+    verticalMovement: "free",
+    lateralMovement: "locked",
+    completionCondition: "depth_goal",
+    targetDepthMeters: 1500,
     depthCeilingMeters: null,
     scoringModel: "depth-multiplied",
     difficultyScaling: "logarithmic",
@@ -104,15 +108,20 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     durationSeconds: GAME_DURATION,
   },
   arena: {
+    // Arena strings together clear-to-advance pockets: each locked-
+    // room chunk traps the player until the shoal is thinned, then the
+    // direction they swim (any edge) unlocks the adjacent pocket.
+    // Infinite traversal; difficulty climbs logarithmically. The dive
+    // is "done" only when a collision ends it — no finish line.
     verticalMovement: "free",
     lateralMovement: "free",
-    completionCondition: "clear_room",
+    completionCondition: "infinite",
     targetDepthMeters: null,
     depthCeilingMeters: null,
     scoringModel: "raw",
-    difficultyScaling: "linear",
+    difficultyScaling: "logarithmic",
     respawnThreats: true,
-    threatPattern: "bullet-hell",
+    threatPattern: "shoal-press",
     collisionEndsDive: true,
     impactGraceSeconds: 0,
     impactOxygenPenaltySeconds: 0,

@@ -219,17 +219,18 @@ describe("deep sea simulation", () => {
     // We already test hasPredatorCollision in its own suite.
   });
 
-  test("advanceScene drives depthTravelMeters forward every frame", () => {
+  test("advanceScene drives depthTravelMeters forward when the player descends", () => {
     const scene = createInitialScene(desktop);
     expect(scene.depthTravelMeters).toBe(0);
 
-    // 60 frames at 1/60s delta = 1 second real-time. Descent speed is
-    // 6 m/s so after 1 second we should be at ~6 meters deeper.
+    // All three modes now use freeVerticalMovement, so depth advances
+    // only when the player actively pushes down. Drive the input
+    // toward the canvas bottom and assert the world responds.
     let current = scene;
     for (let f = 0; f < 60; f++) {
       const result = advanceScene(
         current,
-        { isActive: false, x: 0, y: 0 },
+        { isActive: true, x: current.player.x, y: current.player.y + 5000 },
         desktop,
         f * (1 / 60),
         1 / 60,
@@ -239,7 +240,7 @@ describe("deep sea simulation", () => {
       );
       current = result.scene;
     }
-    expect(current.depthTravelMeters).toBeCloseTo(11, 1);
+    expect(current.depthTravelMeters).toBeGreaterThan(0);
   });
 
   test("advanceScene clamps depthTravelMeters at the trench floor", () => {

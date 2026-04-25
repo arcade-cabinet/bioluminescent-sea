@@ -138,18 +138,17 @@ export function advanceScene(
   const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND * (isOverdrive ? 1.5 : 1);
   const targetDepthOffset = tuning.freeVerticalMovement ? Math.max(0, player.targetY - player.y) * 0.05 : passiveDescent;
 
-  // clear_room gating: in arena mode, cap descent at the floor of the
-  // current chunk while predators belonging to that chunk are still
-  // alive. Once the room is cleared, the cap lifts and the player can
-  // advance into the next chunk's room. The chunk index is encoded in
-  // every spawner id (`predator-c<idx>-…`, `marauder-sub-c<idx>-…`,
-  // `leviathan-c<idx>`); we count how many of those still match the
-  // current chunk. Pirates count too — they're a chunk threat.
+  // Encounter-pocket gating: in arena mode each chunk is a
+  // locked-room travel slot (see factories/chunk/archetypes.ts). While
+  // the pocket's threats are alive, cap descent at the chunk floor so
+  // the player has to clear it before advancing. Once cleared, the cap
+  // lifts and the player can swim into adjacent pockets.
   //
-  // The mode-wide `completionCondition === "clear_room"` check drives
-  // this for arena mode as a whole; per-chunk travel slots (open,
-  // corridor, locked-room) are a render-bridge concern — see
-  // factories/chunk/resolve.ts.
+  // We detect arena-mode locked-rooms via the mode slot (Arena is the
+  // only mode whose chunks use locked-room travel) so this stays a
+  // one-line check — without needing to thread chunk-archetype
+  // resolution into the engine. Per-chunk travel slots are still the
+  // render-bridge's lateral-lock source; see render/bridge.ts.
   const currentChunkIndex = Math.floor(scene.depthTravelMeters / CHUNK_HEIGHT_METERS);
   const chunkSuffix = `-c${currentChunkIndex}`;
   const isThreatInCurrentChunk = (id: string): boolean => {
@@ -159,8 +158,12 @@ export function advanceScene(
   const livePredatorsInChunk =
     predators.filter((p) => isThreatInCurrentChunk(p.id)).length +
     pirates.filter((p) => isThreatInCurrentChunk(p.id)).length;
-  const chunkLocked =
-    tuning.completionCondition === "clear_room" && livePredatorsInChunk > 0;
+  // Arena's locked-room pockets: camera-lock lives on the chunk
+  // archetype, engine-lock follows collisionEndsDive+respawnThreats as
+  // a proxy for "this is arena" — only Arena combines both flags.
+  const isPocketMode =
+    tuning.collisionEndsDive && tuning.respawnThreats;
+  const chunkLocked = isPocketMode && livePredatorsInChunk > 0;
   const chunkFloorMeters = (currentChunkIndex + 1) * CHUNK_HEIGHT_METERS;
 
   let nextDepthTravelMeters: number;

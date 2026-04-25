@@ -26,24 +26,27 @@ describe("dive mode slot system", () => {
     expect(slots.durationSeconds).toBeGreaterThan(getModeSlots("arena").durationSeconds);
   });
 
-  test("descent: forced descent + balanced pressure + logarithmic scaling", () => {
+  test("descent: lateral-locked plunge toward a depth goal with logarithmic pressure", () => {
     const slots = getModeSlots("descent");
-    expect(slots.verticalMovement).toBe("forced-descent");
-    expect(slots.lateralMovement).toBe("free");
+    expect(slots.verticalMovement).toBe("free");
+    expect(slots.lateralMovement).toBe("locked");
+    expect(slots.completionCondition).toBe("depth_goal");
+    expect(slots.targetDepthMeters).toBeGreaterThan(0);
     expect(slots.collisionEndsDive).toBe(false);
     expect(slots.respawnThreats).toBe(true);
-    expect(slots.completionCondition).toBe("infinite");
     expect(slots.difficultyScaling).toBe("logarithmic");
     expect(slots.predatorSpeedScale).toBe(1);
     // Descent's tuning gets its base oxygen from GAME_DURATION via mode.ts.
     expect(getDiveModeTuning("descent").durationSeconds).toBe(GAME_DURATION);
   });
 
-  test("arena: clear-room gating, instant collision-fail, sharp threats", () => {
+  test("arena: infinite-traversal pockets, instant collision-fail, shoal-press threats", () => {
     const slots = getModeSlots("arena");
     expect(slots.collisionEndsDive).toBe(true);
-    expect(slots.completionCondition).toBe("clear_room");
-    expect(slots.threatPattern).toBe("bullet-hell");
+    // Arena is infinite — clear-to-advance lives at the chunk-archetype
+    // layer (locked-room travel), not the dive completion slot.
+    expect(slots.completionCondition).toBe("infinite");
+    expect(slots.threatPattern).toBe("shoal-press");
     expect(slots.impactGraceSeconds).toBe(0);
     expect(slots.threatRadiusScale).toBeGreaterThan(1);
     expect(slots.predatorSpeedScale).toBeGreaterThan(1);

@@ -63,9 +63,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   exploration: {
     id: "exploration",
     label: "Exploration",
-    tagline: "Drift the photic shelf. No deadlines, gentle threats.",
+    tagline: "Drift the photic shelf. Chart the reef at your own pace.",
     description:
-      "A slow survey of the upper trench. Long oxygen, soft predators, free vertical movement — the chart is yours to read.",
+      "A slow survey of the upper trench. Long oxygen, soft currents, free movement through bioluminescent gardens — the chart is yours to read.",
     // Soft variant of --color-glow used for the meditative mode tile.
     accentHex: "#a4d8c5",
     accentVar: "var(--color-glow-soft, #a4d8c5)",
@@ -75,9 +75,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   descent: {
     id: "descent",
     label: "Descent",
-    tagline: "Sink toward the abyss. Forced descent, balanced pressure.",
+    tagline: "Plunge straight down. Hold the line, reach the floor.",
     description:
-      "The classic dive. Oxygen ticks, the trench pulls you down, beacons mark the route. Surface breathing easier than when you started.",
+      "The classic sounding. Lateral current holds you on a fixed heading; you choose only how fast to sink. Pressure grows the deeper you go. Touch the trench floor to surface.",
     accentHex: "#6be6c1",
     accentVar: "var(--color-glow)",
     glyph: "↓",
@@ -86,9 +86,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   arena: {
     id: "arena",
     label: "Arena",
-    tagline: "Clear the room. Bullet-hell, one-shot collisions.",
+    tagline: "Push through contested reefs. Clear each pocket to advance.",
     description:
-      "Each chunk locks until the threats are cleared. Free movement, sharp predators, no impact grace — every contact ends the dive.",
+      "Predator shoals gather in pockets between reef walls. Thin them out and the current releases you — swim toward any edge and the next pocket closes around you. Every contact ends the dive.",
     accentHex: "#ff6b6b",
     accentVar: "var(--color-warn)",
     glyph: "⌖",

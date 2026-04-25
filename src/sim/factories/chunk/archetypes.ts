@@ -58,17 +58,19 @@ export const BEACON_GROVE: ChunkArchetype = {
 };
 
 /**
- * Arena room — viewport clamps to the chunk, dense bullet-hell swarm,
- * clear-to-unlock adjacents. The spawn.ts pattern dispatch already
- * produces the right swarm for "bullet-hell"; the travel = locked-room
- * slot is what drives the camera.
+ * Encounter pocket — the viewport clamps to the chunk, a tight shoal
+ * of predators presses in, and clearing them unlocks the adjacent
+ * pockets. The spawn pattern dispatch produces the pressing shoal for
+ * "shoal-press"; travel = "locked-room" is what drives the camera. The
+ * player-facing description is a reef pocket or trench hollow, never a
+ * literal "room" — this is an underwater world.
  */
 export const ARENA_ROOM: ChunkArchetype = {
   id: "arena-room",
-  label: "Arena Room",
+  label: "Encounter Pocket",
   slots: {
     travel: "locked-room",
-    threatPattern: "bullet-hell",
+    threatPattern: "shoal-press",
     creatureDensity: 0.5,
     predatorDensity: 2,
     anomaliesAllowed: true,

@@ -184,29 +184,20 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(result.totalSimSeconds).toBeLessThan(slots.durationSeconds * 0.05);
   });
 
-  test("descent: forced-descent slot drives depthTravelMeters even with a still bot", () => {
-    expect(getModeSlots("descent").verticalMovement).toBe("forced-descent");
+  test("descent: pins lateral movement; exposes a depth goal; depth is player-driven", () => {
+    // Descent's new design: lateral is locked, vertical is free (player
+    // picks their sink rate), and there's a target depth the dive ends
+    // on. An idle bot holds position — no forced descent — so the run
+    // is still-running and depth stayed at zero. A seeking bot would
+    // drive depth toward the target.
+    const slots = getModeSlots("descent");
+    expect(slots.lateralMovement).toBe("locked");
+    expect(slots.verticalMovement).toBe("free");
+    expect(slots.completionCondition).toBe("depth_goal");
+    expect(slots.targetDepthMeters).toBeGreaterThan(0);
     const result = playMode("descent", makeBot(createIdleHoverProfile), 120);
-    // The trench pulled the sub down despite zero player input.
-    expect(result.finalScene.depthTravelMeters).toBeGreaterThan(0);
     expect(result.outcome).toBe("still-running");
-  });
-
-  test("descent vs exploration: only descent advances depth on idle input", () => {
-    const explorationDepth = playMode(
-      "exploration",
-      makeBot(createIdleHoverProfile),
-      120,
-    ).finalScene.depthTravelMeters;
-    const descentDepth = playMode(
-      "descent",
-      makeBot(createIdleHoverProfile),
-      120,
-    ).finalScene.depthTravelMeters;
-
-    // Exploration is verticalMovement: "free" — sub stays put on idle input.
-    // Descent forces depth growth regardless of input.
-    expect(descentDepth).toBeGreaterThan(explorationDepth);
+    expect(result.finalScene.depthTravelMeters).toBe(0);
   });
 
   test("arena: collisionEndsDive is true; the moment the bot reaches a predator the run ends", () => {
@@ -259,8 +250,12 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(impact.type).toBe("dive-failed");
   });
 
-  test("arena: clear_room slot caps descent at the chunk floor while predators are alive", () => {
-    expect(getModeSlots("arena").completionCondition).toBe("clear_room");
+  test("arena: locked-pocket gate caps descent at the chunk floor while predators are alive", () => {
+    // Arena's dive completion is "infinite" — the clear-to-advance
+    // gate lives on the chunk archetype's locked-room travel slot
+    // (encounter pockets). We assert the gate clamps depth to the
+    // current chunk floor while a chunk-tagged predator is alive.
+    expect(getModeSlots("arena").completionCondition).toBe("infinite");
 
     resetAIManager();
     const scene = createInitialScene(dimensions);
@@ -282,14 +277,14 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       ],
     };
 
-    // Run 200 frames at dt=1/30 ≈ 6.6s. With descent forced this would
-    // grow depth substantially; with clear_room gating it should cap at
-    // the first chunk floor (200m).
+    // Drive the player downward so freeVerticalMovement converts the
+    // input into descent. Without the gate, 200 frames at this rate
+    // would cross the first chunk floor (200m) easily.
     let cur = sceneWithChunkThreat;
     for (let i = 0; i < 200; i++) {
       const r = advanceScene(
         cur,
-        { x: cur.player.x, y: cur.player.y, isActive: false },
+        { x: cur.player.x, y: cur.player.y + 5000, isActive: true },
         dimensions,
         i * (1 / 30),
         1 / 30,

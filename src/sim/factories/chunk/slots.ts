@@ -5,7 +5,14 @@
  * dive-mode slots) don't need to import spawn.ts. The spawner re-
  * exports this union for back-compat.
  */
-export type ThreatPattern = "scattered" | "swarm" | "bullet-hell";
+/**
+ *   scattered   - baseline. Random positions across the play band.
+ *   swarm       - tight clusters around a few anchors per chunk.
+ *   shoal-press - a tight shoal of small fast predators pressing in
+ *                 from every edge. Used by arena-mode pockets; replaces
+ *                 the earlier (off-brand) "bullet-hell" naming.
+ */
+export type ThreatPattern = "scattered" | "swarm" | "shoal-press";
 
 /**
  * What kind of traversal a chunk offers.
