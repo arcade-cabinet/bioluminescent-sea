@@ -43,6 +43,21 @@ export interface Creature {
   ambient?: boolean;
 }
 
+/**
+ * Predator AI state identifiers — drive both behaviour selection in
+ * the Yuka StateMachine and the renderer's posture cues. The full
+ * state catalogue lives in src/sim/ai/predator-brain/states.ts; this
+ * type is the publishable contract that crosses the AI/render seam.
+ */
+export type PredatorAiState =
+  | "patrol"   // Wandering loose box, low arousal
+  | "stalk"    // Aware of player, closing in low-key
+  | "charge"   // Windup before strike — visible telegraph
+  | "strike"   // Active lunge attack
+  | "recover"  // Post-strike disorientation, vulnerable
+  | "flee"     // Damaged or outmatched, retreating
+  | "ambient"; // Leviathans + idle-state default
+
 export interface Predator {
   id: string;
   x: number;
@@ -52,6 +67,18 @@ export interface Predator {
   noiseOffset: number;
   angle: number;
   isLeviathan?: boolean;
+  /**
+   * Current AI state — mirrored from the Yuka StateMachine each frame
+   * so the renderer can read it without coupling to the AI layer.
+   * Defaults to "ambient" until a brain is attached.
+   */
+  aiState?: PredatorAiState;
+  /**
+   * Fraction of the current state that has elapsed (0..1). Useful for
+   * blending posture animations across enter/exit boundaries — e.g.
+   * the maw opens linearly across charge, strike fires at chargeProgress=1.
+   */
+  stateProgress?: number;
 }
 
 export interface Pirate {

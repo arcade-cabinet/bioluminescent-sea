@@ -4,10 +4,11 @@ import { getArchetype } from "@/sim/factories/actor";
 import {
   EnemySubHuntBehavior,
   GameVehicle,
-  StalkAndDashBehavior,
   WanderBehavior,
   WrapPlayBandBehavior,
 } from "./steering";
+import { PredatorBrain } from "./predator-brain/PredatorBrain";
+import { profileForPredatorId } from "./predator-brain/archetype-profiles";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import { resolveNumeric } from "@/sim/_shared/variance";
 
@@ -18,6 +19,14 @@ export class AIManager {
   public time: Time;
   private playerVehicle: GameVehicle;
   private vehicleMap: Map<string, GameVehicle>;
+  /** Predator brains keyed by entity id. Held separately from
+   *  vehicleMap because PredatorBrain has the StateMachine + memory
+   *  + pack messaging surface that AIManager needs to tick + read. */
+  private predatorBrainMap: Map<string, PredatorBrain> = new Map();
+  /** Wall-clock seconds since AIManager construction; pushed into
+   *  every brain's tick() so memory + fuzzy "recent damage" maths
+   *  work without each brain tracking its own clock. */
+  private currentTime = 0;
   private viewportWidth: number;
   private diveSeed: number;
   private flockingBehaviors: Map<string, {
@@ -53,18 +62,17 @@ export class AIManager {
 
   syncPredators(predators: Predator[]) {
     for (const p of predators) {
-      let vehicle = this.vehicleMap.get(p.id);
-      if (!vehicle) {
-        vehicle = new GameVehicle(p.id);
-        vehicle.position.set(p.x, p.y, 0);
-        const baseSpeed = p.speed * 60;
-        vehicle.maxSpeed = baseSpeed;
-
-        // Route by archetype id prefix. The chunked spawner tags
-        // marauder-sub entities with the `marauder-sub-` prefix so
-        // we can wire the archetype-specific hunting behaviour here
-        // without a second ECS trait for enemy subs.
-        if (p.id.startsWith("marauder-sub")) {
+      // Marauder-subs run on their own EnemySubHuntBehavior pipeline.
+      // The full PredatorBrain (StateMachine, MemorySystem, FuzzyModule)
+      // covers organic predators; subs are mechanical and use a
+      // different aesthetic.
+      if (p.id.startsWith("marauder-sub")) {
+        let vehicle = this.vehicleMap.get(p.id);
+        if (!vehicle) {
+          vehicle = new GameVehicle(p.id);
+          vehicle.position.set(p.x, p.y, 0);
+          const baseSpeed = p.speed * 60;
+          vehicle.maxSpeed = baseSpeed;
           const seed =
             Math.floor(p.x * 1000) + Math.floor(p.y * 1000) + Math.floor(p.speed * 1000);
           const hunt = new EnemySubHuntBehavior(
@@ -74,29 +82,51 @@ export class AIManager {
             seed,
           );
           vehicle.steering.add(hunt);
-        } else {
-          // Per-predator subseed so two predators in the same dive
-          // don't share commit/cooldown/dash cadence. Mixing position
-          // + speed gives a stable but uncorrelated seed across the
-          // population.
-          const stalkSeed =
-            Math.floor(p.x * 1000) +
-            Math.floor(p.y * 1000) * 31 +
-            Math.floor(p.speed * 1000) * 1009;
-          const stalk = new StalkAndDashBehavior(
-            this.playerVehicle.position,
-            baseSpeed,
-            stalkSeed,
-          );
-          vehicle.steering.add(stalk);
+          const wrap = new WrapPlayBandBehavior(this.viewportWidth);
+          vehicle.steering.add(wrap);
+          this.entityManager.add(vehicle);
+          this.vehicleMap.set(p.id, vehicle);
         }
-
-        const wrap = new WrapPlayBandBehavior(this.viewportWidth);
-        vehicle.steering.add(wrap);
-
-        this.entityManager.add(vehicle);
-        this.vehicleMap.set(p.id, vehicle);
+        continue;
       }
+
+      let brain = this.predatorBrainMap.get(p.id);
+      if (!brain) {
+        const profile = profileForPredatorId(p.id);
+        brain = new PredatorBrain(p.id, profile, p.x, p.y);
+        if (p.isLeviathan) {
+          brain.pinAsLeviathan();
+        } else {
+          brain.attachPlayer(this.playerVehicle);
+        }
+        this.entityManager.add(brain);
+        this.predatorBrainMap.set(p.id, brain);
+      }
+    }
+
+    // Prune brains whose entity is no longer in the predators list
+    // (chunk retired, predator destroyed). Without this, old brains
+    // pile up in the entity manager forever.
+    const liveIds = new Set(predators.map((p) => p.id));
+    for (const [id, brain] of this.predatorBrainMap.entries()) {
+      if (!liveIds.has(id)) {
+        this.entityManager.remove(brain);
+        this.predatorBrainMap.delete(id);
+      }
+    }
+
+    // Wire pack-mates each tick: same-archetype brains within 1.5×
+    // detection radius are considered packmates for flank broadcasts.
+    // Done after pruning so retired brains can't be referenced.
+    const brains = Array.from(this.predatorBrainMap.values());
+    for (const brain of brains) {
+      const mates = brains.filter(
+        (m) =>
+          m !== brain &&
+          m.profile.id === brain.profile.id &&
+          m.position.distanceTo(brain.position) < brain.profile.detectionRadiusPx * 1.5,
+      );
+      brain.attachPackMates(mates);
     }
   }
 
@@ -184,13 +214,32 @@ export class AIManager {
   }
 
   update(deltaTime: number) {
+    this.currentTime += deltaTime;
+    // Tick every PredatorBrain so the StateMachine + memory advance
+    // before EntityManager integrates positions. Doing the brain tick
+    // first ensures any state-induced steering toggle is in place
+    // when the integration step runs.
+    for (const brain of this.predatorBrainMap.values()) {
+      brain.tick(deltaTime, this.currentTime);
+    }
     this.entityManager.update(deltaTime);
   }
 
   readPredator(p: Predator): Predator {
+    const brain = this.predatorBrainMap.get(p.id);
+    if (brain) {
+      return {
+        ...p,
+        x: brain.position.x,
+        y: brain.position.y,
+        angle: Math.atan2(brain.velocity.y, brain.velocity.x),
+        aiState: brain.currentAiState,
+        stateProgress: brain.currentStateProgress,
+      };
+    }
     const vehicle = this.vehicleMap.get(p.id);
     if (!vehicle) return p;
-    
+
     return {
       ...p,
       x: vehicle.position.x,

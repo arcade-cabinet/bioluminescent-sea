@@ -237,60 +237,7 @@ function syncPredators(
       }
 
     } else {
-      // Normal predator rendering. Identity-coded warm: stroke uses
-      // warn-red (0xff6b6b) instead of mint so the player can never
-      // confuse it with their own sub at a glance. Eye glow is a
-      // slow amber pulse (was static cream) — sells the predator is
-      // *watching*, not just floating.
-      g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).fill({
-        color: 0x0c0508,
-        alpha: 0.95,
-      });
-      g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).stroke({
-        color: 0xff6b6b,
-        alpha: 0.36,
-        width: 1.4,
-      });
-
-      // Dorsal fin
-      g.moveTo(-p.size * 0.05, -p.size * 0.28);
-      g.lineTo(p.size * 0.15, -p.size * 0.55);
-      g.lineTo(p.size * 0.3, -p.size * 0.28);
-      g.fill({ color: 0x050207, alpha: 0.98 });
-
-      // Belly fin
-      g.moveTo(p.size * 0.05, p.size * 0.22);
-      g.lineTo(p.size * 0.22, p.size * 0.45);
-      g.lineTo(p.size * 0.34, p.size * 0.22);
-      g.fill({ color: 0x050207, alpha: 0.9 });
-
-      // Tail
-      g.moveTo(-p.size * 0.55, 0);
-      g.lineTo(-p.size * 0.98, -p.size * 0.32);
-      g.lineTo(-p.size * 0.78, 0);
-      g.lineTo(-p.size * 0.96, p.size * 0.32);
-      g.lineTo(-p.size * 0.55, 0);
-      g.fill({ color: 0x050207, alpha: 0.97 });
-
-      // Gills — faint warm-red rake near the head
-      g.moveTo(p.size * 0.05, -p.size * 0.08);
-      g.lineTo(p.size * 0.15, p.size * 0.05);
-      g.lineTo(p.size * 0.12, -p.size * 0.12);
-      g.lineTo(p.size * 0.22, 0);
-      g.stroke({ color: 0xff6b6b, alpha: 0.45, width: 1 });
-
-      // Eye — amber with a slow pulse. The pulse is a low-frequency
-      // sine on totalTime so it reads as breathing/watching, not a
-      // strobe. Pupil stays dark.
-      const eyePulse = 0.7 + 0.3 * Math.sin(totalTime * 1.4 + p.noiseOffset);
-      g.circle(p.size * 0.55, -p.size * 0.08, p.size * 0.1).fill({
-        color: 0xfde68a,
-        alpha: eyePulse,
-      });
-      g.circle(p.size * 0.58, -p.size * 0.08, p.size * 0.045).fill({
-        color: 0x050207,
-        alpha: 1,
-      });
+      drawPredatorStateful(g, p, totalTime);
     }
   }
   for (const [id, g] of cache) {
@@ -663,3 +610,213 @@ function drawShadowOctopus(
   }
 }
 
+/**
+ * State-driven predator silhouette. The single ellipse-and-fins draw
+ * was a screensaver; emergent attackers need posture cues that read at
+ * a glance:
+ *
+ * - **Patrol** — hull at rest tilt, eye at calm pulse.
+ * - **Stalk** — body coils slightly; eye glows hotter; faint trail
+ *   wake behind tail.
+ * - **Charge** — windup posture: body S-curves, eye lights up to a
+ *   hot orange, dust particles burst forward as the maw opens.
+ *   `stateProgress` 0..1 drives the windup intensity.
+ * - **Strike** — maw fully open, body straight-lined, motion blur
+ *   trail behind. Brief and committed.
+ * - **Recover** — body sags, eye dim; the predator is briefly
+ *   vulnerable and visibly disoriented.
+ * - **Flee** — tail lashes hard, body curves AWAY from forward, eye
+ *   wide. Reads as "this thing is panicking."
+ *
+ * Renderer reads `p.aiState` + `p.stateProgress` from the sim. Both
+ * fields are populated by the AIManager from each PredatorBrain's
+ * StateMachine.
+ */
+function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void {
+  const state = p.aiState ?? "patrol";
+  const progress = p.stateProgress ?? 0;
+
+  // Visual modulation per state.
+  // bodyTilt — sinusoidal undulation amplitude in radians.
+  // bodyCoil — extra S-curve bend in the silhouette (radians).
+  // eyeColor + eyeAlpha — emissive hint.
+  // strokeAlpha — outline visibility.
+  // mawOpen — 0..1 jaw separation.
+  // trailIntensity — 0..1 tail wake density.
+  let bodyTilt = 0.04;
+  let bodyCoil = 0;
+  let eyeColor = 0xfde68a;
+  let eyeAlpha = 0.7 + 0.3 * Math.sin(totalTime * 1.4 + p.noiseOffset);
+  let strokeAlpha = 0.36;
+  let mawOpen = 0;
+  let trailIntensity = 0.15;
+
+  switch (state) {
+    case "patrol":
+      bodyTilt = 0.03 + 0.02 * Math.sin(totalTime * 0.8 + p.noiseOffset);
+      break;
+    case "stalk":
+      bodyTilt = 0.05;
+      bodyCoil = 0.12;
+      eyeColor = 0xff9f4a;
+      eyeAlpha = 0.85 + 0.15 * Math.sin(totalTime * 3 + p.noiseOffset);
+      strokeAlpha = 0.5;
+      trailIntensity = 0.35;
+      break;
+    case "charge":
+      // Windup: body coils against a wall behind it, then springs
+      // forward. progress 0..1 ramps tension.
+      bodyTilt = 0.02;
+      bodyCoil = 0.18 + 0.22 * progress;
+      eyeColor = 0xff5a3a;
+      eyeAlpha = 0.95;
+      strokeAlpha = 0.7 + 0.3 * progress;
+      mawOpen = progress * 0.8;
+      trailIntensity = 0.2;
+      break;
+    case "strike":
+      bodyTilt = 0.005;
+      bodyCoil = -0.08; // straight-lined
+      eyeColor = 0xff3a2a;
+      eyeAlpha = 1;
+      strokeAlpha = 1;
+      mawOpen = 1;
+      trailIntensity = 0.85;
+      break;
+    case "recover":
+      bodyTilt = 0.08 * (1 - progress);
+      bodyCoil = -0.04;
+      eyeColor = 0x7a4520;
+      eyeAlpha = 0.35 + 0.15 * Math.sin(totalTime * 1.2);
+      strokeAlpha = 0.18;
+      trailIntensity = 0.05;
+      break;
+    case "flee":
+      bodyTilt = 0.12 + 0.08 * Math.sin(totalTime * 6);
+      bodyCoil = -0.15;
+      eyeColor = 0xfff2c4;
+      eyeAlpha = 1;
+      strokeAlpha = 0.4;
+      trailIntensity = 0.65;
+      break;
+    case "ambient":
+    default:
+      bodyTilt = 0.02 + 0.02 * Math.sin(totalTime * 0.5);
+      break;
+  }
+
+  const undulation = bodyTilt * Math.sin(totalTime * 4 + p.noiseOffset);
+  const coilOffset = bodyCoil * p.size * 0.4;
+
+  // ---- Trail wake (drawn first so it sits behind the body) -----------
+  if (trailIntensity > 0.05) {
+    const segments = 5;
+    for (let i = 1; i <= segments; i++) {
+      const t = i / segments;
+      const x = -p.size * (0.6 + t * 0.8);
+      const y = Math.sin(totalTime * 5 + p.noiseOffset + t * 2) * p.size * 0.18 * trailIntensity;
+      g.circle(x, y, p.size * 0.05 * (1 - t)).fill({
+        color: 0x6be6c1,
+        alpha: 0.18 * trailIntensity * (1 - t),
+      });
+    }
+  }
+
+  // ---- Body — bezier-coiled silhouette with vertical undulation -----
+  const halfW = p.size * 0.7;
+  const halfH = p.size * 0.3;
+
+  g.moveTo(halfW, undulation);
+  g.bezierCurveTo(
+    halfW * 0.7,
+    -halfH + undulation,
+    -halfW * 0.4,
+    -halfH * 1.1 + coilOffset,
+    -halfW * 0.85,
+    -halfH * 0.4 + undulation,
+  );
+  g.lineTo(-halfW * 0.85, halfH * 0.4 + undulation);
+  g.bezierCurveTo(
+    -halfW * 0.4,
+    halfH * 1.1 + coilOffset,
+    halfW * 0.7,
+    halfH + undulation,
+    halfW,
+    undulation,
+  );
+  g.fill({ color: 0x0c0508, alpha: 0.95 });
+  g.stroke({ color: 0xff6b6b, alpha: strokeAlpha, width: 1.4 });
+
+  // ---- Dorsal + belly fins (slight coil response) -------------------
+  g.moveTo(-p.size * 0.05, -p.size * 0.28 + undulation);
+  g.lineTo(p.size * 0.15, -p.size * (0.5 + bodyCoil * 0.4) + undulation);
+  g.lineTo(p.size * 0.3, -p.size * 0.28 + undulation);
+  g.fill({ color: 0x050207, alpha: 0.98 });
+
+  g.moveTo(p.size * 0.05, p.size * 0.22 + undulation);
+  g.lineTo(p.size * 0.22, p.size * (0.42 + bodyCoil * 0.3) + undulation);
+  g.lineTo(p.size * 0.34, p.size * 0.22 + undulation);
+  g.fill({ color: 0x050207, alpha: 0.9 });
+
+  // ---- Tail — fans wider during stalk/strike, stiff during recover -
+  const tailFan = state === "strike" ? 0.42 : state === "stalk" ? 0.38 : 0.32;
+  g.moveTo(-p.size * 0.55, undulation);
+  g.lineTo(-p.size * 0.98, -p.size * tailFan + undulation);
+  g.lineTo(-p.size * 0.78, undulation);
+  g.lineTo(-p.size * 0.96, p.size * tailFan + undulation);
+  g.lineTo(-p.size * 0.55, undulation);
+  g.fill({ color: 0x050207, alpha: 0.97 });
+
+  // ---- Gills — bright in charge, faint in recover -------------------
+  const gillAlpha = state === "charge" ? 0.8 : state === "recover" ? 0.15 : 0.45;
+  g.moveTo(p.size * 0.05, -p.size * 0.08 + undulation);
+  g.lineTo(p.size * 0.15, p.size * 0.05 + undulation);
+  g.lineTo(p.size * 0.12, -p.size * 0.12 + undulation);
+  g.lineTo(p.size * 0.22, undulation);
+  g.stroke({ color: 0xff6b6b, alpha: gillAlpha, width: 1 });
+
+  // ---- Maw — opens during charge windup, fully open in strike ------
+  if (mawOpen > 0.05) {
+    const mawHeight = p.size * 0.18 * mawOpen;
+    const mawX = p.size * 0.62;
+    g.moveTo(mawX, -mawHeight + undulation);
+    g.lineTo(p.size * 0.95, undulation);
+    g.lineTo(mawX, mawHeight + undulation);
+    g.fill({ color: 0x2a0410, alpha: 0.95 });
+    // Teeth
+    const toothCount = 5;
+    for (let i = 0; i < toothCount; i++) {
+      const tx = mawX + (i / toothCount) * (p.size * 0.32);
+      const ty = -mawHeight * (1 - i / toothCount) + undulation;
+      g.moveTo(tx, ty);
+      g.lineTo(tx + p.size * 0.025, ty + mawHeight * 0.45);
+      g.lineTo(tx + p.size * 0.05, ty);
+      g.fill({ color: 0xfff2c4, alpha: 0.8 });
+      // Mirror on lower jaw
+      g.moveTo(tx, -ty + 2 * undulation);
+      g.lineTo(tx + p.size * 0.025, -ty + 2 * undulation - mawHeight * 0.45);
+      g.lineTo(tx + p.size * 0.05, -ty + 2 * undulation);
+      g.fill({ color: 0xfff2c4, alpha: 0.8 });
+    }
+  }
+
+  // ---- Eye — colour modulated by state ------------------------------
+  const eyeR = p.size * 0.1 * (state === "strike" || state === "charge" ? 1.15 : 1);
+  g.circle(p.size * 0.55, -p.size * 0.08 + undulation, eyeR).fill({
+    color: eyeColor,
+    alpha: eyeAlpha,
+  });
+  g.circle(p.size * 0.58, -p.size * 0.08 + undulation, p.size * 0.045).fill({
+    color: 0x050207,
+    alpha: 1,
+  });
+
+  // ---- Eye glow halo during charge/strike — sells emissive intent --
+  if (state === "charge" || state === "strike") {
+    const haloR = p.size * 0.22 * (1 + 0.4 * progress);
+    g.circle(p.size * 0.55, -p.size * 0.08 + undulation, haloR).fill({
+      color: eyeColor,
+      alpha: 0.18 * eyeAlpha,
+    });
+  }
+}
