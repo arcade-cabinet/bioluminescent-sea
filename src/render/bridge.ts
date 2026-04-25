@@ -81,6 +81,18 @@ export interface RenderFrameInput {
    * the silhouette is hidden in the abyss tint.
    */
   leviathanProximity?: number;
+  /**
+   * Active flank broadcast pairs — engager → packmate line
+   * endpoints with age. The FX layer renders fading arcs.
+   */
+  flankBroadcasts?: readonly {
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    age: number;
+    lifetime: number;
+  }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -150,7 +162,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -275,6 +287,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         threatBearings: threatBearings ?? [],
         impactRippleAt: impactRippleAt ?? null,
         leviathanProximity: leviathanProximity ?? 0,
+        flankBroadcasts: flankBroadcasts ?? [],
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

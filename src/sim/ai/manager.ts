@@ -411,6 +411,53 @@ export class AIManager {
    * `pack-call` SFX once per broadcast — without this, the SFX
    * would spam every frame the cooldown was satisfied.
    */
+  /**
+   * Pairs of {fromX, fromY, toX, toY, ageSeconds, lifetimeSeconds}
+   * for every active flank broadcast within `lifetimeSeconds`. The
+   * FX layer draws fading arcs between the engager and each
+   * packmate it called — the player gets a brief visualisation of
+   * the pack's convergence vectors at the moment a swarm tightens.
+   *
+   * Each broadcast lasts ~1.2s in render time so the arc has a
+   * readable beat — long enough to register, short enough to
+   * not clutter the screen during sustained press scenarios.
+   */
+  recentFlankPairs(lifetimeSeconds = 1.2): {
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    age: number;
+    lifetime: number;
+  }[] {
+    const out: {
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+      age: number;
+      lifetime: number;
+    }[] = [];
+    for (const brain of this.predatorBrainMap.values()) {
+      const age = this.currentTime - brain.lastEngageBroadcastAt;
+      if (age < 0 || age > lifetimeSeconds) continue;
+      if (brain.lastBroadcastedToIds.length === 0) continue;
+      for (const targetId of brain.lastBroadcastedToIds) {
+        const target = this.predatorBrainMap.get(targetId);
+        if (!target) continue;
+        out.push({
+          fromX: brain.position.x,
+          fromY: brain.position.y,
+          toX: target.position.x,
+          toY: target.position.y,
+          age,
+          lifetime: lifetimeSeconds,
+        });
+      }
+    }
+    return out;
+  }
+
   anyEngageBroadcastSince(threshold: number): boolean {
     for (const brain of this.predatorBrainMap.values()) {
       if (brain.lastEngageBroadcastAt > threshold) return true;

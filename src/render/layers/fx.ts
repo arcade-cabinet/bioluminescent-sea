@@ -35,6 +35,16 @@ export interface FxController {
      *  vignette pulse so the player feels something enormous is
      *  nearby. Independent of `threatFlashAlpha`. */
     leviathanProximity: number;
+    /** Active flank broadcasts — fading arcs from engager to
+     *  packmates so the player sees the pack converging. */
+    flankBroadcasts: readonly {
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+      age: number;
+      lifetime: number;
+    }[];
   }): void;
   destroy(): void;
 }
@@ -50,6 +60,7 @@ export function mountFx(parent: Container): FxController {
   const bursts = new Graphics();
   const lampScatter = new Graphics();
   const impactRipples = new Graphics();
+  const flankArcs = new Graphics();
   const leviathanVignette = new Graphics();
   const threatFlash = new Graphics();
   parent.addChild(
@@ -57,6 +68,7 @@ export function mountFx(parent: Container): FxController {
     bursts,
     lampScatter,
     impactRipples,
+    flankArcs,
     leviathanVignette,
     threatFlash,
   );
@@ -68,7 +80,7 @@ export function mountFx(parent: Container): FxController {
   let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts }) {
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -242,6 +254,38 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Pack-flank convergence arcs — when a predator broadcasts an
+      // engage, draw a brief warm-orange line from the engager to
+      // each packmate it called. The arc fades over `lifetime` so
+      // the visual lasts as long as the broadcast cooldown gates
+      // the next call. Sells the moment the pack tightens — a
+      // reflex-readable cue beyond just the audio chirp.
+      flankArcs.clear();
+      for (const b of flankBroadcasts) {
+        const t = Math.max(0, Math.min(1, b.age / b.lifetime));
+        const alpha = Math.pow(1 - t, 1.6) * 0.55;
+        if (alpha < 0.02) continue;
+        flankArcs.moveTo(b.fromX, b.fromY);
+        // Mid-point bow upward (negative y) so the arc reads as a
+        // commanding gesture, not a flat string. Bow height scales
+        // with broadcast age — peaks early, flattens as it fades.
+        const midX = (b.fromX + b.toX) * 0.5;
+        const midY = (b.fromY + b.toY) * 0.5 - 60 * (1 - t);
+        flankArcs.quadraticCurveTo(midX, midY, b.toX, b.toY);
+        flankArcs.stroke({
+          color: 0xff9f4a,
+          alpha,
+          width: 1.6 + (1 - t) * 1.4,
+        });
+        // Lead pulse at the destination — a small filled disc that
+        // shrinks as the arc fades, marks where each mate is being
+        // recruited.
+        flankArcs.circle(b.toX, b.toY, 4 + (1 - t) * 4).fill({
+          color: 0xff9f4a,
+          alpha: alpha * 0.75,
+        });
+      }
+
       // Leviathan presence vignette — four edge bands that ramp
       // alpha with proximity, breathing on a slow sine. Color is
       // dusky violet (0x3a1d5a — same as midnight-column tint) so
@@ -293,6 +337,7 @@ export function mountFx(parent: Container): FxController {
       bursts.destroy();
       lampScatter.destroy();
       impactRipples.destroy();
+      flankArcs.destroy();
       leviathanVignette.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;

@@ -387,6 +387,9 @@ export function advanceScene(
     // renderer (edge-vignette pulse). 0 most frames; non-zero only
     // when a leviathan-flagged predator is within 1200px.
     leviathanProximity: ai.leviathanProximity(player.x, player.y),
+    // Active flank broadcasts — fading arcs in FX layer that show
+    // pack convergence vectors at the moment the engage call fires.
+    flankBroadcasts: ai.recentFlankPairs(1.2),
   };
 }
 
