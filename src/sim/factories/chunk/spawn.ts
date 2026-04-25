@@ -345,7 +345,12 @@ export function spawnPredatorsForChunk(
     });
   }
 
-  return results;
+  // Stamp the biome tint on every spawned predator in this chunk so
+  // the renderer can paint species accents (gills, fins, eye halo)
+  // in a colour matching the depth band — a twilight-shelf eel
+  // carries cool teal, an abyssal-trench predator warm-red. Pure
+  // visual; AI is unaffected.
+  return results.map((p) => ({ ...p, biomeTintHex: biome.tintHex }));
 }
 
 export function spawnPiratesForChunk(
