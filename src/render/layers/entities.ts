@@ -197,8 +197,17 @@ function syncPredators(
       cache.set(p.id, g);
     }
     g.clear();
-    g.position.set(p.x, p.y); // Still screen-space for now, chunk mapping later
-    g.rotation = p.angle;
+    // Death animation: dying predators sink (Y offset) and tilt (extra
+    // angle) over the deathProgress 0..1 window. The renderer also
+    // dims the alpha at the container level so every body piece
+    // fades together. Bubble particles are drawn near the entity in a
+    // separate layer pass below.
+    const deathProg = p.deathProgress ?? 0;
+    const sinkOffset = deathProg * 60; // px below original Y
+    const deathTilt = deathProg * 0.6; // radians
+    g.position.set(p.x, p.y + sinkOffset);
+    g.rotation = p.angle + deathTilt;
+    g.alpha = deathProg > 0 ? 1 - deathProg * deathProg : 1;
 
     // Marauder-sub: render as a sub silhouette (warm-red palette, grungy
     // plating). Detection by id prefix mirrors the AIManager wiring in
@@ -995,6 +1004,28 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
       color: eyeColor,
       alpha: 0.18 * eyeAlpha,
     });
+  }
+
+  // ---- Death bubbles — emitted from the body during sink-and-fade
+  //   so the player can SEE the kill instead of just noticing the
+  //   silhouette vanish. Bubbles drift up + outward at a phase tied
+  //   to the noiseOffset so each predator dies with its own pattern.
+  const deathProg = p.deathProgress ?? 0;
+  if (deathProg > 0.02) {
+    const bubbleCount = 6;
+    for (let i = 0; i < bubbleCount; i++) {
+      const phase = (i / bubbleCount) * Math.PI * 2 + p.noiseOffset;
+      // Bubble rise scales with progress — at progress=1 they've
+      // drifted ~60px above the body's start position. Negate sin
+      // so y decreases (visually "up").
+      const rise = -deathProg * 60 - Math.sin(phase * 3) * 8;
+      const drift = Math.cos(phase + deathProg * 4) * deathProg * 24;
+      const r = p.size * 0.05 * (1 - deathProg * 0.5);
+      g.circle(drift, rise, r).fill({
+        color: 0xd9f2ec,
+        alpha: 0.65 * (1 - deathProg),
+      });
+    }
   }
 
   // ---- Damage cracks — accumulate as the lamp wears the predator

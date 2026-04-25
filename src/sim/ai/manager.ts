@@ -298,10 +298,11 @@ export class AIManager {
   }
 
   /**
-   * IDs of predator brains whose HP has fallen to zero. The sim's
-   * advance() filters these out of the next scene tick, then
-   * syncPredators on the next call will prune them from the brain
-   * map. Returning a set keeps the lookup O(1) on the caller side.
+   * IDs of predator brains whose death animation has fully elapsed.
+   * The sim's advance() filters these out of the next scene tick;
+   * the next syncPredators call prunes the brain map. Dying brains
+   * (HP=0 but mid-animation) are NOT included so the renderer can
+   * continue drawing the sink-and-fade.
    */
   getDeadPredatorIds(): Set<string> {
     const dead = new Set<string>();
@@ -309,6 +310,24 @@ export class AIManager {
       if (brain.isDead()) dead.add(id);
     }
     return dead;
+  }
+
+  /**
+   * IDs of predator brains that just transitioned from alive to
+   * dying THIS frame. Used by the loot-drop pass so a kill spawns
+   * exactly one breath anomaly at death-start, not one per frame
+   * across the animation. Tracked via a per-frame flag the brain
+   * arms in receiveDamage and the manager consumes here.
+   */
+  getJustKilledPredatorIds(): Set<string> {
+    const killed = new Set<string>();
+    for (const [id, brain] of this.predatorBrainMap) {
+      if (brain.isDying() && !brain.lootDropped) {
+        killed.add(id);
+        brain.lootDropped = true;
+      }
+    }
+    return killed;
   }
 
   /**
@@ -370,6 +389,7 @@ export class AIManager {
         aiState: brain.currentAiState,
         stateProgress: brain.currentStateProgress,
         damageFraction: 1 - brain.hp,
+        deathProgress: brain.deathProgress(),
       };
     }
     const vehicle = this.vehicleMap.get(p.id);
