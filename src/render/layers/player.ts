@@ -23,13 +23,12 @@ export interface PlayerController {
   destroy(): void;
 }
 
-export function mountPlayer(parent: Container, rendererResolution = 1): PlayerController {
+export function mountPlayer(parent: Container): PlayerController {
   const subContainer = new Container();
   subContainer.label = "player:sub";
-  // Bloom resolution must match the renderer (DPR-aware) — see the
-  // longer comment in src/render/layers/water.ts. Without this stamp
-  // the bloom texture renders at half size on a retina canvas and
-  // produces upper-left rectangle artifacts when composited.
+  // Filter resolution inherits the renderer's resolution because
+  // `Filter.defaultOptions.resolution = "inherit"` is set globally
+  // in src/render/stage.ts — see pixijs/pixijs#11467.
   const bloom = new AdvancedBloomFilter({
     threshold: 0.45,
     bloomScale: 0.85,
@@ -37,7 +36,6 @@ export function mountPlayer(parent: Container, rendererResolution = 1): PlayerCo
     blur: 4,
     quality: 4,
   });
-  bloom.resolution = rendererResolution;
   subContainer.filters = [bloom];
 
   const trail = new Graphics();

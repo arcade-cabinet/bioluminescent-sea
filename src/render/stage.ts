@@ -1,4 +1,19 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Filter } from "pixi.js";
+
+// One-shot global: every Filter created from now on inherits the
+// renderer's resolution instead of defaulting to 1. This is the
+// upstream-recommended fix for the upper-left-quadrant artifact —
+// see pixijs/pixijs#11467. Without it, filter textures render at
+// half size on retina (DPR=2) and Pixi composites them pixel-for-
+// pixel from (0,0), producing a visible quadrant boundary.
+//
+// `.resolution = "inherit"` is documented at
+// https://pixijs.download/dev/docs/filters.FilterOptions.html#resolution
+// and the binding has to land BEFORE any filter is constructed,
+// hence the module-scope initialiser. Importing this module once
+// from the renderer entrypoint is sufficient; the assignment is
+// idempotent so re-imports are harmless.
+Filter.defaultOptions.resolution = "inherit";
 
 /**
  * PixiJS stage lifecycle + layer ordering.
