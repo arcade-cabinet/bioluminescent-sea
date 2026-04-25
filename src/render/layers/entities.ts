@@ -161,7 +161,12 @@ function syncPredators(
     g.position.set(p.x, p.y); // Still screen-space for now, chunk mapping later
     g.rotation = p.angle;
 
-    if (p.isLeviathan) {
+    // Marauder-sub: render as a sub silhouette (warm-red palette, grungy
+    // plating). Detection by id prefix mirrors the AIManager wiring in
+    // src/sim/ai/manager.ts — entity ids start with "marauder-sub-".
+    if (p.id.startsWith("marauder-sub")) {
+      drawEnemySub(g, p.size, totalTime, p.noiseOffset);
+    } else if (p.isLeviathan) {
       const sway = Math.sin(totalTime * 1.5 + p.noiseOffset) * p.size * 0.05;
       
       // Leviathan rendering
@@ -297,4 +302,104 @@ function syncPirates(
 function parseHex(input: string): number {
   if (input.startsWith("#")) return Number.parseInt(input.slice(1), 16);
   return Number.parseInt(input, 16);
+}
+
+/**
+ * Enemy submarine silhouette. Mirrors the player's articulated sub
+ * shape (hull bezier + dome + lamp cone) but in adversary palette:
+ * grungy iron hull, warn-red running lights, hostile cone in
+ * warn-red. The lamp cone here is a "sweep" rather than a wide
+ * spotlight — narrower, redder, more like a hunting beam.
+ *
+ * Drawn at the predator's local origin; caller positions/rotates the
+ * Graphics container.
+ */
+function drawEnemySub(
+  g: Graphics,
+  size: number,
+  totalTime: number,
+  noiseOffset: number,
+): void {
+  // size from archetype is ~60. Scale internal proportions to match.
+  const s = size / 28;
+
+  // Hostile lamp cone — narrow, warn-red, sweeping wider on a slow
+  // sine so the player reads "this thing is searching for me".
+  const sweep = Math.sin(totalTime * 0.6 + noiseOffset) * 0.15 + 0.85;
+  const coneLen = 90 * s;
+  const coneSpread = 36 * s * sweep;
+  g.moveTo(14 * s, 0);
+  g.quadraticCurveTo(
+    coneLen * 0.45,
+    -coneSpread * 0.4,
+    coneLen,
+    -coneSpread,
+  );
+  g.lineTo(coneLen, coneSpread);
+  g.quadraticCurveTo(
+    coneLen * 0.45,
+    coneSpread * 0.4,
+    14 * s,
+    0,
+  );
+  g.fill({ color: 0xff6b6b, alpha: 0.07 });
+  g.moveTo(14 * s, 0);
+  g.quadraticCurveTo(
+    coneLen * 0.55,
+    -coneSpread * 0.3,
+    coneLen * 0.85,
+    -coneSpread * 0.7,
+  );
+  g.lineTo(coneLen * 0.85, coneSpread * 0.7);
+  g.quadraticCurveTo(
+    coneLen * 0.55,
+    coneSpread * 0.3,
+    14 * s,
+    0,
+  );
+  g.fill({ color: 0xff6b6b, alpha: 0.13 });
+
+  // Pressure hull — same bezier silhouette as the player's sub but
+  // in iron-grey + warn-red stroke.
+  g.moveTo(28 * s, 0);
+  g.bezierCurveTo(28 * s, -10 * s, 14 * s, -14 * s, 0, -14 * s);
+  g.bezierCurveTo(-16 * s, -14 * s, -22 * s, -8 * s, -24 * s, -3 * s);
+  g.lineTo(-24 * s, 3 * s);
+  g.bezierCurveTo(-22 * s, 8 * s, -16 * s, 14 * s, 0, 14 * s);
+  g.bezierCurveTo(14 * s, 14 * s, 28 * s, 10 * s, 28 * s, 0);
+  g.fill({ color: 0x1a0608, alpha: 1 });
+  g.stroke({ color: 0xff6b6b, alpha: 0.7, width: 1.5 });
+
+  // Riveted plating — three faint warn-red lines at mid-line read
+  // as paneling and reinforce the adversary palette.
+  for (let i = -2; i <= 2; i++) {
+    if (i === 0) continue;
+    g.moveTo(-20 * s, i * 4 * s);
+    g.lineTo(20 * s, i * 4 * s);
+    g.stroke({ color: 0xff6b6b, alpha: 0.18, width: 0.6 });
+  }
+
+  // Forward observation dome with an angry red eye behind it.
+  g.circle(8 * s, -7 * s, 7 * s).fill({ color: 0x0a0204, alpha: 1 });
+  g.circle(8 * s, -7 * s, 7 * s).stroke({
+    color: 0xff6b6b,
+    alpha: 0.85,
+    width: 1,
+  });
+  // Eye pulse — lowest-frequency sine so it reads as a slow,
+  // patient watch rather than a strobe.
+  const eyePulse = 0.6 + 0.4 * Math.sin(totalTime * 1.2 + noiseOffset);
+  g.circle(8 * s, -7 * s, 3.4 * s).fill({
+    color: 0xff8a6a,
+    alpha: eyePulse * 0.75,
+  });
+
+  // Stern propeller wash — three warn-red vanes spinning fast.
+  const propPhase = totalTime * 6 + noiseOffset;
+  for (let i = 0; i < 3; i++) {
+    const a = propPhase + (i * Math.PI * 2) / 3;
+    g.moveTo(-24 * s, 0);
+    g.lineTo(-24 * s + Math.cos(a) * 6 * s, Math.sin(a) * 6 * s);
+    g.stroke({ color: 0xff6b6b, alpha: 0.45, width: 1.5 });
+  }
 }
