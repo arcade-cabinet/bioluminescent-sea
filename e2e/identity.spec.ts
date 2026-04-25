@@ -172,6 +172,52 @@ test.describe("Bioluminescent Sea — identity contract", () => {
     expect(visibleCards).toBe(1);
   });
 
+  test("the dive playfield is not permanently washed red", async ({ page }) => {
+    // Regression: a 'threatAlert' radial gradient was painting the
+    // whole canvas warm-red whenever any predator was within 180px.
+    // With the new AI patrolling at 380px the wash was effectively
+    // always on. Identity rule: warm red is reserved for actual
+    // close-contact (<90px) AND must not bleach the playfield.
+    await page.goto("/");
+    await page.getByTestId("mode-card-descent").click();
+    await page.getByTestId("begin-dive-button").click();
+    // Let the dive run a few seconds so any threat-flash overlay
+    // would have stuck on by now.
+    await page.waitForTimeout(4000);
+
+    // Check ALL warn-red radial overlays sized to the canvas. None
+    // should be active at typical play distances; if a predator is
+    // truly close (<90px) the overlay is allowed but its alpha is
+    // capped at <= 0.32. We assert that no red-tinted overlay has
+    // computed opacity * gradient-alpha >= 0.40.
+    const tooBleached = await page.evaluate(() => {
+      const all = Array.from(document.querySelectorAll("*"));
+      for (const el of all) {
+        const cs = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const isFullScreen =
+          rect.width >= window.innerWidth * 0.9 &&
+          rect.height >= window.innerHeight * 0.9;
+        if (!isFullScreen) continue;
+        const bgi = cs.backgroundImage || "";
+        // Match red-ish RGB in gradient stops.
+        const m = bgi.match(/rgba?\(\s*255[^)]*?(?:107|0)[^)]*?(?:107|0)[^)]*?(?:,\s*([0-9.]+))?\s*\)/i);
+        if (!m) continue;
+        const stopAlpha = m[1] ? Number.parseFloat(m[1]) : 1;
+        const elementOpacity = Number.parseFloat(cs.opacity || "1");
+        if (stopAlpha * elementOpacity >= 0.4) {
+          return {
+            bgi: bgi.slice(0, 200),
+            opacity: cs.opacity,
+            tag: el.tagName,
+          };
+        }
+      }
+      return null;
+    });
+    expect(tooBleached).toBeNull();
+  });
+
   test("the seed picker dialog has no opaque abyss tile", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("mode-card-descent").click();
