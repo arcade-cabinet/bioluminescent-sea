@@ -144,7 +144,16 @@ export function advanceScene(
   const isCollision = collidedWithPredator || collidedWithPirate;
   
   const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND * (isOverdrive ? 1.5 : 1);
-  const targetDepthOffset = tuning.freeVerticalMovement ? Math.max(0, player.targetY - player.y) * 0.05 : passiveDescent;
+  // Free vertical movement: depth advances toward player input. But
+  // Descent (lateralMovement: locked) layers a baseline trickle on
+  // top so an idle player still sinks — without it, a fresh dive
+  // where the player doesn't touch the screen sits at 0m forever
+  // while predators stack and burn the oxygen budget.
+  const inputDrivenDescent = Math.max(0, player.targetY - player.y) * 0.05;
+  const baselineDescent = !tuning.freeLateralMovement ? passiveDescent * 0.5 : 0;
+  const targetDepthOffset = tuning.freeVerticalMovement
+    ? Math.max(inputDrivenDescent, baselineDescent)
+    : passiveDescent;
 
   // Encounter-pocket gating: in arena mode each chunk is a
   // locked-room travel slot (see factories/chunk/archetypes.ts). While
