@@ -108,10 +108,15 @@ describe("deep sea simulation", () => {
   });
 
   test("resets stale combo windows and caps active chains", () => {
+    // No prior collection → chain is always 1.
     expect(calculateMultiplier(0, 1, 4)).toBe(1);
-    expect(calculateMultiplier(3, 7.2, 4)).toBe(1);
+    // Past the streak window (3.5s) → resets to 1.
+    expect(calculateMultiplier(3, 7.5, 4)).toBe(1);
+    // Within window: bumps multiplier toward MAX_CHAIN_MULTIPLIER (6).
     expect(calculateMultiplier(3, 4.5, 4)).toBe(5);
-    expect(calculateMultiplier(3, 4.5, 5)).toBe(5);
+    expect(calculateMultiplier(3, 4.5, 5)).toBe(6);
+    // At cap, stays at cap.
+    expect(calculateMultiplier(3, 4.5, 6)).toBe(6);
   });
 
   test("advances predators and detects collision pressure without mutating input", () => {
@@ -176,13 +181,16 @@ describe("deep sea simulation", () => {
     });
 
     expect(descentImpact).toMatchObject({
-      oxygenPenaltySeconds: 45,
-      timeLeft: 255,
+      // Descent's penalty was halved (45 → 25) in the balance pass —
+      // a single missed dodge in a lateral-locked sub used to be
+      // cripplingly punitive.
+      oxygenPenaltySeconds: 25,
+      timeLeft: 275,
       type: "oxygen-penalty",
     });
     expect(graceImpact).toMatchObject({
       oxygenPenaltySeconds: 0,
-      timeLeft: 255,
+      timeLeft: 275,
       type: "none",
     });
     expect(arenaImpact).toMatchObject({

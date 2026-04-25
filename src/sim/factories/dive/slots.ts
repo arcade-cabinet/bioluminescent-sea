@@ -63,6 +63,10 @@ export interface ModeSlots {
  */
 export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
   exploration: {
+    // Exploration's contract is "drift, observe, breathe." Numbers
+    // here lean toward forgiveness: long grace between hits, small
+    // penalty when one lands, threats patrol slowly and disengage
+    // quickly, oxygen budget is the longest of the three modes.
     verticalMovement: "free",
     lateralMovement: "free",
     completionCondition: "infinite",
@@ -73,19 +77,24 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     respawnThreats: false,
     threatPattern: "scattered",
     collisionEndsDive: false,
-    impactGraceSeconds: 5,
-    impactOxygenPenaltySeconds: 15,
-    threatRadiusScale: 0.8,
-    collectionOxygenScale: 1.5,
-    predatorSpeedScale: 0.7,
-    pirateSpeedScale: 0.7,
+    impactGraceSeconds: 8,
+    impactOxygenPenaltySeconds: 8,
+    threatRadiusScale: 0.65,
+    collectionOxygenScale: 1.6,
+    predatorSpeedScale: 0.55,
+    pirateSpeedScale: 0.55,
     durationSeconds: 900,
   },
   descent: {
     // Descent is a vertical-only dive: player can freely pick how fast
     // to sink (including stop), but the trench current holds them on a
     // fixed lateral heading. Threats escalate logarithmically with
-    // depth until the player touches the floor — that's the win.
+    // depth until the player touches the floor.
+    //
+    // Penalty was 45s — cripplingly punitive given a single missed
+    // dodge in a lateral-locked sub. Cut to 25s with longer grace
+    // (6s) so the player feels pressure but a slip doesn't end the
+    // dive.
     verticalMovement: "free",
     lateralMovement: "locked",
     completionCondition: "depth_goal",
@@ -96,10 +105,10 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     respawnThreats: true,
     threatPattern: "scattered",
     collisionEndsDive: false,
-    impactGraceSeconds: 4,
-    impactOxygenPenaltySeconds: 45,
-    threatRadiusScale: 1,
-    collectionOxygenScale: 1,
+    impactGraceSeconds: 6,
+    impactOxygenPenaltySeconds: 25,
+    threatRadiusScale: 0.9,
+    collectionOxygenScale: 1.1,
     predatorSpeedScale: 1,
     pirateSpeedScale: 1,
     // Single source of truth: pull from GAME_DURATION so tuning that

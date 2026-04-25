@@ -154,46 +154,90 @@ export class EnemySubHuntBehavior extends SteeringBehavior {
   }
 }
 
+/**
+ * StalkAndDashBehavior — predators with a real attention budget.
+ *
+ * Old version pursued forever inside detection range. That made
+ * idle Exploration bleed oxygen at 2-3x because a predator that
+ * caught sight of the player would camp on top of them, trigger
+ * impact-grace cycles, and never disengage. Now they have a
+ * state machine:
+ *
+ *   patrol  — drift on a sinusoid around their spawn position
+ *   alert   — player just entered detection radius; close to stalk range
+ *   commit  — short pursuit window, can dash if they get close
+ *   cooldown — broke off, drift away from player for a few seconds
+ *
+ * The result feels like an animal that hunts, takes a swing, then
+ * resets. Player has clear breathing room between contacts.
+ */
 export class StalkAndDashBehavior extends SteeringBehavior {
   private target: Vector3;
   private baseSpeed: number;
   private dashSpeed: number;
   private dashDistance: number;
-  private stalkDistance: number;
   private detectionRadius: number;
-  // Per-instance phase so out-of-detection drift differs across
-  // predators in the same chunk.
   private wanderSeed: number;
+
+  // State machine. Initial state is "patrol" — predator must SEE
+  // the player before it changes course.
+  private state: "patrol" | "alert" | "commit" | "cooldown" = "patrol";
+  private stateElapsed = 0;
+  // Tunable durations.
+  private static readonly COMMIT_SECONDS = 1.6;
+  private static readonly COOLDOWN_SECONDS = 3.5;
+  // After this much elapsed in alert, escalate to commit.
+  private static readonly ALERT_TO_COMMIT_SECONDS = 0.6;
 
   constructor(target: Vector3, baseSpeed: number) {
     super();
     this.target = target;
     this.baseSpeed = baseSpeed;
-    this.dashSpeed = baseSpeed * 2.8; // Huge burst of speed
-    this.dashDistance = 240; // Starts dash when close
-    this.stalkDistance = 450; // Slows down to match speed when in this band
-    // Beyond this radius the predator drifts on its own loop instead
-    // of beelining toward the player. Tightened to 380px after live-
-    // QA showed 700 still pulled chunk-0 spawns into immediate
-    // pursuit on small viewports. 380 ≈ half a phone-portrait
-    // viewport height; the chunk-0 carve-out (30% of height away
-    // from the player) keeps fresh spawns out of range.
+    this.dashSpeed = baseSpeed * 2.4;
+    this.dashDistance = 180;
     this.detectionRadius = 380;
-    // Seed the wander phase off the predator's spawn-time speed so
-    // each predator drifts on a different orbit. Avoids Math.random()
-    // (the sim layer must stay deterministic) without needing a full
-    // RNG plumb-through.
     this.wanderSeed = (baseSpeed * 7919) % (Math.PI * 2);
   }
 
-  calculate(vehicle: Vehicle, force: Vector3, _delta: number): Vector3 {
+  calculate(vehicle: Vehicle, force: Vector3, delta: number): Vector3 {
+    this.stateElapsed += delta;
     const toTarget = new Vector3().subVectors(this.target, vehicle.position);
     const dist = toTarget.length();
 
-    // Out of detection range: drift on a slow sinusoid so predators
-    // patrol their pocket rather than beelining for the player.
-    if (dist > this.detectionRadius) {
-      vehicle.maxSpeed = this.baseSpeed * 0.45;
+    // State transitions.
+    switch (this.state) {
+      case "patrol":
+        if (dist < this.detectionRadius) {
+          this.state = "alert";
+          this.stateElapsed = 0;
+        }
+        break;
+      case "alert":
+        if (dist > this.detectionRadius * 1.3) {
+          this.state = "patrol";
+          this.stateElapsed = 0;
+        } else if (this.stateElapsed >= StalkAndDashBehavior.ALERT_TO_COMMIT_SECONDS) {
+          this.state = "commit";
+          this.stateElapsed = 0;
+        }
+        break;
+      case "commit":
+        if (this.stateElapsed >= StalkAndDashBehavior.COMMIT_SECONDS) {
+          this.state = "cooldown";
+          this.stateElapsed = 0;
+        }
+        break;
+      case "cooldown":
+        if (this.stateElapsed >= StalkAndDashBehavior.COOLDOWN_SECONDS) {
+          this.state = "patrol";
+          this.stateElapsed = 0;
+        }
+        break;
+    }
+
+    if (this.state === "patrol") {
+      // Drift on a slow loop, ignoring the player entirely.
+      vehicle.maxSpeed = this.baseSpeed * 0.4;
       const t = vehicle.position.x * 0.001 + this.wanderSeed;
       force.set(
         Math.cos(t) * vehicle.maxSpeed,
@@ -204,17 +248,31 @@ export class StalkAndDashBehavior extends SteeringBehavior {
       return force;
     }
 
-    if (dist < this.dashDistance) {
-      vehicle.maxSpeed = this.dashSpeed;
-    } else if (dist < this.stalkDistance) {
-      // Stalking: match speed or go slightly slower than base to "hover"
-      vehicle.maxSpeed = this.baseSpeed * 0.6;
-    } else {
-      // Catching up
-      vehicle.maxSpeed = this.baseSpeed * 1.2;
+    if (this.state === "alert") {
+      // Slow down, look at the player but don't close yet — gives
+      // the player a clear visual tell that contact is coming.
+      vehicle.maxSpeed = this.baseSpeed * 0.55;
+      toTarget.normalize().multiplyScalar(vehicle.maxSpeed);
+      force.copy(toTarget).sub(vehicle.velocity);
+      return force;
     }
 
-    toTarget.normalize().multiplyScalar(vehicle.maxSpeed);
+    if (this.state === "commit") {
+      // Active pursuit window — dash if close, otherwise close in.
+      if (dist < this.dashDistance) {
+        vehicle.maxSpeed = this.dashSpeed;
+      } else {
+        vehicle.maxSpeed = this.baseSpeed * 1.4;
+      }
+      toTarget.normalize().multiplyScalar(vehicle.maxSpeed);
+      force.copy(toTarget).sub(vehicle.velocity);
+      return force;
+    }
+
+    // Cooldown: drift AWAY from the player so the next pass is
+    // a clean re-engagement instead of a continuous nuisance.
+    vehicle.maxSpeed = this.baseSpeed * 0.5;
+    toTarget.normalize().multiplyScalar(-vehicle.maxSpeed);
     force.copy(toTarget).sub(vehicle.velocity);
     return force;
   }
