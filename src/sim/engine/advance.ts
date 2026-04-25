@@ -90,7 +90,9 @@ export function advanceScene(
   ai.update(deltaTime);
 
   // Lamp-pressure: predators inside the player's lamp cone take
-  // damage and flip to FleeState. Lamp-flare buff doubles the cone.
+  // damage and flip to FleeState. Lamp-flare buff scales the cone
+  // by 1.35× (matching the renderer's `lampBoost` in player.ts) —
+  // not a doubling, but enough to noticeably extend reach + width.
   // This is the player's only offensive tool — the lamp is the
   // bridge between "vehicle with a light" and "predator deterrent."
   const isLampFlareActive = player.activeBuffs.lampFlareUntil > totalTime;
@@ -123,8 +125,11 @@ export function advanceScene(
     return { ...base, x: nx, y: ny };
   });
 
-  // Prune predators the lamp killed last frame. The brain map cleanup
-  // happens on the next syncPredators tick (live-ids set drops them).
+  // Prune predators the lamp killed this frame (the lamp pressure
+  // pass earlier in this tick may have decremented HP to 0). The
+  // brain map cleanup happens on the next syncPredators tick — its
+  // live-ids set drops anything not in the new scene.predators
+  // array.
   const deadIds = ai.getDeadPredatorIds();
   const predators = scene.predators
     .filter((p) => !deadIds.has(p.id))
