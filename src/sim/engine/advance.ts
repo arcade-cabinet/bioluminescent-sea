@@ -144,15 +144,18 @@ export function advanceScene(
   const isCollision = collidedWithPredator || collidedWithPirate;
   
   const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND * (isOverdrive ? 1.5 : 1);
-  // Free vertical movement: depth advances toward player input. But
-  // Descent (lateralMovement: locked) layers a baseline trickle on
-  // top so an idle player still sinks — without it, a fresh dive
-  // where the player doesn't touch the screen sits at 0m forever
-  // while predators stack and burn the oxygen budget.
-  const inputDrivenDescent = Math.max(0, player.targetY - player.y) * 0.05;
-  const baselineDescent = !tuning.freeLateralMovement ? passiveDescent * 0.5 : 0;
+  // Free vertical movement: depth advances toward player input on
+  // top of a baseline trickle. Without the baseline, an idle player
+  // (no input) sits at 0m forever while predators stack and oxygen
+  // burns. Descent's lateral lock just means the trickle is the
+  // *only* descent source — input-driven descent stacks on top of it
+  // in Exploration so the player can choose to dive faster.
+  const inputDrivenDescent = tuning.freeVerticalMovement
+    ? Math.max(0, player.targetY - player.y) * 0.05
+    : 0;
+  const baselineDescent = passiveDescent * 0.5;
   const targetDepthOffset = tuning.freeVerticalMovement
-    ? Math.max(inputDrivenDescent, baselineDescent)
+    ? inputDrivenDescent + baselineDescent
     : passiveDescent;
 
   // Encounter-pocket gating: in arena mode each chunk is a
