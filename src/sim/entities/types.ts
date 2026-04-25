@@ -93,6 +93,14 @@ export interface Predator {
    * Loot dropped on the frame `deathProgress` first crossed 0.
    */
   deathProgress?: number;
+  /**
+   * Hex tint of the biome this predator was spawned into. Drives the
+   * renderer's accent stroke (gills, fins, eye glow halo) so a
+   * twilight-shelf predator carries cool teal accents while an
+   * abyssal-trench predator carries warm-red. Pure visual — does
+   * not affect AI. Optional so tests / fixtures can omit it.
+   */
+  biomeTintHex?: string;
 }
 
 export interface Pirate {

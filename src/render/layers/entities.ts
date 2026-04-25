@@ -432,6 +432,24 @@ function parseHex(input: string): number {
 }
 
 /**
+ * Linear-blend two 0xRRGGBB integers in RGB space. `t=0` returns
+ * `a`, `t=1` returns `b`. Used by predator silhouettes to bias the
+ * canonical warm-red accent toward the spawn biome's tint.
+ */
+function blendHexColors(a: number, b: number, t: number): number {
+  const ar = (a >> 16) & 0xff;
+  const ag = (a >> 8) & 0xff;
+  const ab = a & 0xff;
+  const br = (b >> 16) & 0xff;
+  const bg = (b >> 8) & 0xff;
+  const bb = b & 0xff;
+  const rr = Math.round(ar + (br - ar) * t);
+  const rg = Math.round(ag + (bg - ag) * t);
+  const rb = Math.round(ab + (bb - ab) * t);
+  return (rr << 16) | (rg << 8) | rb;
+}
+
+/**
  * Draws a small white glyph inside the anomaly core that echoes the
  * buff's effect. Players learn the glyphs and read them at a glance
  * even when colour is washed out by depth tint.
@@ -950,6 +968,16 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
   const state = p.aiState ?? "patrol";
   const progress = p.stateProgress ?? 0;
 
+  // Biome accent: blend the canonical warm-red (0xff6b6b) 60/40
+  // toward the spawn biome's tint. Predators in cool biomes
+  // (twilight-shelf teal, midnight-column violet) carry a cooler
+  // accent; predators in abyssal-trench retain the warm-red. The
+  // blend keeps the silhouette readable at a glance — too far
+  // toward biome and the predator melts into the depth tint.
+  const accentColor = p.biomeTintHex
+    ? blendHexColors(0xff6b6b, parseHex(p.biomeTintHex), 0.4)
+    : 0xff6b6b;
+
   // Visual modulation per state.
   // bodyTilt — sinusoidal undulation amplitude in radians.
   // bodyCoil — extra S-curve bend in the silhouette (radians).
@@ -1059,7 +1087,7 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
     undulation,
   );
   g.fill({ color: 0x0c0508, alpha: 0.95 });
-  g.stroke({ color: 0xff6b6b, alpha: strokeAlpha, width: 1.4 });
+  g.stroke({ color: accentColor, alpha: strokeAlpha, width: 1.4 });
 
   // ---- Dorsal + belly fins (slight coil response) -------------------
   g.moveTo(-p.size * 0.05, -p.size * 0.28 + undulation);
@@ -1087,7 +1115,7 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
   g.lineTo(p.size * 0.15, p.size * 0.05 + undulation);
   g.lineTo(p.size * 0.12, -p.size * 0.12 + undulation);
   g.lineTo(p.size * 0.22, undulation);
-  g.stroke({ color: 0xff6b6b, alpha: gillAlpha, width: 1 });
+  g.stroke({ color: accentColor, alpha: gillAlpha, width: 1 });
 
   // ---- Maw — opens during charge windup, fully open in strike ------
   if (mawOpen > 0.05) {
