@@ -71,6 +71,7 @@ function generateNoiseCanvas(): HTMLCanvasElement {
 export function mountRefraction(
   targets: readonly Container[],
   stage: Container,
+  rendererResolution = 1,
 ): RefractionController {
   const canvas = generateNoiseCanvas();
   const texture = Texture.from(canvas);
@@ -86,6 +87,8 @@ export function mountRefraction(
       sprite: displacementSprite,
       scale: { x: 3.5, y: 3.5 },
     });
+    // DPR-aware filter resolution — see src/render/layers/water.ts.
+    f.resolution = rendererResolution;
     return f;
   });
 
