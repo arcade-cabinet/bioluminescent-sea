@@ -21,13 +21,12 @@ export interface EntityController {
   destroy(): void;
 }
 
-export function mountEntities(parent: Container, rendererResolution = 1): EntityController {
+export function mountEntities(parent: Container): EntityController {
   // Anomalies live in their own sub-container with a GlowFilter so
-  // the buff pickups read as emissive even at distance. The explicit
-  // resolution stamp matches the renderer's DPR — without it the
-  // glow texture renders at half size on retina, producing the
-  // upper-left rectangle artifact (see water.ts for the longer
-  // diagnosis + pixijs/pixijs#11467).
+  // the buff pickups read as emissive even at distance. Filter
+  // resolution inherits the renderer's resolution via
+  // `Filter.defaultOptions.resolution = "inherit"` (set in stage.ts) —
+  // see pixijs/pixijs#11467.
   const anomalyHost = new Container();
   anomalyHost.label = "entities:anomalies";
   const anomalyGlow = new GlowFilter({
@@ -37,7 +36,6 @@ export function mountEntities(parent: Container, rendererResolution = 1): Entity
     color: 0xffffff,
     quality: 0.35,
   });
-  anomalyGlow.resolution = rendererResolution;
   anomalyHost.filters = [anomalyGlow];
   parent.addChild(anomalyHost);
 

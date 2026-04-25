@@ -58,30 +58,28 @@ export interface RenderFrameInput {
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
   const stage: PixiStage = await createStage(canvas);
-  // Renderer DPR (typically 2 on retina). Every Pixi filter that
-  // wants fullscreen rendering MUST set its `.resolution` to this,
-  // or the filter texture renders at half size and composites onto
-  // the upper-left quadrant — the long-running "square" artifact.
-  // See pixijs/pixijs#11467 + src/render/layers/water.ts for the
-  // longer diagnosis.
-  const dpr = stage.app.renderer.resolution;
+  // All Pixi filters created from now on inherit the renderer's
+  // resolution because `Filter.defaultOptions.resolution = "inherit"`
+  // is set at module load in src/render/stage.ts. This is the
+  // upstream-recommended fix for pixijs/pixijs#11467 — without it,
+  // filters at default resolution=1 render to half-size textures on
+  // a DPR=2 canvas and composite into the upper-left quadrant.
   const backdrop: BackdropController = mountBackdrop(stage.layers.far);
   const ambient: AmbientController = mountAmbient(stage.layers.ambient);
-  const water: WaterController = mountWater(stage.layers.water, dpr);
+  const water: WaterController = mountWater(stage.layers.water);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
-  const entities: EntityController = mountEntities(stage.layers.near, dpr);
+  const entities: EntityController = mountEntities(stage.layers.near);
   // The player sub used to live on the `near` layer, but that layer
   // also carries the refraction `DisplacementFilter`. Mounting on
   // `fx` instead keeps the sub above entities, avoids the
   // displacement filter, and shares its transform with the sonar
   // circle so they always render at the same player coordinates.
-  const player: PlayerController = mountPlayer(stage.layers.fx, dpr);
+  const player: PlayerController = mountPlayer(stage.layers.fx);
   const fx: FxController = mountFx(stage.layers.fx);
   // Refraction wobble: targets the mid + near containers.
   const refraction: RefractionController = mountRefraction(
     [stage.layers.mid, stage.layers.near],
     stage.app.stage,
-    dpr,
   );
 
   // Scratch buffers — reused each frame so the render bridge allocates
