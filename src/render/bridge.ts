@@ -69,6 +69,12 @@ export interface RenderFrameInput {
     intensity: number;
     nearness: number;
   }[];
+  /**
+   * Position of a predator-collision impact this frame, or null.
+   * The FX layer pushes it into a short ring buffer and decays
+   * each entry as an expanding shockwave.
+   */
+  impactRippleAt?: { x: number; y: number } | null;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -138,7 +144,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -261,6 +267,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         viewport: v,
         lampScatterPoints: lampScatterPoints ?? [],
         threatBearings: threatBearings ?? [],
+        impactRippleAt: impactRippleAt ?? null,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

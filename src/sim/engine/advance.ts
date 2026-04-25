@@ -378,6 +378,11 @@ export function advanceScene(
     // 800px radar — covers ~2× viewport so threats pressing in from
     // off-screen show up as arcs before they cross the edge.
     threatBearings: ai.threatBearings(player.x, player.y, 800),
+    // Impact ripple anchor — non-null only on the frame collision
+    // first registers. The runtime edge-detects on
+    // `lastImpactSeconds` rising so re-emitting during the grace
+    // window doesn't fire a ring per frame.
+    impactRippleAt: isCollision ? { x: player.x, y: player.y } : null,
   };
 }
 

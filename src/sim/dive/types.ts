@@ -154,6 +154,14 @@ export interface SceneAdvanceResult {
     intensity: number;
     nearness: number;
   }[];
+  /**
+   * Position of the predator collision impact this frame, or null
+   * if no impact occurred. Drives the FX layer's expanding-ring
+   * shockwave at the contact point. Edge-detected by the runtime
+   * so a single hit produces a single ring (not a ring per frame
+   * during the impact's grace window).
+   */
+  impactRippleAt: { x: number; y: number } | null;
 }
 
 export interface DiveModeTuning {

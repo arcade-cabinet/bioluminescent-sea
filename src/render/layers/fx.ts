@@ -30,19 +30,57 @@ export interface FxController {
       intensity: number;
       nearness: number;
     }[];
+    impactRippleAt: { x: number; y: number } | null;
   }): void;
   destroy(): void;
+}
+
+interface ActiveRipple {
+  x: number;
+  y: number;
+  startedAt: number;
 }
 
 export function mountFx(parent: Container): FxController {
   const sonar = new Graphics();
   const bursts = new Graphics();
   const lampScatter = new Graphics();
+  const impactRipples = new Graphics();
   const threatFlash = new Graphics();
-  parent.addChild(sonar, bursts, lampScatter, threatFlash);
+  parent.addChild(sonar, bursts, lampScatter, impactRipples, threatFlash);
+
+  /** Active ripples — short ring buffer, entries auto-prune past
+   *  the 0.7s lifetime. Edge-detected against the last impact
+   *  position so a multi-frame collision doesn't queue duplicates. */
+  const activeRipples: ActiveRipple[] = [];
+  let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt }) {
+      // Ingest a new ripple on rising-edge of impactRippleAt. The
+      // sim re-emits the same {x, y} for several frames during the
+      // grace window, so we de-dupe on identity.
+      if (impactRippleAt) {
+        if (
+          !lastSeenImpact ||
+          lastSeenImpact.x !== impactRippleAt.x ||
+          lastSeenImpact.y !== impactRippleAt.y
+        ) {
+          activeRipples.push({
+            x: impactRippleAt.x,
+            y: impactRippleAt.y,
+            startedAt: totalTime,
+          });
+          lastSeenImpact = { x: impactRippleAt.x, y: impactRippleAt.y };
+        }
+      } else {
+        lastSeenImpact = null;
+      }
+      // Prune ripples past their visible lifetime (0.7s).
+      while (activeRipples.length > 0 && totalTime - activeRipples[0].startedAt > 0.7) {
+        activeRipples.shift();
+      }
+
       sonar.clear();
       const phase = (totalTime * 0.75) % 1;
       const radius = 40 + phase * 220;
@@ -163,6 +201,35 @@ export function mountFx(parent: Container): FxController {
         });
       }
 
+      // Impact ripples — expanding warm-red shockwaves at the
+      // collision position. Two concentric rings: the outer is the
+      // forward shockwave (fast-expanding, sharp), the inner is a
+      // soft trailing fill that anchors the ring as a "thump." Both
+      // fade with t³ so the edge feels percussive rather than
+      // lingering.
+      impactRipples.clear();
+      for (const r of activeRipples) {
+        const age = totalTime - r.startedAt;
+        const t = Math.max(0, Math.min(1, age / 0.7));
+        const outerR = 18 + t * 110;
+        const innerR = outerR * 0.62;
+        const outerAlpha = Math.pow(1 - t, 2.4) * 0.8;
+        const innerAlpha = Math.pow(1 - t, 3) * 0.45;
+        if (outerAlpha > 0.02) {
+          impactRipples.circle(r.x, r.y, outerR).stroke({
+            color: 0xff6b6b,
+            alpha: outerAlpha,
+            width: 2.4 - t * 1.6,
+          });
+        }
+        if (innerAlpha > 0.02) {
+          impactRipples.circle(r.x, r.y, innerR).fill({
+            color: 0xff6b6b,
+            alpha: innerAlpha * 0.35,
+          });
+        }
+      }
+
       threatFlash.clear();
       if (threatFlashAlpha > 0) {
         threatFlash.rect(0, 0, viewport.widthPx, viewport.heightPx).fill({
@@ -175,7 +242,9 @@ export function mountFx(parent: Container): FxController {
       sonar.destroy();
       bursts.destroy();
       lampScatter.destroy();
+      impactRipples.destroy();
       threatFlash.destroy();
+      activeRipples.length = 0;
     },
   };
 }
