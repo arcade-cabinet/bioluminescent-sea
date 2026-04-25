@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.9.2...v0.10.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** biome-aware ambient layer — kelp, jellies, anglers, vents, wrecks ([#119](https://github.com/arcade-cabinet/bioluminescent-sea/issues/119)) ([58443ff](https://github.com/arcade-cabinet/bioluminescent-sea/commit/58443ff29c7cc7f8f6609b5dd0864fc7dfe35e2b))
+
+
+### Bug Fixes
+
+* **bs:** kill the upper-left square by removing GodrayFilter ([#117](https://github.com/arcade-cabinet/bioluminescent-sea/issues/117)) ([6bf3cb6](https://github.com/arcade-cabinet/bioluminescent-sea/commit/6bf3cb67f78f29d2b56ed3fa9abd22f128b12498))
+* **bs:** mount player layer on fx instead of near ([#115](https://github.com/arcade-cabinet/bioluminescent-sea/issues/115)) ([d4a20a9](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d4a20a9481137b6eb23f2674eaf52e3b07ae0301))
+* **bs:** restore godray + bloom; patch pixi v8 filter-resolution bug at root ([#118](https://github.com/arcade-cabinet/bioluminescent-sea/issues/118)) ([767689b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/767689b5afb1b64b6f9ac561740a32b8dde8d797))
+
 ## [0.9.2](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.9.1...v0.9.2) (2026-04-25)
 
 
