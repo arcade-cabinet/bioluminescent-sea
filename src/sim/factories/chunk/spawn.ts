@@ -124,29 +124,53 @@ export function spawnPredatorsForChunk(
     case "shoal-press": {
       // Tight grid of small fast marauders pressing in from every
       // edge of the pocket. Forms the arena-mode encounter.
+      //
+      // Chunk-0 player-spawn carve-out: the player's initial pos is
+      // (centre, 0.54*h). With Arena's `collisionEndsDive: true` +
+      // `impactGraceSeconds: 0`, a shoal-press predator landing on
+      // the player at frame 1 ends the dive instantly. Skip any cell
+      // whose center falls inside the carve-out box around the
+      // player. Subsequent chunks (chunk > 0) place their grid
+      // freely — by then the player has had time to start moving.
       const cols = 6;
       const rows = Math.max(1, Math.ceil(count / cols));
       const cellW = playBandWidth(width) / (cols + 1);
       const cellH = (height * 0.8) / (rows + 1);
-      for (let i = 0; i < count; i++) {
+      const carveX = chunk.index === 0 ? width * 0.5 : Number.NaN;
+      const carveY = chunk.index === 0 ? height * 0.54 : Number.NaN;
+      const carveR = chunk.index === 0 ? Math.min(width, height) * 0.28 : 0;
+      let i = 0;
+      let placed = 0;
+      while (placed < count && i < cols * rows * 2) {
         const col = i % cols;
-        const row = Math.floor(i / cols);
+        const row = Math.floor(i / cols) % rows;
         const cx = playBandMinX(width) + (col + 1) * cellW + rng.range(-10, 10);
         const cy = height * 0.1 + (row + 1) * cellH + rng.range(-8, 8);
+        i++;
+        if (chunk.index === 0) {
+          const dx = cx - carveX;
+          const dy = cy - carveY;
+          if (Math.hypot(dx, dy) < carveR) {
+            // Skip — too close to fresh spawn. The grid is large
+            // enough that we still place plenty of predators.
+            continue;
+          }
+        }
         const isMarauder = rng.next() > 0.4;
         results.push({
           angle: round(rng.range(-Math.PI, Math.PI), 3),
           // Shoal-press uses the marauder-sub archetype so the AI
           // manager can route a hunting behaviour via id prefix.
           id: isMarauder
-            ? `marauder-sub-c${chunk.index}-${i}`
-            : `predator-c${chunk.index}-${i}`,
+            ? `marauder-sub-c${chunk.index}-${placed}`
+            : `predator-c${chunk.index}-${placed}`,
           noiseOffset: round(rng.range(0, 1000), 2),
           size: round(baseSize * rng.range(0.55, 0.75), 2),
           speed: round(rng.range(0.9, 1.2), 3),
           x: round(cx, 2),
           y: round(cy, 2),
         });
+        placed++;
       }
       break;
     }
