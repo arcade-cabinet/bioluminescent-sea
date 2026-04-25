@@ -141,6 +141,24 @@ describe("threats avoid the player's spawn band in chunk 0", () => {
     }
   });
 
+  it("shoal-press marauders in chunk 0 avoid the player spawn radius", () => {
+    // Arena's collisionEndsDive=true + impactGraceSeconds=0 means
+    // a single grid-cell marauder landing on the player ends the
+    // dive on frame 1. Carve-out is a circle of radius
+    // min(w,h) * 0.28 around (w/2, h*0.54).
+    const playerX = viewport.width * 0.5;
+    const playerY = viewport.height * 0.54;
+    const carveR = Math.min(viewport.width, viewport.height) * 0.28;
+    for (let s = 0; s < 16; s++) {
+      const chunk = chunkAt(0, 0x4000 + s);
+      const predators = spawnPredatorsForChunk(chunk, viewport, "shoal-press");
+      for (const p of predators) {
+        const dist = Math.hypot(p.x - playerX, p.y - playerY);
+        expect(dist).toBeGreaterThanOrEqual(carveR);
+      }
+    }
+  });
+
   it("chunk index > 0 does NOT enforce the carve-out (full vertical scatter)", () => {
     // Sanity: the carve-out is chunk-0 only; deeper chunks scatter
     // across the whole band. Sampling many chunks/seeds, at least
