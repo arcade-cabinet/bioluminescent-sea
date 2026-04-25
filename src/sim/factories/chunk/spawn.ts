@@ -117,8 +117,11 @@ export type { ThreatPattern };
 // Authored envelope for a chunk's charted creatures. Biome multipliers
 // scale on top (0.7–1.4× depending on biome.creatureDensity); the
 // chunk's own seed picks where in the envelope it lands so two chunks
-// with the same biome don't necessarily have the same count.
-export const BASE_CREATURES_PER_CHUNK_RANGE = [8, 14] as const;
+// with the same biome don't necessarily have the same count. Range
+// bumped from [8, 14] to [12, 20] after playtest feedback that the
+// trench felt under-populated — corridors should read as flocks of
+// collectible fish weaving between predators, not individual specks.
+export const BASE_CREATURES_PER_CHUNK_RANGE = [12, 20] as const;
 
 export function spawnCreaturesForChunk(
   chunk: Chunk,
@@ -194,7 +197,14 @@ export function spawnPredatorsForChunk(
   // tuneable from the mode slot alone.
   const patternScale =
     pattern === "shoal-press" ? 3 : pattern === "swarm" ? 2 : 1;
-  const count = clamp(baseCount * patternScale, 0, pattern === "shoal-press" ? 24 : 10);
+  // Cap is pattern-tuned: shoal-press is the densest at 24, swarm sits
+  // at 16 (so a corridor reads as a wall of motion), scattered stays
+  // at 10. Bumped from 10/24 after playtest feedback that descent
+  // felt sparse — "couple of very gentle enemies hardly swarms and
+  // flocks." Swarm pattern with cap 16 puts pressure on lateral
+  // evasion without losing the deterministic seed-based density curve.
+  const swarmCap = pattern === "shoal-press" ? 24 : pattern === "swarm" ? 16 : 10;
+  const count = clamp(baseCount * patternScale, 0, swarmCap);
 
   if (count === 0 && !isStygian) return [];
 
