@@ -45,10 +45,26 @@ export function mountEntities(parent: Container): EntityController {
   const predators = new Map<string, Graphics>();
   const pirates = new Map<string, Graphics>();
 
+  // Predator wake trails — per-id ring buffer of recent positions.
+  // The renderer draws a fading ribbon from the latest sample back
+  // through the buffer so a moving predator leaves a visible water
+  // trail behind it. Buffer length is short (12 samples ≈ 0.2s at
+  // 60fps) so a stationary patroller doesn't accumulate a stale
+  // smear; a fast strike still gets a visible streak.
+  const predatorTrails = new Map<
+    string,
+    { x: number; y: number; time: number }[]
+  >();
+  // Wake graphics — one container per predator id, drawn underneath
+  // the predator silhouette. Separate Graphics objects so the wake
+  // alpha curve doesn't have to share its draw call with the body.
+  const predatorWakes = new Map<string, Graphics>();
+
   return {
     sync({ anomalies: as, creatures: cs, predators: ps, pirates: ks, totalTime, camera }) {
       syncAnomalies(anomalyHost, anomalies, as, camera);
       syncCreatures(parent, creatures, cs, camera);
+      syncPredatorWakes(parent, predatorWakes, predatorTrails, ps, totalTime);
       syncPredators(parent, predators, ps, totalTime);
       syncPirates(parent, pirates, ks, totalTime);
     },
@@ -57,10 +73,13 @@ export function mountEntities(parent: Container): EntityController {
       for (const g of creatures.values()) g.destroy();
       for (const g of predators.values()) g.destroy();
       for (const g of pirates.values()) g.destroy();
+      for (const g of predatorWakes.values()) g.destroy();
       anomalies.clear();
       creatures.clear();
       predators.clear();
       pirates.clear();
+      predatorWakes.clear();
+      predatorTrails.clear();
       anomalyHost.filters = [];
       anomalyHost.destroy();
     },
@@ -177,6 +196,100 @@ function syncCreatures(
     if (!seen.has(id)) {
       g.destroy();
       cache.delete(id);
+    }
+  }
+}
+
+/**
+ * Wake trails for moving predators. Records position samples per id
+ * each frame and draws a fading ribbon from oldest → newest. Trails
+ * for retired predators are dropped from both maps so a chunk-out
+ * doesn't leak.
+ *
+ * The trail intensity scales with the predator's frame velocity
+ * (estimated from the latest two samples) so a stalking patroller
+ * leaves a faint hairline while a striking lunge leaves a thick
+ * streak. Dying predators (deathProgress > 0) get a bubble-tinted
+ * trail at half alpha — same colour as the death-bubbles, sells the
+ * "this is over" beat.
+ */
+const TRAIL_BUFFER_LENGTH = 12;
+const TRAIL_SAMPLE_INTERVAL_SECONDS = 0.05;
+
+function syncPredatorWakes(
+  parent: Container,
+  wakes: Map<string, Graphics>,
+  trails: Map<string, { x: number; y: number; time: number }[]>,
+  list: readonly Predator[],
+  totalTime: number,
+): void {
+  const seen = new Set<string>();
+  for (const p of list) {
+    seen.add(p.id);
+    let trail = trails.get(p.id);
+    if (!trail) {
+      trail = [];
+      trails.set(p.id, trail);
+    }
+    // Sample at a fixed interval so fast predators don't burn the
+    // buffer in a single frame and slow patrollers still record
+    // enough to draw a visible ribbon. The wake length stays
+    // consistent across frame rates.
+    const lastSample = trail[0];
+    if (!lastSample || totalTime - lastSample.time >= TRAIL_SAMPLE_INTERVAL_SECONDS) {
+      trail.unshift({ x: p.x, y: p.y, time: totalTime });
+      if (trail.length > TRAIL_BUFFER_LENGTH) trail.pop();
+    }
+
+    let g = wakes.get(p.id);
+    if (!g) {
+      g = new Graphics();
+      // Insert wake BEHIND any predator graphics already attached
+      // (predators may be added later in this sync step).
+      parent.addChildAt(g, 0);
+      wakes.set(p.id, g);
+    }
+    g.clear();
+    if (trail.length < 2) continue;
+
+    // Estimate frame velocity from the latest two samples to scale
+    // the wake. A stationary patroller doesn't burn alpha; a striking
+    // predator leaves a thick streak.
+    const a = trail[0];
+    const b = trail[1];
+    const dt = Math.max(0.001, a.time - b.time);
+    const velPxPerSec = Math.hypot(a.x - b.x, a.y - b.y) / dt;
+    const speedScalar = Math.min(1, velPxPerSec / 360); // 360 px/s = full streak
+
+    // Dying predators get a mint-bubble tint matching the death
+    // bubbles. Living predators get a cool blue-cyan that blends
+    // with the water.
+    const dying = (p.deathProgress ?? 0) > 0;
+    const tint = dying ? 0xd9f2ec : 0x6be6c1;
+    const baseAlpha = dying ? 0.22 : 0.42;
+
+    for (let i = 1; i < trail.length; i++) {
+      const segA = trail[i - 1];
+      const segB = trail[i];
+      const tA = i / trail.length; // 0 at head, 1 at tail
+      const segAlpha = baseAlpha * (1 - tA) * speedScalar;
+      if (segAlpha < 0.02) continue;
+      g.moveTo(segA.x, segA.y);
+      g.lineTo(segB.x, segB.y);
+      g.stroke({
+        color: tint,
+        alpha: segAlpha,
+        width: Math.max(1, p.size * 0.18 * (1 - tA)),
+      });
+    }
+  }
+  // Prune trails / wakes for predators no longer in the live list so
+  // chunk-outs don't leak position history forever.
+  for (const [id, g] of wakes) {
+    if (!seen.has(id)) {
+      g.destroy();
+      wakes.delete(id);
+      trails.delete(id);
     }
   }
 }
