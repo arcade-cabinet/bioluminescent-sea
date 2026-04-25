@@ -183,6 +183,11 @@ export class PredatorBrain extends Vehicle {
    *  broadcasts don't have to walk the whole entity manager. */
   private packMates: PredatorBrain[] = [];
 
+  /** Snapshot of the IDs the most recent broadcastEngage messaged.
+   *  Read once by AIManager.recentFlankPairs to draw the converging
+   *  arcs in the FX layer. */
+  public lastBroadcastedToIds: string[] = [];
+
   /** Engage broadcast cooldown so we don't spam every tick. */
   private lastBroadcastTime = -Infinity;
 
@@ -514,6 +519,7 @@ export class PredatorBrain extends Vehicle {
     if (this.currentTime - this.lastBroadcastTime < 1.5) return;
     this.lastBroadcastTime = this.currentTime;
     this.lastEngageBroadcastAt = this.currentTime;
+    this.lastBroadcastedToIds = [];
     if (!this.playerRef) return;
     // Compute the flank vector once: from player to this brain. Each
     // packmate rotates this vector by ±flankAngleOffset so they pinch
@@ -537,6 +543,7 @@ export class PredatorBrain extends Vehicle {
         const flankY = playerPos.y + Math.sin(flankAngle) * baseDist;
         const flankTarget = new Vector3(flankX, flankY, 0);
         this.sendMessage(mate, TELEGRAM_FLANK, 0, { flankTarget });
+        this.lastBroadcastedToIds.push(mate.name);
         mateIndex++;
       }
     }

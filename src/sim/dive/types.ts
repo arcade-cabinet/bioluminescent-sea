@@ -169,6 +169,20 @@ export interface SceneAdvanceResult {
    * presence even when the silhouette is hidden in the abyss tint.
    */
   leviathanProximity: number;
+  /**
+   * Active flank broadcast pairs — engager → packmate line
+   * endpoints with age. The FX layer renders a fading arc per
+   * pair so the player sees the pack converging the moment the
+   * call goes out, not just when the predators arrive.
+   */
+  flankBroadcasts: readonly {
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    age: number;
+    lifetime: number;
+  }[];
 }
 
 export interface DiveModeTuning {

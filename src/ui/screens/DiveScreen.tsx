@@ -617,6 +617,7 @@ export function DiveScreen({
         threatBearings: result.threatBearings,
         impactRippleAt: result.impactRippleAt,
         leviathanProximity: result.leviathanProximity,
+        flankBroadcasts: result.flankBroadcasts,
       });
     },
     [
