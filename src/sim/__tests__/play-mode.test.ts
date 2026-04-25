@@ -202,10 +202,13 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(result.finalScene.depthTravelMeters).toBeGreaterThan(0);
   });
 
-  test("descent: lateralMovement=locked actually pins the sub on its initial X", () => {
-    // Drive lateral input far off to the right; with the lock honoured
-    // by advancePlayer, the player's x must not drift away from the
-    // initial centre.
+  test("descent: lateralMovement=locked locks the CAMERA, not the player's input", () => {
+    // Updated contract: in Descent the player can still wiggle
+    // laterally inside the viewport (sub responds to input.x) but
+    // the world doesn't pan with them. The camera-lock is applied
+    // in render/bridge.ts via DiveRoot.lateralCameraLocked. At the
+    // sim layer the player's x advances normally — assert that
+    // here. The camera-pin assertion is covered by an e2e test.
     resetAIManager();
     const scene = createInitialScene(dimensions);
     const initialX = scene.player.x;
@@ -224,8 +227,10 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       );
       cur = r.scene;
     }
-    expect(cur.player.x).toBe(initialX);
-    // Vertical input still works under the lock.
+    // Player x advanced toward the input target — the sim no longer
+    // drops lateral input when the mode declares lateralMovement=locked.
+    expect(cur.player.x).toBeGreaterThan(initialX);
+    // Vertical input still works.
     expect(cur.player.y).toBeGreaterThan(scene.player.y);
   });
 

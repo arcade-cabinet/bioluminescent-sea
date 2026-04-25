@@ -250,6 +250,10 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     cameraTravel,
     activeChunkBoundsLeftPx,
     activeChunkBoundsRightPx,
+    // Mirror lateralMovement="locked" so the render bridge can pin
+    // the camera in Descent without importing the mode tuning
+    // directly.
+    lateralCameraLocked: modeSlots.lateralMovement === "locked",
     objectiveQueueJson: JSON.stringify(queueWithClearTally),
     chunksClearedCount,
   });

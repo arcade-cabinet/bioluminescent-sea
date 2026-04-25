@@ -236,12 +236,16 @@ export class StalkAndDashBehavior extends SteeringBehavior {
     }
 
     if (this.state === "patrol") {
-      // Drift on a slow loop, ignoring the player entirely.
-      vehicle.maxSpeed = this.baseSpeed * 0.4;
-      const t = vehicle.position.x * 0.001 + this.wanderSeed;
+      // Drift on a slow loop, ignoring the player entirely. Speed
+      // bumped from 0.4 → 0.7 so the predator looks like it's
+      // *actually swimming around hunting*, not floating in place.
+      // Wander phase advances on time so the loop doesn't stall when
+      // the predator is at a fixed x.
+      vehicle.maxSpeed = this.baseSpeed * 0.7;
+      const t = vehicle.position.x * 0.0015 + this.wanderSeed;
       force.set(
         Math.cos(t) * vehicle.maxSpeed,
-        Math.sin(t * 1.3) * vehicle.maxSpeed * 0.5,
+        Math.sin(t * 1.3) * vehicle.maxSpeed * 0.55,
         0,
       );
       force.sub(vehicle.velocity);

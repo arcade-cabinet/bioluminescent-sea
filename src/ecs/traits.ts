@@ -106,6 +106,17 @@ export const DiveRoot = trait({
   activeChunkBoundsLeftPx: 0,
   activeChunkBoundsRightPx: 0,
   /**
+   * Mode-level lateral camera lock. When true, the render bridge
+   * holds camera scroll-x at the player's spawn x (the trench's
+   * centerline) regardless of player movement — the player can
+   * still wiggle laterally inside the viewport but the world
+   * doesn't pan with them. This is Descent's contract: the sub
+   * is pinned to a fixed heading visually even though the player
+   * can dodge inside the visible window. Mirrors
+   * `!ModeSlots.freeLateralMovement`.
+   */
+  lateralCameraLocked: false,
+  /**
    * Serialized JSON of the SceneState.objectiveQueue. Koota's trait
    * schema rejects arbitrary nested-object arrays, so we carry the
    * live queue on DiveRoot as a string and decode on read. The bridge
