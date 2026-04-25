@@ -129,8 +129,24 @@ export function advanceScene(
   // pass earlier in this tick may have decremented HP to 0). The
   // brain map cleanup happens on the next syncPredators tick — its
   // live-ids set drops anything not in the new scene.predators
-  // array.
+  // array. Each death drops a `breath` loot anomaly at the
+  // predator's final position so killing isn't just risk-removal —
+  // it's an oxygen reward, which makes the lamp the central loop
+  // ("see threat, light it up, collect oxygen, dive deeper").
   const deadIds = ai.getDeadPredatorIds();
+  const lootDrops: import("@/sim/entities/types").Anomaly[] = [];
+  for (const dead of scene.predators) {
+    if (!deadIds.has(dead.id)) continue;
+    if (dead.isLeviathan) continue; // leviathans are ambient, never lamp-killed
+    lootDrops.push({
+      id: `loot-${dead.id}-${Math.floor(totalTime * 1000)}`,
+      type: "breath",
+      x: dead.x,
+      y: dead.y,
+      size: 18,
+      pulsePhase: totalTime,
+    });
+  }
   const predators = scene.predators
     .filter((p) => !deadIds.has(p.id))
     .map((p) => {
@@ -275,7 +291,13 @@ export function advanceScene(
   };
 
   const nextSceneBase: SceneState = {
-    anomalies: anomalyCollection.anomalies.map(a => ({ ...a, pulsePhase: a.pulsePhase + deltaTime * 3 })),
+    // Surviving anomalies advance their pulsePhase; freshly-dropped
+    // loot from this frame's predator deaths is appended at full
+    // pulse so the player sees the drop pop in.
+    anomalies: [
+      ...anomalyCollection.anomalies.map(a => ({ ...a, pulsePhase: a.pulsePhase + deltaTime * 3 })),
+      ...lootDrops,
+    ],
     creatures: collection.creatures,
     particles,
     pirates,
@@ -316,6 +338,8 @@ export function advanceScene(
   // collision check missed. Tuned wider than the actual hit radius
   // (~140 vs 60) so a near-miss still feels dangerous.
   const predatorStrikeNearPlayer = ai.anyPredatorStrikingNear(player.x, player.y, 140);
+  // Continuous threat axis for the ambient audio layer.
+  const threatIntensity = ai.computeThreatIntensity(player.x, player.y);
 
   return {
     collection,
@@ -324,5 +348,6 @@ export function advanceScene(
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
     oxygenBonusSeconds: breathBonus,
     predatorStrikeNearPlayer,
+    threatIntensity,
   };
 }
