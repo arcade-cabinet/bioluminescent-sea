@@ -36,6 +36,7 @@ export function mountPlayer(parent: Container): PlayerController {
     blur: 4,
     quality: 4,
   });
+  bloom.resolution = "inherit";
   subContainer.filters = [bloom];
 
   const trail = new Graphics();

@@ -1,20 +1,5 @@
 import { Application, Container, Filter } from "pixi.js";
 
-// One-shot global: every Filter created from now on inherits the
-// renderer's resolution instead of defaulting to 1. This is the
-// upstream-recommended fix for the upper-left-quadrant artifact —
-// see pixijs/pixijs#11467. Without it, filter textures render at
-// half size on retina (DPR=2) and Pixi composites them pixel-for-
-// pixel from (0,0), producing a visible quadrant boundary.
-//
-// `.resolution = "inherit"` is documented at
-// https://pixijs.download/dev/docs/filters.FilterOptions.html#resolution
-// and the binding has to land BEFORE any filter is constructed,
-// hence the module-scope initialiser. Importing this module once
-// from the renderer entrypoint is sufficient; the assignment is
-// idempotent so re-imports are harmless.
-Filter.defaultOptions.resolution = "inherit";
-
 /**
  * PixiJS stage lifecycle + layer ordering.
  *
@@ -53,6 +38,22 @@ export interface PixiStage {
 }
 
 export async function createStage(canvas: HTMLCanvasElement): Promise<PixiStage> {
+  // Every Pixi filter created from now on inherits the renderer's
+  // resolution instead of defaulting to 1. This is the upstream-
+  // recommended fix for pixijs/pixijs#11467 — without it, filters at
+  // resolution=1 render to half-size textures on a DPR=2 canvas and
+  // composite into the upper-left quadrant.
+  //
+  // The assignment lives INSIDE this called function (rather than at
+  // module scope) because Rolldown tree-shakes module-level mutations
+  // to imported namespace objects — even with the side-effect intent.
+  // Putting the write on a guaranteed-called code path makes it
+  // unconditionally land in the bundle.
+  //
+  // `'inherit'` documented at:
+  // https://pixijs.download/dev/docs/filters.FilterOptions.html#resolution
+  Filter.defaultOptions.resolution = "inherit";
+
   const app = new Application();
   await app.init({
     canvas,

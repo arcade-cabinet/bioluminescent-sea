@@ -1,7 +1,6 @@
 import {
   Container,
   DisplacementFilter,
-  Rectangle,
   Sprite,
   Texture,
 } from "pixi.js";
@@ -82,10 +81,12 @@ export function mountRefraction(
   stage.addChild(displacementSprite);
 
   const filters = targets.map(() => {
-    return new DisplacementFilter({
+    const f = new DisplacementFilter({
       sprite: displacementSprite,
       scale: { x: 3.5, y: 3.5 },
     });
+    f.resolution = "inherit";
+    return f;
   });
 
   targets.forEach((t, i) => {
@@ -104,11 +105,10 @@ export function mountRefraction(
       displacementSprite.x = (Math.sin(totalTime * 0.3) * 12) % NOISE_SIZE;
       displacementSprite.y = (totalTime * 8) % NOISE_SIZE;
     },
-    resize(widthPx, heightPx) {
-      const area = new Rectangle(0, 0, widthPx, heightPx);
-      for (const t of targets) {
-        t.filterArea = area;
-      }
+    resize() {
+      // No-op: filterArea is auto-computed from each target
+      // container's content bounds. The mid + near layers carry
+      // entities that span the viewport so the union is correct.
     },
     destroy() {
       // Detach the dead filters from each target before destroying them,
