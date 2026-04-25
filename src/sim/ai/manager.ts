@@ -311,6 +311,27 @@ export class AIManager {
     return dead;
   }
 
+  /**
+   * Returns true if any predator brain is currently inside its
+   * StrikeState within `radiusPx` of the given point. Used by the
+   * sim to trigger a screen-shake/flash burst when a lunge lands
+   * close — readable feedback that the strike happened, even if it
+   * missed the collision check by a hair.
+   *
+   * One-frame edge detection is the caller's job: pass the previous
+   * frame's value alongside this and only fire on the rising edge.
+   */
+  anyPredatorStrikingNear(x: number, y: number, radiusPx: number): boolean {
+    const radiusSq = radiusPx * radiusPx;
+    for (const brain of this.predatorBrainMap.values()) {
+      if (brain.currentAiState !== "strike") continue;
+      const dx = brain.position.x - x;
+      const dy = brain.position.y - y;
+      if (dx * dx + dy * dy < radiusSq) return true;
+    }
+    return false;
+  }
+
   readPredator(p: Predator): Predator {
     const brain = this.predatorBrainMap.get(p.id);
     if (brain) {

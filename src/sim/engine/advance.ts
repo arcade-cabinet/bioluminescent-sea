@@ -305,11 +305,19 @@ export function advanceScene(
     objectiveQueue: nextObjectiveQueue,
   };
 
+  // Strike-burst feedback: if any predator is mid-strike inside a
+  // generous radius around the player, surface that to the runtime
+  // so it can fire the threat-flash camera shake even when the
+  // collision check missed. Tuned wider than the actual hit radius
+  // (~140 vs 60) so a near-miss still feels dangerous.
+  const predatorStrikeNearPlayer = ai.anyPredatorStrikingNear(player.x, player.y, 140);
+
   return {
     collection,
     collidedWithPredator: isCollision,
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
     oxygenBonusSeconds: breathBonus,
+    predatorStrikeNearPlayer,
   };
 }
