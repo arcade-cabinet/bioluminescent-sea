@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Bioluminescent Sea — golden path", () => {
-  test("landing renders title, tagline, mode triptych without console errors", async ({ page }) => {
+  test("landing renders title, tagline, mode triptych without console errors", async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
     page.on("console", (msg) => {
@@ -11,7 +11,12 @@ test.describe("Bioluminescent Sea — golden path", () => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: /bioluminescent sea/i })).toBeVisible();
-    await expect(page.getByText(/sink into an abyssal trench/i)).toBeVisible();
+    // Tagline is hidden on short viewports (mobile landscape) to keep the
+    // mode triptych above the fold — the title carries the brand on its own.
+    const isShortViewport = testInfo.project.name === "mobile-landscape";
+    if (!isShortViewport) {
+      await expect(page.getByText(/sink into an abyssal trench/i)).toBeVisible();
+    }
 
     // The three mode cards make the dive intent legible at first paint.
     await expect(page.getByTestId("mode-card-exploration")).toBeVisible();

@@ -17,6 +17,7 @@ import {
   type SceneState,
   type SessionMode,
 } from "@/sim";
+import { useDevFastDive } from "@/hooks/useDevFastDive";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useResolvedInput } from "@/hooks/useResolvedInput";
 import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
@@ -32,7 +33,9 @@ import {
 } from "@/ecs";
 import { createRenderBridge, type RenderBridge } from "@/render";
 import type { SubUpgrades } from "@/sim/meta/upgrades";
+import { CompactPrimary } from "@/ui/hud/CompactPrimary";
 import { HUD } from "@/ui/hud/HUD";
+import { HudShell } from "@/ui/hud/HudShell";
 import {
   cloneSceneState,
   type DeepSeaRunSnapshot,
@@ -112,6 +115,7 @@ export function DiveScreen({
   inputProvider,
 }: DiveScreenProps) {
   const durationSeconds = getDiveDurationSeconds(mode, upgrades);
+  const fastDiveScale = useDevFastDive();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialDimensionsRef = useRef(getInitialDiveDimensions());
@@ -349,12 +353,17 @@ export function DiveScreen({
       if (isGameOver) return;
 
       const effectiveTotalTime = elapsedOffsetRef.current + totalTime;
+      // ?devFastDive=N scales how fast the oxygen budget burns. Production
+      // is always 1; the Playwright oxygen-depletion spec passes ?devFastDive=80
+      // so a 600s budget collapses in seconds. Entity sim continues at real
+      // time — only the oxygen countdown is sped up.
+      const oxygenElapsed = effectiveTotalTime * fastDiveScale;
       const getAdjustedTimeLeft = () =>
         Math.max(
           0,
           Math.min(
             durationSeconds,
-            Math.floor(durationSeconds - effectiveTotalTime + timeModifierRef.current),
+            Math.floor(durationSeconds - oxygenElapsed + timeModifierRef.current),
           ),
         );
       let newTimeLeft = getAdjustedTimeLeft();
@@ -539,6 +548,7 @@ export function DiveScreen({
       showOxygenPulse,
       showImpactPulse,
       inputProvider,
+      fastDiveScale,
     ],
   );
 
@@ -614,19 +624,32 @@ export function DiveScreen({
           </motion.div>
         )}
       </AnimatePresence>
-      <HUD
-        score={score}
-        timeLeft={timeLeft}
-        multiplier={multiplier}
-        depthMeters={telemetry.depthMeters}
-        beacons={Math.round(telemetry.collectionRatio * 100)}
-        oxygenRatio={telemetry.oxygenRatio}
+      <HudShell
         threatAlert={threatAlert}
-        nearestLandmarkLabel={telemetry.routeLandmarkLabel}
-        nearestLandmarkDistance={telemetry.routeLandmarkDistance}
-        runCodename={codenameFromSeed(seed)}
-        biomeLabel={telemetry.biomeLabel}
-        biomeTintHex={telemetry.biomeTintHex}
+        compactPrimary={
+          <CompactPrimary
+            score={score}
+            timeLeft={timeLeft}
+            multiplier={multiplier}
+            oxygenRatio={telemetry.oxygenRatio}
+          />
+        }
+        fullHud={
+          <HUD
+            score={score}
+            timeLeft={timeLeft}
+            multiplier={multiplier}
+            depthMeters={telemetry.depthMeters}
+            beacons={Math.round(telemetry.collectionRatio * 100)}
+            oxygenRatio={telemetry.oxygenRatio}
+            threatAlert={threatAlert}
+            nearestLandmarkLabel={telemetry.routeLandmarkLabel}
+            nearestLandmarkDistance={telemetry.routeLandmarkDistance}
+            runCodename={codenameFromSeed(seed)}
+            biomeLabel={telemetry.biomeLabel}
+            biomeTintHex={telemetry.biomeTintHex}
+          />
+        }
       />
       <div
         className="pointer-events-none absolute left-4 right-4 z-10 flex justify-center"

@@ -46,6 +46,10 @@ export default defineConfig({
       use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } },
     },
     {
+      name: "mobile-landscape",
+      use: { ...devices["Pixel 7"], viewport: { width: 844, height: 390 } },
+    },
+    {
       name: "tablet-portrait",
       use: { ...devices["iPad (gen 7)"], viewport: { width: 834, height: 1194 } },
     },

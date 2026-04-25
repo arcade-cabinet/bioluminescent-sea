@@ -58,6 +58,13 @@ export function LandingHero() {
       const w = rect.width;
       const h = rect.height;
 
+      // Bail when the canvas hasn't been laid out yet — createRadialGradient
+      // throws on non-finite radii, and h*0.3 / w*0.5 propagate NaN/0 here.
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) {
+        rafRef.current = requestAnimationFrame(frame);
+        return;
+      }
+
       const horizonY = h * 0.45;
 
       // Draw Sky

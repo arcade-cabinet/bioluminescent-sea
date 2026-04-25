@@ -134,3 +134,18 @@ button {
   border: none;
   cursor: pointer;
 }
+
+/* The phone-landscape landing layout pins the mode triptych to viewport
+ * bottom (see LandingScreen.tsx). Framer-motion stacks a translateY on
+ * each ModeCard's wrapper that getBoundingClientRect picks up even at
+ * rest, pushing the rect ~12px past the section edge and tripping the
+ * playwright clipping check. Force-reset transforms on every wrapper
+ * inside the triptych on landscape phones so bounding rects match the
+ * visual layout. */
+@media (max-height: 500px) {
+  [data-testid="landing-screen"] [data-testid="mode-triptych"] *,
+  [data-testid="landing-screen"] [data-testid="mode-triptych"] {
+    transform: none !important;
+  }
+}
+

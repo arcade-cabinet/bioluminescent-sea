@@ -3,7 +3,6 @@ import {
   attachCollector,
   dumpBeat,
   summarizeClipping,
-  probeElements,
 } from "./helpers/diagnostics";
 
 // Every HUD and landing element we care about for visual-regression
@@ -74,13 +73,26 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
       `landing → playing transition took ${transitionMs}ms (budget 2500ms — PRD says 600ms ideal)`
     ).toBeLessThan(2500);
 
-    // Beat 4 — first gameplay frame. HUD stats must all be visible AND
-    // within viewport.
+    // Beat 4 — first gameplay frame. The compact HUD on phone viewports
+    // collapses everything except the primary cluster (oxygen, score,
+    // chain) behind a hamburger button — open it so the deep stats are
+    // visible to the diagnostics dump. On tablet/desktop the inline HUD
+    // already exposes all stats and the menu button isn't rendered.
     await expect(page.locator("canvas[aria-label*='playfield' i]")).toBeVisible();
+    const menuButton = page.getByTestId("hud-menu-button");
+    if (await menuButton.isVisible()) {
+      await menuButton.click();
+      await expect(page.getByTestId("hud-menu-panel")).toBeVisible();
+    }
     await expect(page.getByTestId("hud-stat-score")).toBeVisible();
     await expect(page.getByTestId("hud-stat-oxygen")).toBeVisible();
     await expect(page.getByTestId("hud-stat-depth")).toBeVisible();
     await expect(page.getByTestId("objective-banner")).toBeVisible();
+    // Close the panel so subsequent beats run against gameplay, not paused.
+    if (await page.getByTestId("hud-menu-panel").isVisible().catch(() => false)) {
+      await page.getByTestId("hud-menu-close").click();
+      await expect(page.getByTestId("hud-menu-panel")).not.toBeVisible();
+    }
 
     const firstFrameDump = await dumpBeat(
       page,
@@ -112,20 +124,34 @@ test.describe("Bioluminescent Sea — full journey diagnostics", () => {
     ).toEqual([]);
 
     // Beat 6 — stat sanity: oxygen is ticking down, depth is growing.
-    const snapshotAfter4s = await probeElements(page, [
-      "[data-testid='hud-stat-oxygen']",
-      "[data-testid='hud-stat-depth']",
-    ]);
-    const oxygenText = snapshotAfter4s[0]?.elements[0]?.text ?? "";
-    const depthText = snapshotAfter4s[1]?.elements[0]?.text ?? "";
+    // On compact viewports the inline HUD is hidden behind the hamburger
+    // panel. The compact primary cluster carries the oxygen reading
+    // always, and depth lives in the panel — open it briefly to read.
+    const compactOxygen = page.getByTestId("hud-compact-oxygen");
+    const oxygenLocator = (await compactOxygen.isVisible().catch(() => false))
+      ? compactOxygen
+      : page.getByTestId("hud-stat-oxygen");
+    const oxygenText = (await oxygenLocator.textContent()) ?? "";
     expect(
       oxygenText,
-      `oxygen stat should be a "Ns" reading but got "${oxygenText}"`
+      `oxygen stat should contain a "Ns" reading but got "${oxygenText}"`
     ).toMatch(/\d+s/);
+
+    const menuButtonForDepth = page.getByTestId("hud-menu-button");
+    const usedMenu = await menuButtonForDepth.isVisible().catch(() => false);
+    if (usedMenu) {
+      await menuButtonForDepth.click();
+      await expect(page.getByTestId("hud-menu-panel")).toBeVisible();
+    }
+    const depthText = (await page.getByTestId("hud-stat-depth").textContent()) ?? "";
     expect(
       depthText,
       `depth stat should be an "Nm" reading but got "${depthText}"`
     ).toMatch(/\d+m/);
+    if (usedMenu) {
+      await page.getByTestId("hud-menu-close").click();
+      await expect(page.getByTestId("hud-menu-panel")).not.toBeVisible();
+    }
 
     // Beat 7 — final console accounting. Errors are a hard fail.
     // Tone.js autoplay warnings are known-benign; anything else should
