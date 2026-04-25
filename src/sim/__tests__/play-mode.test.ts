@@ -184,12 +184,13 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(result.totalSimSeconds).toBeLessThan(slots.durationSeconds * 0.05);
   });
 
-  test("descent: pins lateral movement; exposes a depth goal; depth is player-driven", () => {
-    // Descent's new design: lateral is locked, vertical is free (player
+  test("descent: pins lateral movement; exposes a depth goal; baseline descent prevents the idle-stuck UX trap", () => {
+    // Descent's design: lateral is locked, vertical is free (player
     // picks their sink rate), and there's a target depth the dive ends
-    // on. An idle bot holds position — no forced descent — so the run
-    // is still-running and depth stayed at zero. A seeking bot would
-    // drive depth toward the target.
+    // on. An idle bot still sinks at the half-rate baseline so a fresh
+    // dive where the player doesn't touch the screen doesn't sit at
+    // 0m while predators burn the oxygen budget. A seeking bot would
+    // drive depth toward the target faster.
     const slots = getModeSlots("descent");
     expect(slots.lateralMovement).toBe("locked");
     expect(slots.verticalMovement).toBe("free");
@@ -197,7 +198,8 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(slots.targetDepthMeters).toBeGreaterThan(0);
     const result = playMode("descent", makeBot(createIdleHoverProfile), 120);
     expect(result.outcome).toBe("still-running");
-    expect(result.finalScene.depthTravelMeters).toBe(0);
+    // Idle baseline ticks even without explicit downward input.
+    expect(result.finalScene.depthTravelMeters).toBeGreaterThan(0);
   });
 
   test("descent: lateralMovement=locked actually pins the sub on its initial X", () => {

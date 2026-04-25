@@ -5,6 +5,8 @@ import {
   estimateWorldYMeters,
   spawnCreaturesForChunk,
   spawnCreaturesForChunks,
+  spawnPiratesForChunk,
+  spawnPredatorsForChunk,
 } from "./spawn";
 
 const viewport = { width: 1280, height: 720 };
@@ -108,6 +110,56 @@ describe("spawnCreaturesForChunks", () => {
     const a = spawnCreaturesForChunks(chunks, viewport);
     const b = spawnCreaturesForChunks(chunks, viewport);
     expect(a.map((c) => c.id)).toEqual(b.map((c) => c.id));
+  });
+});
+
+describe("threats avoid the player's spawn band in chunk 0", () => {
+  // Player initial y is height * 0.54. Carve-out: [0.40, 0.70] of
+  // height. predator/pirate spawns in chunk 0 must land outside
+  // that band so a fresh dive doesn't open with a hit.
+  const PLAYER_Y_MIN = viewport.height * 0.4;
+  const PLAYER_Y_MAX = viewport.height * 0.7;
+
+  it("scattered predators in chunk 0 avoid the player band", () => {
+    // Sample many seeds — exclusion must be statistical, not lucky.
+    for (let s = 0; s < 16; s++) {
+      const chunk = chunkAt(0, 0x1000 + s);
+      const predators = spawnPredatorsForChunk(chunk, viewport, "scattered");
+      for (const p of predators) {
+        expect(p.y < PLAYER_Y_MIN || p.y > PLAYER_Y_MAX).toBe(true);
+      }
+    }
+  });
+
+  it("pirates in chunk 0 avoid the player band", () => {
+    for (let s = 0; s < 16; s++) {
+      const chunk = chunkAt(0, 0x2000 + s);
+      const pirates = spawnPiratesForChunk(chunk, viewport);
+      for (const p of pirates) {
+        expect(p.y < PLAYER_Y_MIN || p.y > PLAYER_Y_MAX).toBe(true);
+      }
+    }
+  });
+
+  it("chunk index > 0 does NOT enforce the carve-out (full vertical scatter)", () => {
+    // Sanity: the carve-out is chunk-0 only; deeper chunks scatter
+    // across the whole band. Sampling many chunks/seeds, at least
+    // one threat lands inside the player-band y range.
+    let foundInBand = false;
+    for (let i = 1; i <= 8 && !foundInBand; i++) {
+      for (let s = 0; s < 16; s++) {
+        const predators = spawnPredatorsForChunk(
+          chunkAt(i, 0x3000 + s),
+          viewport,
+          "scattered",
+        );
+        if (predators.some((p) => p.y >= PLAYER_Y_MIN && p.y <= PLAYER_Y_MAX)) {
+          foundInBand = true;
+          break;
+        }
+      }
+    }
+    expect(foundInBand).toBe(true);
   });
 });
 

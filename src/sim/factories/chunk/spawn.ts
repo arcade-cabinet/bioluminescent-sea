@@ -151,16 +151,24 @@ export function spawnPredatorsForChunk(
       break;
     }
     default: {
-      // scattered — baseline
+      // scattered — baseline. Y scatters across the chunk's vertical
+      // band so predators don't all stack on the player's y.
+      // Chunk 0 also enforces a no-spawn zone around the player's
+      // initial position so a fresh dive doesn't open with a hit.
       for (let i = 0; i < count; i++) {
+        const x = round(
+          playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width),
+          2,
+        );
+        const y = round(predatorYForChunk(chunk.index, height, rng), 2);
         results.push({
           angle: round(rng.range(-Math.PI, Math.PI), 3),
           id: `predator-c${chunk.index}-${i}`,
           noiseOffset: round(rng.range(0, 1000), 2),
           size: round(baseSize * rng.range(0.85, 1.05), 2),
           speed: round(rng.range(0.5, 0.75), 3),
-          x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
-          y: round(height * 0.5, 2),
+          x,
+          y,
         });
       }
     }
@@ -176,7 +184,7 @@ export function spawnPredatorsForChunk(
       size: round(baseSize * 4, 2),
       speed: round(rng.range(0.2, 0.4), 3),
       x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
-      y: round(height * 0.5, 2),
+      y: round(predatorYForChunk(chunk.index, height, rng), 2),
       isLeviathan: true,
     });
   }
@@ -206,11 +214,36 @@ export function spawnPiratesForChunk(
       speed: round(rng.range(0.6, 0.9), 3),
       lanternPhase: rng.next() * Math.PI * 2,
       x: round(playBandMinX(width) + rng.range(0.1, 0.9) * playBandWidth(width), 2),
-      y: round(height * 0.5, 2),
+      y: round(predatorYForChunk(chunk.index, height, rng), 2),
     });
   }
 
   return results;
+}
+
+/**
+ * Pick a y for a threat (predator/pirate/leviathan) inside a chunk's
+ * visible band. Chunk 0 (the chunk the player spawns in) carves out
+ * a no-spawn zone around the player's initial y (height * 0.54) so
+ * a fresh dive doesn't open with a hit; threats are pushed to the
+ * top or bottom band of the viewport. Subsequent chunks scatter
+ * uniformly across the full band.
+ */
+function predatorYForChunk(
+  chunkIndex: number,
+  height: number,
+  rng: { range: (min: number, max: number) => number; next: () => number },
+): number {
+  if (chunkIndex === 0) {
+    // Player spawns at y = height * 0.54. Carve out [0.40, 0.70] —
+    // a 30% band around the spawn — and place the threat above or
+    // below it. The 50/50 coin keeps the chunk from feeling
+    // top-heavy.
+    return rng.next() < 0.5
+      ? height * rng.range(0.08, 0.38)
+      : height * rng.range(0.72, 0.94);
+  }
+  return height * rng.range(0.1, 0.9);
 }
 
 export function spawnAnomaliesForChunk(
