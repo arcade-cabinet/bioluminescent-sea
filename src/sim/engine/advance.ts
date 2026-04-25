@@ -84,6 +84,10 @@ export function advanceScene(
   );
 
   ai.updatePlayer(player);
+  // Biome-driven aggression: deeper biomes turn the dial up.
+  // photic-gate=1.0 → stygian-abyss=1.6. Lookup is by current
+  // depthTravel, NOT player.y (which is screen-space).
+  ai.setBiomeAggression(biomeAggressionForDepth(scene.depthTravelMeters));
   ai.syncPredators(scene.predators);
   ai.syncPirates(scene.pirates);
   ai.syncCreatures(scene.creatures);
@@ -355,4 +359,30 @@ export function advanceScene(
     predatorStrikeNearPlayer,
     threatIntensity,
   };
+}
+
+/**
+ * Map descended depth to the biome aggression multiplier consumed
+ * by AIManager.setBiomeAggression. The five biome bands are:
+ *
+ *   0–800m       photic-gate      1.00  (surface, calm)
+ *   800–2400m    twilight-shelf   1.15
+ *   2400–4800m   midnight-column  1.30
+ *   4800–6400m   abyssal-trench   1.45
+ *   >6400m       stygian-abyss    1.60
+ *
+ * Biome-keyed (not interpolated) so the player feels a clean tonal
+ * shift each time they cross a band boundary, matching the existing
+ * caustics + ambient pad transitions.
+ */
+function biomeAggressionForDepth(depthMeters: number): number {
+  const biome = biomeAtDepth(depthMeters);
+  switch (biome.id) {
+    case "photic-gate": return 1.0;
+    case "twilight-shelf": return 1.15;
+    case "midnight-column": return 1.3;
+    case "abyssal-trench": return 1.45;
+    case "stygian-abyss": return 1.6;
+    default: return 1.0;
+  }
 }
