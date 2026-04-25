@@ -1,18 +1,16 @@
-import { Container, Graphics, Rectangle } from "pixi.js";
-import { AdvancedBloomFilter } from "pixi-filters";
+import { Container, Graphics } from "pixi.js";
 import type { Player } from "@/sim/entities/types";
 
 /**
  * Player submersible + headlamp cone.
  *
- * Two Graphics: the lamp cone (under the hull) and the hull itself
- * (over the cone). Glow intensity drives the lamp alpha breathing.
- *
- * An `AdvancedBloomFilter` is applied to the player's sub-container so
- * the lamp cone + mint strokes read as emissive — the player's position
- * has to pop out of the fluidic backdrop or the eye loses the subject.
- * Tuned conservatively so the bloom supports the silhouette rather than
- * smearing it.
+ * Four Graphics: trail, buff halo, lamp cone, hull silhouette. Glow
+ * intensity drives the lamp alpha breathing; the hull's mint stroke
+ * + lamp's gradient fill carry the emissive identity directly without
+ * a post-process bloom — earlier versions wore an `AdvancedBloomFilter`
+ * on the sub container, but that nested poorly with the parent
+ * (`near` layer) refraction filter and rendered the entire sub
+ * invisibly when both filters stacked.
  */
 
 export interface PlayerController {
@@ -23,24 +21,14 @@ export interface PlayerController {
 export function mountPlayer(parent: Container): PlayerController {
   const subContainer = new Container();
   subContainer.label = "player:sub";
-  // The AdvancedBloomFilter renders the player's emissive look. It
-  // needs an EXPLICIT filterArea — without one, pixi auto-fits to the
-  // subContainer's children's bounds, and once the parent (`near`
-  // layer) gains its own DisplacementFilter the nested filter stack
-  // ends up sampling beyond the bloom's filterArea and the entire
-  // sub renders invisibly. We pin the area to a generous 800x800 box
-  // anchored at origin, big enough to cover the sub at any viewport.
-  subContainer.filters = [
-    new AdvancedBloomFilter({
-      threshold: 0.45,
-      bloomScale: 0.85,
-      brightness: 1,
-      blur: 4,
-      quality: 4,
-    }),
-  ];
-  // Updated each frame in `sync()` to track the player.
-  subContainer.filterArea = new Rectangle(0, 0, 1, 1);
+  // The `subContainer` previously wore an AdvancedBloomFilter for the
+  // sub's emissive halo. Once the `near` layer gained its own
+  // DisplacementFilter (refraction), the nested filter stack
+  // (`bloom → displacement`) caused pixi to render the sub to a
+  // bounded texture that the displacement step then sampled outside,
+  // producing a fully-invisible sub. Removing the inner bloom: the
+  // mint-stroke hull + lamp gradient + halo ring already give the
+  // emissive identity without the bloom's compositional cost.
 
   const trail = new Graphics();
   const buff = new Graphics();
@@ -60,24 +48,6 @@ export function mountPlayer(parent: Container): PlayerController {
       // glint + propeller wash were invisible. Larger silhouette
       // gives detail room to read.
       const s = Math.max(1.4, viewportScale);
-
-      // Pin the bloom filter's render area around the player every
-      // frame. Without an explicit filterArea, pixi falls back to the
-      // child Graphics' bounds — which produces the correct result
-      // when this is the only filter in play, but breaks when the
-      // parent (`near` layer) ALSO carries a filter (refraction's
-      // DisplacementFilter). The combined filter stack ends up
-      // sampling outside the bloom's auto-fitted area and the sub
-      // renders invisibly. A generous box anchored on the player's
-      // position covers every Graphics this layer draws (trail back
-      // ~25 frames, lamp cone forward, halo around hull).
-      const filterPad = 360;
-      subContainer.filterArea = new Rectangle(
-        player.x - filterPad,
-        player.y - filterPad,
-        filterPad * 2,
-        filterPad * 2,
-      );
 
       // Record trail
       trailPositions.unshift({ x: player.x, y: player.y, time: totalTime });

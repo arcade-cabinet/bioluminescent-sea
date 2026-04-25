@@ -18,6 +18,7 @@ import { GameViewport } from "@/ui/shell/GameViewport";
 import { DrydockScreen } from "@/ui/shell/DrydockScreen";
 import {
   clearDeepSeaSnapshot,
+  resolveDeepSeaSnapshot,
   type DeepSeaRunSnapshot,
 } from "@/lib/diveSnapshot";
 import { recordScoreIfBest } from "@/lib/bestScore";
@@ -103,12 +104,27 @@ export default function Game(props: GameProps = {}) {
   }, [gameState, finalScore]);
 
   const startDive = (seed: number) => {
-    // The user explicitly clicked "Begin Dive" with a fresh seed —
-    // they want a new dive, not a resumed one. Snapshot restore only
-    // makes sense for in-tab refreshes (browser reload), not for
-    // user-initiated session starts. Drop any persisted snapshot
-    // here so the dive starts clean.
-    clearDeepSeaSnapshot();
+    // If a persisted snapshot exists for an *active* dive (timeLeft > 0,
+    // already filtered inside resolveDeepSeaSnapshot), resume that dive
+    // — that's the refresh-persistence contract: closing and re-opening
+    // the tab while diving picks up where you left off, and the
+    // snapshot's stored seed wins over the URL's seed param.
+    //
+    // resolveDeepSeaSnapshot returns null for any timed-out snapshot,
+    // so the only path that survives here is a genuine in-progress
+    // dive. A finished/expired snapshot drops cleanly and we start
+    // fresh on the requested seed instead.
+    const snapshot = resolveDeepSeaSnapshot();
+    if (snapshot) {
+      const resumeSeed = snapshot.seed ?? seed;
+      setActiveSeed(resumeSeed);
+      pushSeedToUrl(resumeSeed);
+      setInitialSnapshot(snapshot);
+      setSessionMode(snapshot.mode);
+      setPickerMode(null);
+      setGameState("playing");
+      return;
+    }
     setActiveSeed(seed);
     pushSeedToUrl(seed);
     setInitialSnapshot(null);
