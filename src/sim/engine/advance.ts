@@ -297,6 +297,11 @@ export function advanceScene(
       lureUntil: activeLure,
       lampFlareUntil: activeLampFlare,
     },
+    // Stamp impact wall-time for the renderer's hull flicker. The
+    // 0.6s window matches the renderer's flicker duration; older
+    // values just stay around (no harm — the flicker math has a
+    // hard cutoff).
+    lastImpactSeconds: isCollision ? totalTime : (player.lastImpactSeconds ?? -Infinity),
   };
 
   const nextSceneBase: SceneState = {
@@ -349,6 +354,12 @@ export function advanceScene(
   const predatorStrikeNearPlayer = ai.anyPredatorStrikingNear(player.x, player.y, 140);
   // Continuous threat axis for the ambient audio layer.
   const threatIntensity = ai.computeThreatIntensity(player.x, player.y);
+  // Pack-call edge detection: any brain broadcast in the last
+  // deltaTime window. Cheaper than tracking per-brain state on the
+  // runtime side.
+  const predatorPackCallThisFrame = ai.anyEngageBroadcastSince(totalTime - deltaTime - 0.001);
+  // Kill count for SFX — justKilled is already computed above.
+  const predatorKillsThisFrame = justKilled.size;
 
   return {
     collection,
@@ -358,6 +369,8 @@ export function advanceScene(
     oxygenBonusSeconds: breathBonus,
     predatorStrikeNearPlayer,
     threatIntensity,
+    predatorPackCallThisFrame,
+    predatorKillsThisFrame,
   };
 }
 

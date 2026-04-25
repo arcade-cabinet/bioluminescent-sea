@@ -386,6 +386,19 @@ export class AIManager {
   }
 
   /**
+   * True if any predator brain broadcast a flank engage this frame.
+   * The runtime reads this on the rising edge to play the
+   * `pack-call` SFX once per broadcast — without this, the SFX
+   * would spam every frame the cooldown was satisfied.
+   */
+  anyEngageBroadcastSince(threshold: number): boolean {
+    for (const brain of this.predatorBrainMap.values()) {
+      if (brain.lastEngageBroadcastAt > threshold) return true;
+    }
+    return false;
+  }
+
+  /**
    * Returns true if any predator brain is currently inside its
    * StrikeState within `radiusPx` of the given point. Used by the
    * sim to trigger a screen-shake/flash burst when a lunge lands

@@ -125,6 +125,17 @@ export interface SceneAdvanceResult {
    * with predator pressure.
    */
   threatIntensity: number;
+  /**
+   * True if a predator broadcast a pack-flank engage this frame.
+   * Edge-detected by the runtime to play `pack-call` SFX once per
+   * broadcast.
+   */
+  predatorPackCallThisFrame: boolean;
+  /**
+   * Count of predator brains that transitioned from alive→dying
+   * THIS frame. Runtime plays `predator-kill` SFX once per kill.
+   */
+  predatorKillsThisFrame: number;
 }
 
 export interface DiveModeTuning {

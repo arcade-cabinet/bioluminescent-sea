@@ -167,6 +167,10 @@ export class PredatorBrain extends Vehicle {
    *  prevents the drop from re-firing each frame the brain is dying. */
   public lootDropped = false;
 
+  /** Wall time of the most recent broadcastEngage. AIManager reads
+   *  this to schedule the pack-call SFX once per broadcast. */
+  public lastEngageBroadcastAt = -Infinity;
+
   /**
    * When set, StalkState seeks this position instead of pursuing the
    * player directly. Cleared on transition out of stalk. Used by the
@@ -509,6 +513,7 @@ export class PredatorBrain extends Vehicle {
   broadcastEngage(): void {
     if (this.currentTime - this.lastBroadcastTime < 1.5) return;
     this.lastBroadcastTime = this.currentTime;
+    this.lastEngageBroadcastAt = this.currentTime;
     if (!this.playerRef) return;
     // Compute the flank vector once: from player to this brain. Each
     // packmate rotates this vector by ±flankAngleOffset so they pinch

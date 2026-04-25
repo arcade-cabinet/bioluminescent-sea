@@ -14,7 +14,9 @@ export type SfxEvent =
   | "impact"
   | "biome-transition"
   | "oxygen-warn"
-  | "dive-complete";
+  | "dive-complete"
+  | "pack-call"      // a predator broadcasts engage to its packmates
+  | "predator-kill"; // the lamp breaks a predator
 
 let synth: Tone.PolySynth<Tone.Synth> | null = null;
 let pling: Tone.MembraneSynth | null = null;
@@ -67,6 +69,19 @@ export async function playSfx(event: SfxEvent): Promise<void> {
       synth.triggerAttackRelease("E4", "8n", now + 0.18);
       synth.triggerAttackRelease("A4", "8n", now + 0.36);
       synth.triggerAttackRelease("C#5", "4n", now + 0.54);
+      break;
+    case "pack-call":
+      // Two short low chirps — a predator radioing its packmates.
+      // Tritone interval (D2 → G#2) so it reads as alarming, not
+      // melodic.
+      synth.triggerAttackRelease("D2", "32n", now);
+      synth.triggerAttackRelease("G#2", "32n", now + 0.06);
+      break;
+    case "predator-kill":
+      // Hollow whoomph — a low pluck + a high glassy tail. Sells the
+      // "I broke that thing" beat.
+      pling.triggerAttackRelease("A1", "8n", now);
+      synth.triggerAttackRelease(["A5", "E6"], "16n", now + 0.05);
       break;
   }
 }
