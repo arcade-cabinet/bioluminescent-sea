@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.4.0...v0.5.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** adaptive HUD per device class + e2e extensions ([#76](https://github.com/arcade-cabinet/bioluminescent-sea/issues/76)) ([63e7408](https://github.com/arcade-cabinet/bioluminescent-sea/commit/63e7408dedb1bbad4f6de522b27480fc882d8753))
+* **bs:** Add Powerup Anomalies and Stygian Leviathans to the simulation ([#72](https://github.com/arcade-cabinet/bioluminescent-sea/issues/72)) ([a17299a](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a17299ae5cf113abf1959d7b0a76986377751b61))
+* **bs:** Add Stygian Abyss Infinite Open World Loop ([#68](https://github.com/arcade-cabinet/bioluminescent-sea/issues/68)) ([b04d7bb](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b04d7bb15eef4ed397f1d858eaa1410833ec8eaf))
+* **bs:** Add Submersible Upgrade Meta-progression and Drydock UI ([#69](https://github.com/arcade-cabinet/bioluminescent-sea/issues/69)) ([6c2de3d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/6c2de3d88a494c43f9a916fe28e65d3a92e2bee7))
+* **bs:** biome transition banner — player sees the depth bands ([#60](https://github.com/arcade-cabinet/bioluminescent-sea/issues/60)) ([5ecb06b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/5ecb06b109d7180cd8bad1ab8f2d10fba98f6ed3))
+* **bs:** Implement Chunking, Lateral Scaling, Customization, Procedural Visuals and AI Steering ([#67](https://github.com/arcade-cabinet/bioluminescent-sea/issues/67)) ([28fca7f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/28fca7fec91642a0e8d63936fd08184d42443e97))
+* **bs:** runtime chunk lifecycle — biomes actually change during play ([#58](https://github.com/arcade-cabinet/bioluminescent-sea/issues/58)) ([423b998](https://github.com/arcade-cabinet/bioluminescent-sea/commit/423b998506263207c600607fd9a136412a8c10b2))
+* **render:** entities layer projects worldYMeters through camera (F.4e) ([#55](https://github.com/arcade-cabinet/bioluminescent-sea/issues/55)) ([9acc999](https://github.com/arcade-cabinet/bioluminescent-sea/commit/9acc99913c9ca316672ba7b35f94350f7db2e3d6))
+* **sim:** chunked-spawn populates Creature.worldYMeters (F.4e seam) ([#54](https://github.com/arcade-cabinet/bioluminescent-sea/issues/54)) ([a7bdd10](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a7bdd10fd223dbb3d9bbe5fa7e01c8c83323b69b))
+* **sim:** chunkLifecycleDelta — F.4f spawn/retire helper ([#56](https://github.com/arcade-cabinet/bioluminescent-sea/issues/56)) ([588ffb4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/588ffb4af339d47a44669296bb4f99ee4990475c))
+
+
+### Bug Fixes
+
+* **bs:** address PR [#74](https://github.com/arcade-cabinet/bioluminescent-sea/issues/74) CodeRabbit feedback — real bugs + clear-room gating + palette tokens ([#75](https://github.com/arcade-cabinet/bioluminescent-sea/issues/75)) ([8942598](https://github.com/arcade-cabinet/bioluminescent-sea/commit/8942598ad17437a574f0e91038d335ff4052c912))
+* **hud:** group right-side chip stack (landmark + biome + codename) ([#62](https://github.com/arcade-cabinet/bioluminescent-sea/issues/62)) ([affb2de](https://github.com/arcade-cabinet/bioluminescent-sea/commit/affb2defefc46567d002a1dcd31bf95013e52fd2))
+
+
+### Performance
+
+* **bs:** fix tap-lag — decouple pointer events from RAF rebinds ([#59](https://github.com/arcade-cabinet/bioluminescent-sea/issues/59)) ([70c0aac](https://github.com/arcade-cabinet/bioluminescent-sea/commit/70c0aaccbe845563801590be1e1ad042c5b22525))
+* **bs:** stabilize autosave effect; keep ambient alive across mute toggles ([#63](https://github.com/arcade-cabinet/bioluminescent-sea/issues/63)) ([865d4b5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/865d4b5b8dc89ff39f18ad74ca5d524d76be5869))
+
+
+### Refactoring
+
+* **bs:** decompose Game.tsx, add primitives, mode triptych landing + Radix seed picker ([#74](https://github.com/arcade-cabinet/bioluminescent-sea/issues/74)) ([928b536](https://github.com/arcade-cabinet/bioluminescent-sea/commit/928b53603e038c0badef21701a20a804b786451c))
+* **bs:** remove legacy unchunked spawning logic ([#71](https://github.com/arcade-cabinet/bioluminescent-sea/issues/71)) ([09beee9](https://github.com/arcade-cabinet/bioluminescent-sea/commit/09beee9835278d12636634d0a8c6d53edc7fa9ea))
+
+
+### Documentation
+
+* **agentic:** handoff + decisions log for bioluminescent-sea ([#64](https://github.com/arcade-cabinet/bioluminescent-sea/issues/64)) ([ab43d5d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/ab43d5d5472192ccf7f8bc1344806d20557e0759))
+* **bs:** Update docs to reflect Stygian Abyss, Yuka AI, and Drydock decisions ([#73](https://github.com/arcade-cabinet/bioluminescent-sea/issues/73)) ([f80f067](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f80f067c0934a75ee5814316403dc0b98ed6b5e8))
+* **production:** mark sibling foundations complete ([#57](https://github.com/arcade-cabinet/bioluminescent-sea/issues/57)) ([c738bf8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/c738bf8d13808cd87a97eb80423d0b2a48fd2bfd))
+* **production:** split F.4 into reviewable sub-PRs ([#52](https://github.com/arcade-cabinet/bioluminescent-sea/issues/52)) ([038773c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/038773ca3e61b08ca2b8e0e2a52b2024d9404eb5))
+
 ## [0.4.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.3.1...v0.4.0) (2026-04-24)
 
 
