@@ -70,7 +70,7 @@ export function advanceScene(
   const tuning = getDiveModeTuning(mode, seed);
   
   if (!aiManager) {
-    aiManager = new AIManager(dimensions);
+    aiManager = new AIManager(dimensions, seed);
   }
   const ai = aiManager;
 

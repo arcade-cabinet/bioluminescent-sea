@@ -9,6 +9,7 @@ import {
   WrapPlayBandBehavior,
 } from "./steering";
 import type { ViewportDimensions } from "@/sim/dive/types";
+import { resolveNumeric } from "@/sim/_shared/variance";
 
 const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
 
@@ -18,19 +19,29 @@ export class AIManager {
   private playerVehicle: GameVehicle;
   private vehicleMap: Map<string, GameVehicle>;
   private viewportWidth: number;
+  private diveSeed: number;
   private flockingBehaviors: Map<string, {
     alignment: AlignmentBehavior;
     cohesion: CohesionBehavior;
     separation: SeparationBehavior;
   }>;
 
-  constructor(viewport: ViewportDimensions) {
+  /**
+   * @param viewport viewport dimensions in pixels
+   * @param diveSeed dive seed; per-dive flocking weights are sampled
+   *   from authored ranges so two dives with different seeds produce
+   *   visually distinct flocking behaviour. Default 0 keeps tests
+   *   deterministic without forcing every existing call site to
+   *   thread a seed in this PR.
+   */
+  constructor(viewport: ViewportDimensions, diveSeed = 0) {
     this.entityManager = new EntityManager();
     this.time = new Time();
     this.vehicleMap = new Map();
     this.flockingBehaviors = new Map();
     this.viewportWidth = viewport.width;
-    
+    this.diveSeed = diveSeed;
+
     this.playerVehicle = new GameVehicle("player");
     this.playerVehicle.position.set(0, 0, 0);
     this.entityManager.add(this.playerVehicle);
@@ -114,11 +125,30 @@ export class AIManager {
     
     for (const type of ["fish", "jellyfish"]) {
       if (!this.flockingBehaviors.has(type)) {
-        this.flockingBehaviors.set(type, {
-          alignment: new AlignmentBehavior(),
-          cohesion: new CohesionBehavior(),
-          separation: new SeparationBehavior()
-        });
+        // Per-dive, per-species flocking weights. Each species draws
+        // independent weights from the authored ranges, and each dive's
+        // seed picks a different blend — one dive's fish might be
+        // tightly cohesive (cohesion=0.9) and loosely aligned (0.3),
+        // the next dive's fish might fan out and align like a school.
+        const alignment = new AlignmentBehavior();
+        const cohesion = new CohesionBehavior();
+        const separation = new SeparationBehavior();
+        alignment.weight = resolveNumeric(
+          [0.4, 1.1],
+          this.diveSeed,
+          `flock:${type}:alignment`,
+        );
+        cohesion.weight = resolveNumeric(
+          [0.3, 1.0],
+          this.diveSeed,
+          `flock:${type}:cohesion`,
+        );
+        separation.weight = resolveNumeric(
+          [0.6, 1.4],
+          this.diveSeed,
+          `flock:${type}:separation`,
+        );
+        this.flockingBehaviors.set(type, { alignment, cohesion, separation });
       }
     }
 
