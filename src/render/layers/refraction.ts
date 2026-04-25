@@ -1,6 +1,7 @@
 import {
   Container,
   DisplacementFilter,
+  Rectangle,
   Sprite,
   Texture,
 } from "pixi.js";
@@ -23,6 +24,15 @@ import {
 export interface RefractionController {
   /** Advance the displacement-map scroll. Call once per render frame. */
   tick(totalTime: number): void;
+  /**
+   * Pin every target's filterArea to the current viewport. Must be
+   * called whenever the canvas resizes — otherwise pixi falls back to
+   * each target's content bounds, which causes the displacement filter
+   * to clip to e.g. the bounding box of the marine-snow cloud,
+   * leaving a visible rectangle of "wobbled" pixels surrounded by
+   * un-filtered ones.
+   */
+  resize(widthPx: number, heightPx: number): void;
   destroy(): void;
 }
 
@@ -94,6 +104,12 @@ export function mountRefraction(
       // neither stationary nor obviously periodic.
       displacementSprite.x = (Math.sin(totalTime * 0.3) * 12) % NOISE_SIZE;
       displacementSprite.y = (totalTime * 8) % NOISE_SIZE;
+    },
+    resize(widthPx, heightPx) {
+      const area = new Rectangle(0, 0, widthPx, heightPx);
+      for (const t of targets) {
+        t.filterArea = area;
+      }
     },
     destroy() {
       // Detach the dead filters from each target before destroying them,
