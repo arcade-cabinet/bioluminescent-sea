@@ -11,6 +11,7 @@ import {
 import type { Creature, Particle, Pirate, Predator } from "@/sim/entities/types";
 import { createCamera, type Camera } from "./camera";
 import type { CollectionBurstView } from "./layers/fx";
+import { mountAmbient, type AmbientController } from "./layers/ambient";
 import { mountBackdrop, type BackdropController } from "./layers/backdrop";
 import { mountEntities, type EntityController } from "./layers/entities";
 import { mountFx, type FxController } from "./layers/fx";
@@ -58,6 +59,7 @@ export interface RenderFrameInput {
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
   const stage: PixiStage = await createStage(canvas);
   const backdrop: BackdropController = mountBackdrop(stage.layers.far);
+  const ambient: AmbientController = mountAmbient(stage.layers.ambient);
   const water: WaterController = mountWater(stage.layers.water);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
   const entities: EntityController = mountEntities(stage.layers.near);
@@ -197,6 +199,13 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         biomeTintHex,
         depthMeters: root?.depthTravelMeters ?? 0,
       });
+      ambient.draw({
+        widthPx: v.widthPx,
+        heightPx: v.heightPx,
+        totalTime,
+        depthMeters: root?.depthTravelMeters ?? 0,
+        diveSeed: world.masterSeed,
+      });
       water.draw({
         widthPx: v.widthPx,
         heightPx: v.heightPx,
@@ -243,6 +252,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       entities.destroy();
       parallax.destroy();
       water.destroy();
+      ambient.destroy();
       backdrop.destroy();
       stage.destroy();
     },

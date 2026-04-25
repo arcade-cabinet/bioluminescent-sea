@@ -5,11 +5,15 @@ import { applyFilterResolutionPatch } from "./filterResolutionPatch";
  * PixiJS stage lifecycle + layer ordering.
  *
  * Layers, back to front:
- *   far       — abyss gradient, distant silhouettes
+ *   far       — abyss gradient, distant silhouettes (ridge layers)
+ *   ambient   — biome-aware deep-far elements (kelp, jellyfish swarms,
+ *               anglerfish lures, abyssal landmarks); slow parallax to
+ *               sell "traveling through water"
  *   water     — god-ray shafts + procedural caustics (fluidic layer)
  *   mid       — parallax marine snow, ridges
- *   near      — entities (creatures, predators, pirates, player)
- *   fx        — sonar ping, collection bursts, impact flashes, lamp cones
+ *   near      — entities (creatures, predators, pirates)
+ *   fx        — sonar ping, collection bursts, impact flashes, lamp
+ *               cones, the player sub silhouette
  *   overlay   — depth vignette, biome tint (above entities, below UI)
  *
  * React mounts the pixi canvas; everything else happens imperatively
@@ -19,6 +23,7 @@ import { applyFilterResolutionPatch } from "./filterResolutionPatch";
 
 export interface StageLayers {
   far: Container;
+  ambient: Container;
   water: Container;
   mid: Container;
   near: Container;
@@ -53,6 +58,7 @@ export async function createStage(canvas: HTMLCanvasElement): Promise<PixiStage>
   });
 
   const far = new Container();
+  const ambient = new Container();
   const water = new Container();
   const mid = new Container();
   const near = new Container();
@@ -60,17 +66,18 @@ export async function createStage(canvas: HTMLCanvasElement): Promise<PixiStage>
   const overlay = new Container();
 
   far.label = "layer:far";
+  ambient.label = "layer:ambient";
   water.label = "layer:water";
   mid.label = "layer:mid";
   near.label = "layer:near";
   fx.label = "layer:fx";
   overlay.label = "layer:overlay";
 
-  app.stage.addChild(far, water, mid, near, fx, overlay);
+  app.stage.addChild(far, ambient, water, mid, near, fx, overlay);
 
   return {
     app,
-    layers: { far, water, mid, near, fx, overlay },
+    layers: { far, ambient, water, mid, near, fx, overlay },
     resize(widthPx, heightPx) {
       app.renderer.resize(widthPx, heightPx);
     },
