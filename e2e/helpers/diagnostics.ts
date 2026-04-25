@@ -104,8 +104,22 @@ export async function probeElements(
             rect.width === 0 ||
             rect.height === 0;
 
+          // Elements inside a horizontally scroll-snapping container
+          // (carousel slides) legitimately extend past the viewport
+          // — that's the contract. Walk up looking for an ancestor
+          // whose computed overflow-x permits scrolling and treat
+          // off-screen children of that ancestor as intentional.
+          let inHorizontalScroller = false;
+          for (let p = node.parentElement; p; p = p.parentElement) {
+            const ps = window.getComputedStyle(p);
+            if (ps.overflowX === "auto" || ps.overflowX === "scroll") {
+              inHorizontalScroller = true;
+              break;
+            }
+          }
+
           const clipped: string[] = [];
-          if (!intentionallyHidden) {
+          if (!intentionallyHidden && !inHorizontalScroller) {
             if (rect.left < -EDGE_TOLERANCE) clipped.push("left");
             if (rect.top < -EDGE_TOLERANCE) clipped.push("top");
             if (rect.right > vw + EDGE_TOLERANCE) clipped.push("right");

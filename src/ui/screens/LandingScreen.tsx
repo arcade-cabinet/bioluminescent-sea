@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { Compass, Crosshair, MoveDown } from "lucide-react";
-import type { ComponentType } from "react";
+import { ChevronLeft, ChevronRight, Compass, Crosshair, MoveDown } from "lucide-react";
+import { type ComponentType, useCallback, useEffect, useRef, useState } from "react";
 import { useDeviceClass } from "@/hooks/useDeviceClass";
 import {
   getModeMetadata,
@@ -31,10 +31,12 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
   const isPhoneLandscape = klass === "phone-landscape";
   const isPhonePortrait = klass === "phone-portrait";
   const isTabletPortrait = klass === "tablet" && isPortrait;
-  // Compact layouts get the triptych pinned to viewport-bottom so the
-  // three mode cards are always above the fold — the top half is the
-  // hero + title. Desktop + tablet-landscape keep the natural flow.
-  const pinTriptychToBottom = isPhonePortrait || isPhoneLandscape || isTabletPortrait;
+  // Compact layouts swap the 3-up grid for a swipeable carousel: one
+  // full mode card per page, snap-scroll, dot indicators below. This
+  // gives the tagline + description back on phones (the compact grid
+  // had to drop them) and scales naturally to a fourth/fifth mode.
+  const useCarousel = isPhonePortrait || isPhoneLandscape || isTabletPortrait;
+  const pinTriptychToBottom = useCarousel;
   return (
     <motion.div
       data-testid="landing-screen"
@@ -104,7 +106,7 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
           Bioluminescent Sea
         </motion.h1>
 
-        {!isPhoneLandscape && !isPhonePortrait && (
+        {!isPhoneLandscape && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.95 }}
@@ -141,29 +143,26 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
         aria-label="Choose dive mode"
         data-testid="mode-triptych"
       >
-        {!pinTriptychToBottom && (
+        {!useCarousel && (
           <p className="mb-3 text-center text-[0.7rem] uppercase tracking-[0.18em] text-fg-muted">
             Choose your descent
           </p>
         )}
-        <div
-          className={
-            pinTriptychToBottom
-              ? "grid grid-cols-3 gap-2"
-              : "grid grid-cols-1 gap-3 sm:grid-cols-3"
-          }
-        >
-          {SESSION_MODES.map((mode, index) => (
-            <ModeCard
-              key={mode}
-              meta={getModeMetadata(mode)}
-              icon={MODE_ICONS[mode]}
-              onSelect={() => onPickMode(mode)}
-              animationDelay={0.8 + index * 0.08}
-              compact={pinTriptychToBottom}
-            />
-          ))}
-        </div>
+        {useCarousel ? (
+          <ModeCarousel onPickMode={onPickMode} />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {SESSION_MODES.map((mode, index) => (
+              <ModeCard
+                key={mode}
+                meta={getModeMetadata(mode)}
+                icon={MODE_ICONS[mode]}
+                onSelect={() => onPickMode(mode)}
+                animationDelay={0.8 + index * 0.08}
+              />
+            ))}
+          </div>
+        )}
       </motion.section>
     </motion.div>
   );
@@ -174,24 +173,21 @@ interface ModeCardProps {
   icon: ComponentType<{ className?: string }>;
   onSelect: () => void;
   animationDelay: number;
-  /** Compact card layout for phone-landscape — single-row label, no
-   * tagline, smaller icon badge. Drops to ~56px tall so three cards fit
-   * across a 390px-tall viewport without crowding the title. */
-  compact?: boolean;
 }
 
-function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeCardProps) {
+function ModeCard({ meta, icon: Icon, onSelect, animationDelay }: ModeCardProps) {
   return (
     <motion.div
-      initial={compact ? { opacity: 0 } : { opacity: 0, y: 12 }}
-      animate={compact ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay, duration: 0.55 }}
+      className="h-full"
     >
       <Button
         asChild
         variant="ghost"
         size="lg"
-        className="group h-auto w-full justify-start whitespace-normal p-0 text-left"
+        className="group h-full w-full justify-start whitespace-normal p-0 text-left"
         data-testid={`mode-card-${meta.id}`}
       >
         <button
@@ -200,55 +196,29 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeC
           aria-label={`Begin ${meta.label} dive — ${meta.tagline}`}
         >
           <Card
-            className={
-              compact
-                ? "group relative w-full overflow-hidden border-deep/70 bg-abyss/80 p-2 transition-all duration-300 group-hover:border-glow/50"
-                : "group relative w-full overflow-hidden border-deep/70 bg-abyss/80 p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-glow/50 group-hover:shadow-[0_0_32px_rgba(107,230,193,0.18)]"
-            }
+            className="group relative h-full w-full overflow-hidden border-deep/70 bg-abyss/80 p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-glow/50 group-hover:shadow-[0_0_32px_rgba(107,230,193,0.18)]"
             style={{
               backgroundImage: `radial-gradient(circle at 0% 0%, ${meta.accentHex}14, transparent 60%)`,
             }}
           >
             <CardCorners color={meta.accentHex} />
 
-            <div
-              className={
-                compact
-                  ? "flex flex-col items-center gap-1.5"
-                  : "flex items-start gap-3"
-              }
-            >
+            <div className="flex items-start gap-3">
               <div
-                className={
-                  compact
-                    ? "flex size-8 shrink-0 items-center justify-center rounded-full border bg-bg/40"
-                    : "flex size-10 shrink-0 items-center justify-center rounded-md border bg-bg/40"
-                }
+                className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-bg/40"
                 style={{
                   borderColor: `${meta.accentHex}55`,
                   color: meta.accentHex,
                 }}
               >
-                <Icon className={compact ? "size-4" : "size-5"} />
+                <Icon className="size-5" />
               </div>
-              <div
-                className={
-                  compact
-                    ? "flex flex-col items-center gap-0"
-                    : "flex flex-col gap-0.5"
-                }
-              >
-                {!compact && (
-                  <span className="text-[0.65rem] uppercase tracking-[0.14em] text-fg-muted">
-                    {meta.paceLabel}
-                  </span>
-                )}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[0.65rem] uppercase tracking-[0.14em] text-fg-muted">
+                  {meta.paceLabel}
+                </span>
                 <h3
-                  className={
-                    compact
-                      ? "bs-display m-0 text-xs font-medium uppercase tracking-[0.08em] leading-tight"
-                      : "bs-display m-0 text-2xl font-medium leading-tight"
-                  }
+                  className="bs-display m-0 text-2xl font-medium leading-tight"
                   style={{ color: meta.accentHex }}
                 >
                   {meta.label}
@@ -256,27 +226,150 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay, compact }: ModeC
               </div>
             </div>
 
-            {!compact && (
-              <p className="mt-3 text-sm leading-relaxed text-fg-muted normal-case">
-                {meta.tagline}
-              </p>
-            )}
+            <p className="mt-3 text-sm leading-relaxed text-fg-muted normal-case">
+              {meta.tagline}
+            </p>
 
-            {!compact && (
-              <div className="mt-4 flex items-center justify-between text-[0.7rem] uppercase tracking-[0.16em] text-fg/70 normal-case">
-                <span className="text-fg-muted">Tap to chart</span>
-                <span
-                  aria-hidden="true"
-                  className="transition-transform duration-300 group-hover:translate-x-0.5"
-                  style={{ color: meta.accentHex }}
-                >
-                  →
-                </span>
-              </div>
-            )}
+            <div className="mt-4 flex items-center justify-between text-[0.7rem] uppercase tracking-[0.16em] text-fg/70 normal-case">
+              <span className="text-fg-muted">Tap to chart</span>
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:translate-x-0.5"
+                style={{ color: meta.accentHex }}
+              >
+                →
+              </span>
+            </div>
           </Card>
         </button>
       </Button>
     </motion.div>
+  );
+}
+
+interface ModeCarouselProps {
+  onPickMode: (mode: SessionMode) => void;
+}
+
+/**
+ * Horizontal scroll-snap carousel — one full mode card per page on
+ * compact viewports. All cards stay in the DOM (clickable from
+ * Playwright via auto-scroll). Dot indicators reflect the active page;
+ * left/right keys navigate; arrow buttons appear on tablet-portrait
+ * where there's room for chrome. Adding a fourth mode is one extra
+ * card in the same scroller — no layout work.
+ */
+function ModeCarousel({ onPickMode }: ModeCarouselProps) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const scrollToIndex = useCallback((index: number) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const clamped = Math.max(0, Math.min(SESSION_MODES.length - 1, index));
+    scroller.scrollTo({
+      left: clamped * scroller.clientWidth,
+      behavior: "smooth",
+    });
+  }, []);
+
+  // Track the active page from scroll position so swipe + arrow + dot
+  // taps all stay in sync. We round to nearest page width.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const onScroll = () => {
+      const page = Math.round(scroller.scrollLeft / scroller.clientWidth);
+      setActiveIndex(page);
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      scrollToIndex(activeIndex + 1);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      scrollToIndex(activeIndex - 1);
+    }
+  };
+
+  return (
+    <div className="relative" data-testid="mode-carousel">
+      <div
+        ref={scrollerRef}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-roledescription="carousel"
+        aria-label="Dive mode picker"
+      >
+        {SESSION_MODES.map((mode, index) => (
+          <div
+            key={mode}
+            className="w-full shrink-0 snap-center px-2"
+            aria-roledescription="slide"
+            aria-label={`${getModeMetadata(mode).label} (${index + 1} of ${SESSION_MODES.length})`}
+          >
+            <ModeCard
+              meta={getModeMetadata(mode)}
+              icon={MODE_ICONS[mode]}
+              onSelect={() => onPickMode(mode)}
+              animationDelay={0.8 + index * 0.08}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Page dots — tap to jump. */}
+      <div
+        className="mt-1 flex items-center justify-center gap-2"
+        role="tablist"
+        aria-label="Mode pages"
+      >
+        {SESSION_MODES.map((mode, index) => {
+          const isActive = index === activeIndex;
+          return (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`Go to ${getModeMetadata(mode).label}`}
+              data-testid={`mode-dot-${mode}`}
+              onClick={() => scrollToIndex(index)}
+              className={
+                isActive
+                  ? "h-2 w-6 rounded-full bg-glow transition-all"
+                  : "h-2 w-2 rounded-full bg-fg-muted/40 transition-all hover:bg-fg-muted/70"
+              }
+            />
+          );
+        })}
+      </div>
+
+      {/* Prev/Next chevrons — tablet-portrait has the width to host
+       * them; phones rely on swipe + dots. */}
+      <button
+        type="button"
+        aria-label="Previous mode"
+        onClick={() => scrollToIndex(activeIndex - 1)}
+        disabled={activeIndex === 0}
+        className="absolute left-0 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-deep/60 bg-abyss/80 p-1.5 text-fg-muted backdrop-blur-md transition-colors hover:border-glow/60 hover:text-glow disabled:opacity-30 md:flex"
+      >
+        <ChevronLeft className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next mode"
+        onClick={() => scrollToIndex(activeIndex + 1)}
+        disabled={activeIndex === SESSION_MODES.length - 1}
+        className="absolute right-0 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-deep/60 bg-abyss/80 p-1.5 text-fg-muted backdrop-blur-md transition-colors hover:border-glow/60 hover:text-glow disabled:opacity-30 md:flex"
+      >
+        <ChevronRight className="size-4" aria-hidden="true" />
+      </button>
+    </div>
   );
 }
