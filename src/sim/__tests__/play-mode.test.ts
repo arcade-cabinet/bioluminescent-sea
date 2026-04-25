@@ -200,6 +200,55 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(result.finalScene.depthTravelMeters).toBe(0);
   });
 
+  test("descent: lateralMovement=locked actually pins the sub on its initial X", () => {
+    // Drive lateral input far off to the right; with the lock honoured
+    // by advancePlayer, the player's x must not drift away from the
+    // initial centre.
+    resetAIManager();
+    const scene = createInitialScene(dimensions);
+    const initialX = scene.player.x;
+    let cur = scene;
+    for (let i = 0; i < 60; i++) {
+      const r = advanceScene(
+        cur,
+        { isActive: true, x: initialX + 5000, y: cur.player.y + 5000 },
+        dimensions,
+        i * (1 / 30),
+        1 / 30,
+        0,
+        1,
+        480,
+        "descent",
+      );
+      cur = r.scene;
+    }
+    expect(cur.player.x).toBe(initialX);
+    // Vertical input still works under the lock.
+    expect(cur.player.y).toBeGreaterThan(scene.player.y);
+  });
+
+  test("exploration: lateralMovement=free does not pin the sub", () => {
+    resetAIManager();
+    const scene = createInitialScene(dimensions);
+    const initialX = scene.player.x;
+    let cur = scene;
+    for (let i = 0; i < 60; i++) {
+      const r = advanceScene(
+        cur,
+        { isActive: true, x: initialX + 5000, y: cur.player.y },
+        dimensions,
+        i * (1 / 30),
+        1 / 30,
+        0,
+        1,
+        480,
+        "exploration",
+      );
+      cur = r.scene;
+    }
+    expect(cur.player.x).toBeGreaterThan(initialX);
+  });
+
   test("arena: collisionEndsDive is true; the moment the bot reaches a predator the run ends", () => {
     const slots = getModeSlots("arena");
     expect(slots.collisionEndsDive).toBe(true);

@@ -73,7 +73,14 @@ export function advanceScene(
   }
   const ai = aiManager;
 
-  const player = advancePlayer(scene.player, input, dimensions, totalTime, deltaTime);
+  const player = advancePlayer(
+    scene.player,
+    input,
+    dimensions,
+    totalTime,
+    deltaTime,
+    !tuning.freeLateralMovement,
+  );
 
   ai.updatePlayer(player);
   ai.syncPredators(scene.predators);
