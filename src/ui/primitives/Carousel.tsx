@@ -143,7 +143,11 @@ export function CarouselNavigation({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute left-[-12.5%] top-1/2 flex w-[125%] -translate-y-1/2 justify-between px-2",
+        // Arrows live inside the carousel's viewport on small
+        // breakpoints (so they aren't clipped by `overflow-hidden` on
+        // the page) and bleed slightly outside on tablet+ for a
+        // sweeter visual rhythm.
+        "pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between px-2 sm:left-[-12.5%] sm:inset-x-auto sm:w-[125%]",
         className,
       )}
     >
