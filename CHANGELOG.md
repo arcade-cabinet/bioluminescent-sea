@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.5.0...v0.6.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** ambient fish baseline so chunks feel populated ([#82](https://github.com/arcade-cabinet/bioluminescent-sea/issues/82)) ([8b6944b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/8b6944baeb6a2937cc6aea9397d9daebc06105b4))
+* **bs:** arena pockets stay cleared after threats drop to zero ([#84](https://github.com/arcade-cabinet/bioluminescent-sea/issues/84)) ([921f15e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/921f15ec7d18564441efba6ebe96dd5c675be1ee))
+* **bs:** articulated submersible silhouette ([#83](https://github.com/arcade-cabinet/bioluminescent-sea/issues/83)) ([5ff37c3](https://github.com/arcade-cabinet/bioluminescent-sea/commit/5ff37c384e42da9f5f11de2c2e2ae33968cf4e72))
+* **bs:** enforce Descent's lateralMovement=locked slot ([#80](https://github.com/arcade-cabinet/bioluminescent-sea/issues/80)) ([0ac9baa](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0ac9baa77d91bf760e0bc04d1019657fd27200d1))
+* **bs:** swipeable mode carousel for compact viewports ([#81](https://github.com/arcade-cabinet/bioluminescent-sea/issues/81)) ([c91979b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/c91979b7cb98c7d84fd78af0dc535eea17a979c3))
+
+
+### Bug Fixes
+
+* **bs:** visual QA round 1 — landing, biome banner, spawns ([#77](https://github.com/arcade-cabinet/bioluminescent-sea/issues/77)) ([e16072f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e16072fc92123f0e40ed8e9a9b283c5aad0b7d1b))
+
+
+### Refactoring
+
+* **bs:** aquatic rebrand + redesigned mode slots ([#79](https://github.com/arcade-cabinet/bioluminescent-sea/issues/79)) ([0962196](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0962196c98dcc3dbf52dfbfb9fd4965ae42f09e0))
+
 ## [0.5.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.4.0...v0.5.0) (2026-04-25)
 
 
