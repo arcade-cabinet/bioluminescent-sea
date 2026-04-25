@@ -76,6 +76,7 @@ export class PatrolState extends TimedState {
 
   execute(owner: PredatorBrain): void {
     this.tickElapsed(owner);
+    owner.maintainPatrolAnchor();
     if (owner.canSeePlayer()) {
       owner.stateMachine.changeTo(STALK);
     }

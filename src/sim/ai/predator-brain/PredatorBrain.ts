@@ -102,7 +102,7 @@ const _scratch = new Vector3();
 
 export class PredatorBrain extends Vehicle {
   public readonly profile: PredatorArchetypeProfile;
-  public readonly stateMachine: StateMachine<PredatorBrain>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  public readonly stateMachine: StateMachine<PredatorBrain>;
   public readonly memorySystem: MemorySystem;
   public readonly fuzzy: FuzzyModule;
   public readonly lastKnownPlayerPosition = new Vector3();
@@ -226,19 +226,45 @@ export class PredatorBrain extends Vehicle {
 
   activatePatrolBehaviour(): void {
     this.maxSpeed = this.profile.patrolMaxSpeed;
+    // If the brain has wandered past its patrol radius, swap to an
+    // arrive-back behaviour so it returns to the anchor instead of
+    // drifting indefinitely. The next tick's _maybeRecenterPatrol
+    // will handle the toggle as the brain moves.
     this._setActive({ wander: true, separation: true });
   }
   deactivatePatrolBehaviour(): void {
-    this._setActive({ wander: false });
+    this._setActive({ wander: false, arrive: false });
+  }
+
+  /**
+   * Called inside PatrolState.execute via the brain's tick loop —
+   * swaps wander↔arrive based on whether the brain has strayed past
+   * the archetype's patrol radius. Keeps predators rooted to their
+   * spawn region so the player can build a mental map of "where they
+   * live."
+   */
+  maintainPatrolAnchor(): void {
+    if (this.currentAiState !== "patrol") return;
+    const distFromAnchor = this.position.distanceTo(this.patrolAnchor);
+    if (distFromAnchor > this.profile.patrolRadiusPx) {
+      this.slots.arrive.target.copy(this.patrolAnchor);
+      this._setActive({ arrive: true, wander: false });
+    } else if (this.slots.arrive.active && distFromAnchor < this.profile.patrolRadiusPx * 0.4) {
+      // Reached anchor — resume wandering.
+      this._setActive({ arrive: false, wander: true });
+    }
   }
 
   activateStalkBehaviour(): void {
     this.maxSpeed = this.profile.stalkMaxSpeed;
     if (this.playerRef) this.slots.pursue.evader = this.playerRef;
-    this._setActive({ pursue: true, separation: true });
+    // Alignment lets a pack converge with shared heading — packmates
+    // visibly orient toward the player together rather than each
+    // independently corkscrewing in.
+    this._setActive({ pursue: true, separation: true, alignment: true });
   }
   deactivateStalkBehaviour(): void {
-    this._setActive({ pursue: false });
+    this._setActive({ pursue: false, alignment: false });
   }
 
   activateChargeBehaviour(target: Vector3): void {
