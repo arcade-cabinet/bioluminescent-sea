@@ -20,6 +20,13 @@ export {
   DialogTitle,
   DialogTrigger,
 } from "./Dialog";
+export {
+  Carousel,
+  CarouselContent,
+  CarouselIndicator,
+  CarouselItem,
+  CarouselNavigation,
+} from "./Carousel";
 export { EmbossFilters } from "./EmbossFilters";
 export { Input } from "./Input";
 export { StatTile, type StatTileProps } from "./StatTile";
