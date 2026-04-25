@@ -85,6 +85,14 @@ export interface Predator {
    * the lamp working before the predator actually breaks off.
    */
   damageFraction?: number;
+  /**
+   * 0..1 death-animation progress. >0 means the predator is in its
+   * sink-and-fade dying state — the renderer dims, drops the body
+   * downward, and emits bubbles. The sim treats dying predators as
+   * non-collidable so they can't spook the player on the way down.
+   * Loot dropped on the frame `deathProgress` first crossed 0.
+   */
+  deathProgress?: number;
 }
 
 export interface Pirate {

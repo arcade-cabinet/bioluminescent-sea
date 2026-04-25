@@ -125,18 +125,23 @@ export function advanceScene(
     return { ...base, x: nx, y: ny };
   });
 
-  // Prune predators the lamp killed this frame (the lamp pressure
-  // pass earlier in this tick may have decremented HP to 0). The
-  // brain map cleanup happens on the next syncPredators tick — its
-  // live-ids set drops anything not in the new scene.predators
-  // array. Each death drops a `breath` loot anomaly at the
-  // predator's final position so killing isn't just risk-removal —
-  // it's an oxygen reward, which makes the lamp the central loop
-  // ("see threat, light it up, collect oxygen, dive deeper").
+  // Two-stage death pipeline:
+  //
+  // 1. `justKilled` — predators whose HP hit 0 THIS frame. Drop loot
+  //    once at the death position, then the brain enters its
+  //    sink-and-fade animation.
+  //
+  // 2. `dead` — predators whose death animation fully elapsed. These
+  //    are pruned from the scene; the next syncPredators tick removes
+  //    the brain map entry too.
+  //
+  // Dying-but-not-yet-pruned predators stay in the scene so the
+  // renderer can drive `deathProgress` (sink + fade + bubbles).
+  const justKilled = ai.getJustKilledPredatorIds();
   const deadIds = ai.getDeadPredatorIds();
   const lootDrops: import("@/sim/entities/types").Anomaly[] = [];
   for (const dead of scene.predators) {
-    if (!deadIds.has(dead.id)) continue;
+    if (!justKilled.has(dead.id)) continue;
     if (dead.isLeviathan) continue; // leviathans are ambient, never lamp-killed
     lootDrops.push({
       id: `loot-${dead.id}-${Math.floor(totalTime * 1000)}`,

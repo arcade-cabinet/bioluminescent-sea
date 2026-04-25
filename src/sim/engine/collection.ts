@@ -97,6 +97,9 @@ export function hasPredatorCollision(
   radiusScale = 1
 ): boolean {
   return predators.some((predator) => {
+    // Dying predators are sinking corpses — non-collidable so they
+    // can't spook the player while drifting downward.
+    if ((predator.deathProgress ?? 0) > 0) return false;
     const distance = Math.hypot(predator.x - player.x, predator.y - player.y);
     return distance < (predator.size * 0.4 + 25) * radiusScale;
   });

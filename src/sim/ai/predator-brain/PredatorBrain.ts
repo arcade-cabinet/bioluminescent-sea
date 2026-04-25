@@ -140,6 +140,21 @@ export class PredatorBrain extends Vehicle {
   public readonly lampDamagePerHit = 0.34;
 
   /**
+   * Total seconds the death animation should run for after HP hits
+   * 0. The brain stops responding to inputs (no state transitions,
+   * no pursuit) and the renderer drives the sink-and-fade. After
+   * this elapses, AIManager prunes the brain.
+   */
+  public readonly deathAnimationSeconds = 0.7;
+
+  /** Wall time when HP hit 0. POSITIVE_INFINITY = still alive. */
+  public deathStartTime = Number.POSITIVE_INFINITY;
+
+  /** Set true once AIManager has issued the loot drop for this brain;
+   *  prevents the drop from re-firing each frame the brain is dying. */
+  public lootDropped = false;
+
+  /**
    * When set, StalkState seeks this position instead of pursuing the
    * player directly. Cleared on transition out of stalk. Used by the
    * pack-flank telegram so recipients close from an offset angle
@@ -223,15 +238,37 @@ export class PredatorBrain extends Vehicle {
   }
 
   receiveDamage(currentTime: number): void {
+    if (this.isDying()) return; // already in death animation
     this.lastDamageReceivedTime = currentTime;
     this.hp = Math.max(0, this.hp - this.lampDamagePerHit);
-    if (this.stateMachine.currentState !== this.stateMachine.states.get(STRIKE)) {
+    if (this.hp <= 0 && this.deathStartTime === Number.POSITIVE_INFINITY) {
+      this.deathStartTime = currentTime;
+      // Park the brain in flee on death so steering produces a brief
+      // backward slide as the body drops. The death animation
+      // overrides rendering so the renderer doesn't read the state.
+      this.stateMachine.changeTo(FLEE);
+    } else if (this.stateMachine.currentState !== this.stateMachine.states.get(STRIKE)) {
       this.stateMachine.changeTo(FLEE);
     }
   }
 
+  /** True the moment HP hits 0; false again after the death
+   *  animation window elapses (caller should prune the brain). */
+  isDying(): boolean {
+    return this.deathStartTime !== Number.POSITIVE_INFINITY;
+  }
+
+  /** Prune-eligible: dying long enough that the sink-and-fade is
+   *  visually done. */
   isDead(): boolean {
-    return this.hp <= 0;
+    if (!this.isDying()) return false;
+    return this.currentTime - this.deathStartTime > this.deathAnimationSeconds;
+  }
+
+  /** 0..1 death progress used by the renderer for sink + fade. */
+  deathProgress(): number {
+    if (!this.isDying()) return 0;
+    return Math.min(1, (this.currentTime - this.deathStartTime) / this.deathAnimationSeconds);
   }
 
   // ---- Per-tick API ------------------------------------------------------
@@ -239,6 +276,14 @@ export class PredatorBrain extends Vehicle {
   tick(delta: number, currentTime: number): void {
     this.lastDelta = delta;
     this.currentTime = currentTime;
+    if (this.isDying()) {
+      // Dying brains don't update memory or run states — they coast
+      // on residual velocity while the renderer animates the
+      // sink-and-fade. The body slows continuously so it doesn't
+      // skim out of frame at strike speed.
+      this.maxSpeed = Math.max(8, this.maxSpeed * 0.92);
+      return;
+    }
     this._updateMemory();
     this.stateMachine.update();
   }
