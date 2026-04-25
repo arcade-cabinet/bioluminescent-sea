@@ -273,6 +273,32 @@ describe("deep sea simulation", () => {
     expect(current.depthTravelMeters).toBeGreaterThan(0);
   });
 
+  test("advanceScene drives depthTravelMeters forward even when the player gives no input (regression)", () => {
+    // Live QA on v0.7.0 caught a dive that sat at depth=0m forever in
+    // Exploration mode because the baseline trickle was gated on
+    // `!freeLateralMovement`. Without input, both `inputDrivenDescent`
+    // and `baselineDescent` were 0, and oxygen drained while the world
+    // never moved. Lock that in: an idle dive must descend.
+    const scene = createInitialScene(desktop);
+    let current = scene;
+    for (let f = 0; f < 120; f++) {
+      const result = advanceScene(
+        current,
+        { isActive: false, x: 0, y: 0 },
+        desktop,
+        f * (1 / 60),
+        1 / 60,
+        0,
+        1,
+        GAME_DURATION
+      );
+      current = result.scene;
+    }
+    // 120 frames at 1/60s = 2s of sim. Baseline is 5.5 m/s for free-
+    // vertical modes, so we should see at least ~10m of progress.
+    expect(current.depthTravelMeters).toBeGreaterThan(8);
+  });
+
   test("advanceScene clamps depthTravelMeters at the trench floor", () => {
     const scene = { ...createInitialScene(desktop), depthTravelMeters: 3199 };
     // One big frame that would overshoot the floor.
