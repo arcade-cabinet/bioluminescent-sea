@@ -40,10 +40,12 @@ function detectIsNative(): boolean {
 
 function classify(width: number, height: number): DeviceClass {
   // Short-edge breakpoints. Foldables unfolded ~720x870, treated as tablet.
+  // Desktop is gated on `width >= 1024` so portrait tablets (e.g.
+  // 768×1024) stay classified as "tablet" — `longEdge` would otherwise
+  // misroute them into the desktop layout.
   const shortEdge = Math.min(width, height);
-  const longEdge = Math.max(width, height);
   if (shortEdge >= 600) {
-    return longEdge >= 1024 ? "desktop" : "tablet";
+    return width >= 1024 ? "desktop" : "tablet";
   }
   // Phone — orientation matters for HUD placement.
   return width > height ? "phone-landscape" : "phone-portrait";

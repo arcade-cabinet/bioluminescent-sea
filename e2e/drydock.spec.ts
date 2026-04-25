@@ -34,14 +34,15 @@ test.describe("Drydock purchase flow", () => {
     const hullRow = page.getByTestId("upgrade-hull");
     await expect(hullRow).toBeVisible();
 
-    // Capture the level text from the row, which contains "Lvl 0 / 5".
-    const hullCard = hullRow.locator("xpath=ancestor::*[contains(@class,'border-deep') or self::section][1]");
-    await expect(hullCard).toContainText(/Lvl 0/);
+    // Level chip carries a dedicated testid — read level text directly
+    // off it rather than walking the DOM for a class match.
+    const hullLevel = page.getByTestId("upgrade-level-hull");
+    await expect(hullLevel).toHaveText(/Lvl 0/);
 
     await hullRow.click();
 
     // After purchase: level becomes 1, currency drops by 500.
-    await expect(hullCard).toContainText(/Lvl 1/, { timeout: 4000 });
+    await expect(hullLevel).toHaveText(/Lvl 1/, { timeout: 4000 });
 
     // Lux balance in the header shrunk to 500.
     await expect(page.locator(":root").locator("text=/^500 Lux$/").first()).toBeVisible({

@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Refresh persistence smoke. Start a dive, wait a few seconds for the
- * autosave to fire (~400ms initial + 2.5s interval), then page.reload().
- * After reload the URL still carries the seed, the playing screen
- * mounts immediately from `resolveDeepSeaSnapshot()`, and the canvas
- * is back. The active seed in the URL must match the seed before the
- * reload — proving the snapshot's stored seed (added in PR #75) is
- * being honoured on resume.
+ * Refresh persistence smoke. Start a dive on seed A, wait for the
+ * autosave to fire (~400ms initial + 2.5s interval), then reload onto
+ * seed B (a different URL param). When the player picks Begin Dive,
+ * `resolveDeepSeaSnapshot()` should restore the *original* seed A from
+ * the persisted snapshot rather than starting fresh on seed B —
+ * proving the snapshot's stored seed (added in PR #75) overrides the
+ * URL when present. The URL gets rewritten back to A via
+ * pushSeedToUrl on the resumed dive.
  */
 
 test.describe("Mid-dive refresh persistence", () => {
@@ -21,22 +22,32 @@ test.describe("Mid-dive refresh persistence", () => {
       timeout: 4000,
     });
 
-    // Capture the seed in the URL after begin-dive (Game pushes it via
-    // pushSeedToUrl).
-    const urlBefore = page.url();
-    expect(urlBefore).toContain("seed=");
-    const seedBefore = new URL(urlBefore).searchParams.get("seed");
-    expect(seedBefore).toBeTruthy();
+    // Seed A — what the snapshot will store.
+    const seedA = new URL(page.url()).searchParams.get("seed");
+    expect(seedA).toBeTruthy();
 
     // Let the autosave fire at least once (initial fires at 400ms).
     await page.waitForTimeout(1500);
 
-    await page.reload();
+    // Reload onto a *different* seed B. Without the snapshot, Begin
+    // Dive on this page would start a fresh dive on seed B. With the
+    // snapshot, it should resume seed A's dive instead.
+    const seedB = "photic-kelpish-benthos";
+    expect(seedB).not.toBe(seedA);
+    await page.goto(`/?seed=${seedB}`);
 
-    // Some snapshots resume directly into the playing screen; others
-    // route back through landing + auto-resume on next dive. Either is
-    // acceptable as long as the seed survives.
-    const urlAfter = page.url();
-    expect(new URL(urlAfter).searchParams.get("seed")).toBe(seedBefore);
+    await page.getByTestId("mode-card-descent").click();
+    await expect(page.getByTestId("seed-picker-overlay")).toBeVisible();
+    await page.getByTestId("begin-dive-button").click();
+    await expect(page.locator('canvas[aria-label*="playfield" i]')).toBeVisible({
+      timeout: 4000,
+    });
+
+    // The resumed dive must run on seed A, not seed B — and Game's
+    // pushSeedToUrl should rewrite the URL back to A.
+    await expect.poll(
+      () => new URL(page.url()).searchParams.get("seed"),
+      { timeout: 5000, message: "seed A from snapshot should win over URL seed B" }
+    ).toBe(seedA);
   });
 });

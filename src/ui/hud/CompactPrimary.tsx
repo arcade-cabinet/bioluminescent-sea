@@ -15,12 +15,12 @@ const wrapStyle: CSSProperties = {
   display: "flex",
   alignItems: "stretch",
   gap: 0,
-  background: "rgba(10, 26, 46, 0.72)",
-  border: "1px solid rgba(107, 230, 193, 0.2)",
+  background: "color-mix(in srgb, var(--color-abyss) 72%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--color-glow) 20%, transparent)",
   borderRadius: 10,
   color: "var(--color-fg)",
   fontFamily: "var(--font-body)",
-  boxShadow: "0 4px 18px rgba(5, 10, 20, 0.45)",
+  boxShadow: "0 4px 18px color-mix(in srgb, var(--color-bg) 45%, transparent)",
   backdropFilter: "blur(8px)",
   WebkitBackdropFilter: "blur(8px)",
   overflow: "hidden",
@@ -36,7 +36,7 @@ const cellStyle: CSSProperties = {
 
 const dividerStyle: CSSProperties = {
   width: 1,
-  background: "rgba(107, 230, 193, 0.18)",
+  background: "color-mix(in srgb, var(--color-glow) 18%, transparent)",
   margin: "0.25rem 0",
 };
 

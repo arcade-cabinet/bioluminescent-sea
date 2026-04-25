@@ -26,6 +26,12 @@
   --color-fg-muted: #8aa7a2;
   --color-warn: #ff6b6b;
 
+  /* Palette-derived shadow recipes — keep raw rgba out of component
+   * className strings so the shadow tone tracks the bg palette token. */
+  --shadow-hud: 0 4px 18px color-mix(in srgb, var(--color-bg) 45%, transparent);
+  --shadow-hud-panel: 0 12px 32px color-mix(in srgb, var(--color-bg) 60%, transparent);
+  --shadow-hud-panel-side: -12px 0 32px color-mix(in srgb, var(--color-bg) 60%, transparent);
+
   --font-display: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua",
     Palatino, serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -142,7 +148,7 @@ button {
  * playwright clipping check. Force-reset transforms on every wrapper
  * inside the triptych on landscape phones so bounding rects match the
  * visual layout. */
-@media (max-height: 500px) {
+@media (max-height: 500px) and (orientation: landscape) {
   [data-testid="landing-screen"] [data-testid="mode-triptych"] *,
   [data-testid="landing-screen"] [data-testid="mode-triptych"] {
     transform: none !important;

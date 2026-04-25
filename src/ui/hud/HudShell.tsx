@@ -32,6 +32,15 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
   const { isCompact, klass } = useDeviceClass();
   const [open, setOpen] = useState(false);
 
+  // Reset `open` when the device class crosses out of compact (e.g. a
+  // foldable unfolds, or the user resizes the window past the tablet
+  // breakpoint). Without this, the panel-driven pause effect would never
+  // unwind because we'd return early at the inline-HUD path before the
+  // pause cleanup ran.
+  useEffect(() => {
+    if (!isCompact && open) setOpen(false);
+  }, [isCompact, open]);
+
   useEffect(() => {
     if (open) {
       setRuntimePaused(true);
@@ -79,11 +88,12 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
           data-testid="hud-menu-button"
           onClick={() => setOpen(true)}
           className={[
-            "pointer-events-auto flex size-11 items-center justify-center rounded-full border bg-abyss/85 text-fg shadow-[0_4px_18px_rgba(5,10,20,0.45)] backdrop-blur-md transition-colors",
+            "pointer-events-auto flex size-11 items-center justify-center rounded-full border bg-abyss/85 text-fg backdrop-blur-md transition-colors",
             threatAlert
               ? "border-warn animate-pulse text-warn"
               : "border-glow/30 hover:border-glow/60 hover:text-glow",
           ].join(" ")}
+          style={{ boxShadow: "var(--shadow-hud)" }}
         >
           <Menu className="size-5" aria-hidden="true" />
         </button>
@@ -117,12 +127,16 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
               data-testid="hud-menu-panel"
               className={
                 klass === "phone-landscape"
-                  ? "absolute bottom-0 right-0 top-0 z-50 flex w-[min(20rem,80vw)] flex-col gap-3 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-4 shadow-[-12px_0_32px_rgba(5,10,20,0.6)]"
-                  : "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto border-b border-deep/60 bg-abyss/95 p-4 shadow-[0_12px_32px_rgba(5,10,20,0.6)]"
+                  ? "absolute bottom-0 right-0 top-0 z-50 flex w-[min(20rem,80vw)] flex-col gap-3 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-4"
+                  : "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto border-b border-deep/60 bg-abyss/95 p-4"
               }
               style={{
                 paddingTop: "max(env(safe-area-inset-top), 1rem)",
                 paddingBottom: "max(env(safe-area-inset-bottom), 1rem)",
+                boxShadow:
+                  klass === "phone-landscape"
+                    ? "var(--shadow-hud-panel-side)"
+                    : "var(--shadow-hud-panel)",
               }}
               initial={
                 klass === "phone-landscape"

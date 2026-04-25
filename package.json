@@ -15,7 +15,7 @@
     "pretest:node": "pnpm run content:compile",
     "pretest:dom": "pnpm run content:compile",
     "pretest:browser": "pnpm run content:compile",
-    "pretest:e2e": "pnpm run content:compile && pnpm run build",
+    "pretest:e2e": "pnpm run content:compile && pnpm exec vite build --mode development",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

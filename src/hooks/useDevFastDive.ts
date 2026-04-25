@@ -24,6 +24,12 @@ export function useDevFastDive(): number {
 
 function readFromUrl(): number {
   if (typeof window === "undefined") return 1;
+  // Production builds must never honor this flag — a shared production
+  // URL with `?devFastDive=80` would silently change oxygen depletion
+  // for any visitor. Vite replaces `import.meta.env.MODE` at build time
+  // with the `--mode` argument; the e2e pretest builds with `--mode
+  // development` so the Playwright oxygen-depletion spec still works.
+  if (import.meta.env.MODE !== "development") return 1;
   try {
     const url = new URL(window.location.href);
     const flag = url.searchParams.get("devFastDive");

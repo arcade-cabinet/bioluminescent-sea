@@ -107,7 +107,10 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
   const Icon = def.icon;
 
   return (
-    <Card className="relative flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card
+      className="relative flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
+      data-testid={`upgrade-row-${def.id}`}
+    >
       <CardCorners />
       <div className="flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md border border-deep/80 bg-bg/40 text-glow">
@@ -116,7 +119,10 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
         <div>
           <h3 className="m-0 text-base font-semibold text-fg">
             {def.label}
-            <span className="ml-2 text-[0.7rem] font-normal uppercase tracking-[0.14em] text-fg-muted">
+            <span
+              data-testid={`upgrade-level-${def.id}`}
+              className="ml-2 text-[0.7rem] font-normal uppercase tracking-[0.14em] text-fg-muted"
+            >
               Lvl {level} / {MAX_UPGRADE_LEVEL}
             </span>
           </h3>
