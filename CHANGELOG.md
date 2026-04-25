@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.7.2...v0.8.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** every gameplay parameter seed-derived; no hardcoded balance numbers ([#107](https://github.com/arcade-cabinet/bioluminescent-sea/issues/107)) ([30e6620](https://github.com/arcade-cabinet/bioluminescent-sea/commit/30e66207a57eeebf45171226158f20cd6737a196))
+
 ## [0.7.2](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.7.1...v0.7.2) (2026-04-25)
 
 
