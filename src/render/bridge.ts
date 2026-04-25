@@ -85,6 +85,14 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
     heightPx: stage.app.renderer.height / stage.app.renderer.resolution,
   });
   const camera: Camera = createCamera(viewport());
+  // Pin refraction's filterArea to the viewport from frame 0. Without
+  // this initial sync the displacement filter falls back to the
+  // mid/near container's content bounds, which produces a visible
+  // rectangle in the upper-left while only marine snow has spawned.
+  {
+    const v = viewport();
+    refraction.resize(v.widthPx, v.heightPx);
+  }
 
   return {
     camera,
@@ -217,6 +225,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
     resize(widthPx, heightPx) {
       stage.resize(widthPx, heightPx);
       water.resize(widthPx, heightPx);
+      refraction.resize(widthPx, heightPx);
     },
     destroy() {
       refraction.destroy();
