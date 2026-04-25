@@ -103,6 +103,14 @@ export interface Pirate {
   speed: number;
   noiseOffset: number;
   lanternPhase: number;
+  /**
+   * 0 = patrolling, 1 = aware of player + pursuing. Drives the
+   * renderer's lantern color (blue → red), pursuit speed boost,
+   * and tells the player visually that they've been spotted.
+   * Decays back to 0 over `awarenessDecaySeconds` after the player
+   * leaves the cone.
+   */
+  awareness?: number;
 }
 
 export interface Particle {

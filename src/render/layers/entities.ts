@@ -281,14 +281,29 @@ function syncPirates(
     g.bezierCurveTo(28, 12, -26, 12, -34, 0);
     g.fill({ color: 0x061018, alpha: 0.95 });
 
-    const lanternIntensity = 0.55 + Math.sin(totalTime * 2 + p.lanternPhase) * 0.25;
+    // Lantern colour interpolates from amber (patrol) to red (alert)
+    // as awareness ramps. Pulse frequency also bumps up so an aware
+    // pirate's lantern visibly *flickers* faster — the "I see you"
+    // tell from a distance, before pursuit speed becomes obvious.
+    const awareness = p.awareness ?? 0;
+    const pulseFreq = 2 + awareness * 4;
+    const lanternIntensity = 0.55 + Math.sin(totalTime * pulseFreq + p.lanternPhase) * 0.25;
+    // Amber 0xfde68a (253, 230, 138) → Red 0xff5a3a (255, 90, 58)
+    const r = 253 + Math.round(awareness * (255 - 253));
+    const gr = 230 + Math.round(awareness * (90 - 230));
+    const b = 138 + Math.round(awareness * (58 - 138));
+    const lanternColor = (r << 16) | (gr << 8) | b;
+    const coreR = 255 + Math.round(awareness * (255 - 255));
+    const coreG = 243 + Math.round(awareness * (120 - 243));
+    const coreB = 160 + Math.round(awareness * (80 - 160));
+    const coreColor = (coreR << 16) | (coreG << 8) | coreB;
     g.moveTo(34, -8);
     g.lineTo(128, -42);
     g.lineTo(128, 42);
     g.lineTo(34, 8);
-    g.fill({ color: 0xfde68a, alpha: 0.18 * lanternIntensity });
+    g.fill({ color: lanternColor, alpha: 0.18 * lanternIntensity });
 
-    g.circle(34, 0, 4).fill({ color: 0xfff3a0, alpha: lanternIntensity });
+    g.circle(34, 0, 4).fill({ color: coreColor, alpha: lanternIntensity });
   }
   for (const [id, g] of cache) {
     if (!seen.has(id)) {
