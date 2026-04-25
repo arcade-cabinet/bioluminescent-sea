@@ -143,6 +143,17 @@ export interface SceneAdvanceResult {
    * even before damage cooldown allows another HP tick.
    */
   lampScatterPoints: readonly { x: number; y: number }[];
+  /**
+   * Bearings + intensities of every active threat within radar
+   * range of the player. Drives the FX-layer sonar ring's
+   * directional warning arcs so the player sees threats pressing
+   * in from off-screen before they cross the viewport edge.
+   */
+  threatBearings: readonly {
+    bearing: number;
+    intensity: number;
+    nearness: number;
+  }[];
 }
 
 export interface DiveModeTuning {

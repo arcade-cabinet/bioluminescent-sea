@@ -25,6 +25,11 @@ export interface FxController {
     threatFlashAlpha: number;
     viewport: { widthPx: number; heightPx: number };
     lampScatterPoints: readonly { x: number; y: number }[];
+    threatBearings: readonly {
+      bearing: number;
+      intensity: number;
+      nearness: number;
+    }[];
   }): void;
   destroy(): void;
 }
@@ -37,7 +42,7 @@ export function mountFx(parent: Container): FxController {
   parent.addChild(sonar, bursts, lampScatter, threatFlash);
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings }) {
       sonar.clear();
       const phase = (totalTime * 0.75) % 1;
       const radius = 40 + phase * 220;
@@ -46,6 +51,49 @@ export function mountFx(parent: Container): FxController {
         alpha: 0.4 * (1 - phase),
         width: 1.6,
       });
+
+      // Threat-bearing arcs on a fixed-radius warning ring around
+      // the player. Each active stalker/charger/striker paints a
+      // short red arc at its bearing — the player learns "I'm
+      // about to be flanked from upper-left" at a glance, even
+      // for predators outside the viewport.
+      //
+      // Arc width scales with intensity (stalk thinner, strike
+      // fatter) so the player's lizard brain can rank threats by
+      // urgency without reading colour. Alpha scales with nearness
+      // so close threats burn brighter.
+      const warningRingRadius = 64;
+      for (const t of threatBearings) {
+        const arcSpan = 0.16 + 0.18 * t.intensity; // radians
+        const ax = player.x + Math.cos(t.bearing) * warningRingRadius;
+        const ay = player.y + Math.sin(t.bearing) * warningRingRadius;
+        // Lead head — the dot at the bearing.
+        sonar.circle(ax, ay, 1.5 + t.intensity * 1.5).fill({
+          color: 0xff6b6b,
+          alpha: 0.85 * t.nearness,
+        });
+        // Arc segment — short ring stroke spanning ±arcSpan/2 around
+        // the bearing. Pixi has no arc primitive on Graphics, so
+        // approximate with a small N-segment polyline.
+        const segments = 8;
+        const half = arcSpan / 2;
+        sonar.moveTo(
+          player.x + Math.cos(t.bearing - half) * warningRingRadius,
+          player.y + Math.sin(t.bearing - half) * warningRingRadius,
+        );
+        for (let i = 1; i <= segments; i++) {
+          const theta = t.bearing - half + (arcSpan * i) / segments;
+          sonar.lineTo(
+            player.x + Math.cos(theta) * warningRingRadius,
+            player.y + Math.sin(theta) * warningRingRadius,
+          );
+        }
+        sonar.stroke({
+          color: 0xff6b6b,
+          alpha: 0.55 * t.nearness,
+          width: 1.4 + t.intensity * 1.6,
+        });
+      }
 
       bursts.clear();
       for (const b of list) {

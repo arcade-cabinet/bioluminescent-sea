@@ -61,6 +61,14 @@ export interface RenderFrameInput {
    * cone overlaps, not just on the 1.2s damage tick.
    */
   lampScatterPoints?: readonly { x: number; y: number }[];
+  /**
+   * Active threat bearings for the sonar-ring warning arcs.
+   */
+  threatBearings?: readonly {
+    bearing: number;
+    intensity: number;
+    nearness: number;
+  }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -130,7 +138,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -252,6 +260,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         threatFlashAlpha,
         viewport: v,
         lampScatterPoints: lampScatterPoints ?? [],
+        threatBearings: threatBearings ?? [],
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

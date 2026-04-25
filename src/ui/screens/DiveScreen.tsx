@@ -613,6 +613,7 @@ export function DiveScreen({
         viewportScale: getViewportScale(dimensions.width, dimensions.height),
         biomeTintHex: result.telemetry.biomeTintHex,
         lampScatterPoints: result.lampScatterPoints,
+        threatBearings: result.threatBearings,
       });
     },
     [
