@@ -129,34 +129,80 @@ export function mountPlayer(parent: Container): PlayerController {
       hull.position.set(player.x, player.y);
       hull.rotation = player.angle;
 
-      // Main hull
-      hull.ellipse(0, 0, 28 * s, 14 * s).fill({
-        color: 0x0e4f55,
-        alpha: 1,
-      });
-      hull.ellipse(0, 0, 28 * s, 14 * s).stroke({
-        color: 0x6be6c1,
-        alpha: 0.9,
-        width: 1.5,
-      });
-      // Dome
-      hull.circle(6 * s, -6 * s, 7 * s).fill({ color: 0x102b34, alpha: 1 });
-      hull.circle(6 * s, -6 * s, 7 * s).stroke({
+      // Main pressure hull — slightly tapered tail end so the
+      // silhouette reads as directional rather than a flat ellipse.
+      hull.moveTo(28 * s, 0);
+      hull.bezierCurveTo(28 * s, -10 * s, 14 * s, -14 * s, 0, -14 * s);
+      hull.bezierCurveTo(-16 * s, -14 * s, -22 * s, -8 * s, -24 * s, -3 * s);
+      hull.lineTo(-24 * s, 3 * s);
+      hull.bezierCurveTo(-22 * s, 8 * s, -16 * s, 14 * s, 0, 14 * s);
+      hull.bezierCurveTo(14 * s, 14 * s, 28 * s, 10 * s, 28 * s, 0);
+      hull.fill({ color: 0x0e4f55, alpha: 1 });
+      hull.stroke({ color: 0x6be6c1, alpha: 0.9, width: 1.5 });
+
+      // Riveted hull plating — three faint horizontal lines at the
+      // mid-line read as paneling under the mint stroke.
+      for (let i = -2; i <= 2; i++) {
+        if (i === 0) continue;
+        hull.moveTo(-20 * s, i * 4 * s);
+        hull.lineTo(20 * s, i * 4 * s);
+        hull.stroke({ color: 0x6be6c1, alpha: 0.18, width: 0.6 });
+      }
+
+      // Forward observation dome — the captain's bubble. Inner light
+      // breathes with `glowIntensity`.
+      hull.circle(8 * s, -7 * s, 7 * s).fill({ color: 0x051a22, alpha: 1 });
+      hull.circle(8 * s, -7 * s, 7 * s).stroke({
         color: 0x6be6c1,
         alpha: 0.85,
         width: 1,
       });
-      hull.circle(6 * s, -6 * s, 3 * s).fill({
+      hull.circle(8 * s, -7 * s, 3.4 * s).fill({
         color: 0xfffbea,
-        alpha: 0.75 + Math.sin(totalTime * 3) * 0.15,
+        alpha: 0.7 + Math.sin(totalTime * 3) * 0.18,
       });
-      // Rear fin
-      hull.moveTo(-22 * s, -6 * s);
-      hull.lineTo(-34 * s, -14 * s);
-      hull.lineTo(-28 * s, 0);
-      hull.lineTo(-34 * s, 14 * s);
-      hull.lineTo(-22 * s, 6 * s);
-      hull.fill({ color: 0x0a3740, alpha: 1 });
+      // Highlight glint on the dome — sells the curvature.
+      hull.circle(10 * s, -9 * s, 1.2 * s).fill({
+        color: 0xffffff,
+        alpha: 0.6,
+      });
+
+      // Aft thrust nacelles — two short cylinders on either side of
+      // the tail. Pulse alpha tracks overdrive so a boost reads.
+      const thrusterAlpha = overdriveActive
+        ? 0.95
+        : 0.7 + Math.sin(totalTime * 8) * 0.08;
+      hull.roundRect(-30 * s, -10 * s, 8 * s, 5 * s, 1.5).fill({
+        color: 0x0a3740,
+        alpha: thrusterAlpha,
+      });
+      hull.roundRect(-30 * s, 5 * s, 8 * s, 5 * s, 1.5).fill({
+        color: 0x0a3740,
+        alpha: thrusterAlpha,
+      });
+
+      // Propeller wash — a soft amber/teal puff streaming behind the
+      // nacelles, pushed back further during overdrive.
+      const washX = -32 * s;
+      const washSpread = overdriveActive ? 18 * s : 10 * s;
+      hull.ellipse(washX - washSpread * 0.5, -7.5 * s, washSpread, 2 * s).fill({
+        color: overdriveActive ? 0xffcc6a : 0x6be6c1,
+        alpha: (0.18 + Math.sin(totalTime * 10) * 0.06) * (overdriveActive ? 2 : 1),
+      });
+      hull.ellipse(washX - washSpread * 0.5, 7.5 * s, washSpread, 2 * s).fill({
+        color: overdriveActive ? 0xffcc6a : 0x6be6c1,
+        alpha: (0.18 + Math.sin(totalTime * 10 + 1) * 0.06) * (overdriveActive ? 2 : 1),
+      });
+
+      // Top antenna — single mast with a blinking tip light. Adds a
+      // tiny vertical detail that breaks the otherwise-flat silhouette.
+      hull.moveTo(-2 * s, -14 * s);
+      hull.lineTo(-2 * s, -22 * s);
+      hull.stroke({ color: 0x6be6c1, alpha: 0.55, width: 0.8 });
+      hull.circle(-2 * s, -22 * s, 1.4 * s).fill({
+        color: 0xff6b6b,
+        alpha: 0.5 + Math.sin(totalTime * 5) * 0.5,
+      });
     },
     destroy() {
       subContainer.destroy({ children: true });
