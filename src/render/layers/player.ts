@@ -46,7 +46,11 @@ export function mountPlayer(parent: Container): PlayerController {
 
   return {
     sync(player, viewportScale, totalTime) {
-      const s = Math.max(0.75, viewportScale);
+      // Base scale floor bumped from 0.75 to 1.4 — at 1280px the sub
+      // was rendering at ~28px wide and the riveted plating + dome
+      // glint + propeller wash were invisible. Larger silhouette
+      // gives detail room to read.
+      const s = Math.max(1.4, viewportScale);
 
       // Record trail
       trailPositions.unshift({ x: player.x, y: player.y, time: totalTime });
@@ -105,24 +109,54 @@ export function mountPlayer(parent: Container): PlayerController {
       lamp.position.set(player.x, player.y);
       lamp.rotation = player.angle;
       // Lamp cone fans forward (+x) of the sub. Overdrive widens + brightens.
+      // Volumetric look: paint concentric cones from outer→inner with
+      // additive-feeling alpha layering so the centre reads bright
+      // and the edges fade into water rather than terminating in a
+      // hard polygon. A small lamp-glow disc sits at the housing.
       const lampBoost = overdriveActive ? 1.35 : 1;
       const coneLen = 180 * s * player.lampScale * lampBoost;
       const coneSpread = 80 * s * player.lampScale * lampBoost;
-      lamp.moveTo(16 * s, 0);
-      lamp.lineTo(coneLen, -coneSpread);
+      const baseAlpha = (overdriveActive ? 1.6 : 1) * (0.6 + player.glowIntensity * 0.4);
+
+      // Outer halo — widest, dimmest, fades fastest with distance.
+      const haloLen = coneLen * 1.05;
+      const haloSpread = coneSpread * 1.15;
+      lamp.moveTo(14 * s, 0);
+      lamp.quadraticCurveTo(haloLen * 0.5, -haloSpread * 0.55, haloLen, -haloSpread);
+      lamp.lineTo(haloLen, haloSpread);
+      lamp.quadraticCurveTo(haloLen * 0.5, haloSpread * 0.55, 14 * s, 0);
+      lamp.fill({ color: 0x6be6c1, alpha: 0.05 * baseAlpha });
+
+      // Mid cone — primary mint volume.
+      lamp.moveTo(15 * s, 0);
+      lamp.quadraticCurveTo(coneLen * 0.5, -coneSpread * 0.55, coneLen, -coneSpread);
       lamp.lineTo(coneLen, coneSpread);
-      lamp.lineTo(16 * s, 0);
-      lamp.fill({
-        color: 0x6be6c1,
-        alpha: (0.09 + player.glowIntensity * 0.08) * (overdriveActive ? 1.6 : 1),
-      });
+      lamp.quadraticCurveTo(coneLen * 0.5, coneSpread * 0.55, 15 * s, 0);
+      lamp.fill({ color: 0x6be6c1, alpha: 0.09 * baseAlpha });
+
+      // Inner cone — narrower, brighter, the perceived beam.
+      const innerLen = coneLen * 0.78;
+      const innerSpread = coneSpread * 0.55;
       lamp.moveTo(16 * s, 0);
-      lamp.lineTo(coneLen * 0.7, -coneSpread * 0.5);
-      lamp.lineTo(coneLen * 0.7, coneSpread * 0.5);
-      lamp.lineTo(16 * s, 0);
-      lamp.fill({
-        color: 0xd9f2ec,
-        alpha: (0.06 + player.glowIntensity * 0.1) * (overdriveActive ? 1.6 : 1),
+      lamp.quadraticCurveTo(innerLen * 0.5, -innerSpread * 0.45, innerLen, -innerSpread);
+      lamp.lineTo(innerLen, innerSpread);
+      lamp.quadraticCurveTo(innerLen * 0.5, innerSpread * 0.45, 16 * s, 0);
+      lamp.fill({ color: 0xd9f2ec, alpha: 0.13 * baseAlpha });
+
+      // Hot core — a tight, bright stripe near the lamp housing.
+      const coreLen = coneLen * 0.5;
+      const coreSpread = coneSpread * 0.22;
+      lamp.moveTo(17 * s, 0);
+      lamp.lineTo(coreLen, -coreSpread);
+      lamp.lineTo(coreLen, coreSpread);
+      lamp.lineTo(17 * s, 0);
+      lamp.fill({ color: 0xffffff, alpha: 0.18 * baseAlpha });
+
+      // Lamp housing glow — a small disc at the bulb so the source
+      // reads emissive rather than the cone appearing free-floating.
+      lamp.circle(17 * s, 0, 4 * s).fill({
+        color: 0xfffbea,
+        alpha: 0.8 * baseAlpha,
       });
 
       hull.clear();

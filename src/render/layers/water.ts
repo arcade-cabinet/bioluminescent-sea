@@ -118,24 +118,29 @@ export function mountWater(parent: Container): WaterController {
       const causticsAlpha = causticsAlphaForDepth(depthMeters);
       if (causticsAlpha > 0) {
         const color = biomeTintHex ? parseHexColor(biomeTintHex) : 0x6be6c1;
-        const cols = 22;
-        const rows = 14;
+        // Finer grid → smaller bright peaks → reads as filamentous
+        // shimmer rather than overlapping discs. Per-circle radius is
+        // also clamped well under cell size so neighbouring lit cells
+        // don't bleed into a single visible blob.
+        const cols = 36;
+        const rows = 24;
         const cellW = widthPx / cols;
         const cellH = heightPx / rows;
+        const maxRadius = Math.min(cellW, cellH) * 0.5;
         for (let j = 0; j < rows; j++) {
           for (let i = 0; i < cols; i++) {
             const cx = (i + 0.5) * cellW;
             const cy = (j + 0.5) * cellH;
             const n = smoothNoise(cx, cy, totalTime);
-            // Threshold the noise — only the bright peaks paint. This is
-            // what gives caustics their characteristic filamentous look
-            // rather than a uniform shimmer.
-            if (n > 0.42) {
-              const brightness = (n - 0.42) / 0.58;
-              const r = Math.max(cellW, cellH) * (0.6 + brightness * 0.7);
+            // Higher threshold makes lit cells sparse — the
+            // characteristic caustic look is a thin web of bright
+            // points, not a covering of overlapping discs.
+            if (n > 0.62) {
+              const brightness = (n - 0.62) / 0.38;
+              const r = maxRadius * (0.35 + brightness * 0.55);
               caustics.circle(cx, cy, r).fill({
                 color,
-                alpha: causticsAlpha * brightness,
+                alpha: causticsAlpha * brightness * 0.6,
               });
             }
           }
