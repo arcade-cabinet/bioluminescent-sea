@@ -1,16 +1,21 @@
 import { Container, Graphics } from "pixi.js";
+import { AdvancedBloomFilter } from "pixi-filters";
 import type { Player } from "@/sim/entities/types";
 
 /**
  * Player submersible + headlamp cone.
  *
  * Four Graphics: trail, buff halo, lamp cone, hull silhouette. Glow
- * intensity drives the lamp alpha breathing; the hull's mint stroke
- * + lamp's gradient fill carry the emissive identity directly without
- * a post-process bloom — earlier versions wore an `AdvancedBloomFilter`
- * on the sub container, but that nested poorly with the parent
- * (`near` layer) refraction filter and rendered the entire sub
- * invisibly when both filters stacked.
+ * intensity drives the lamp alpha breathing. An `AdvancedBloomFilter`
+ * on the sub container layers a soft halo over the mint strokes so
+ * the player's position reads as emissive against the fluidic
+ * backdrop. The bloom is on the `fx` layer (mounted by bridge.ts),
+ * which is NOT a refraction target — the previous bug where the sub
+ * vanished came from stacking bloom inside `near`'s
+ * DisplacementFilter, plus the upstream pixi#11467 filter-resolution
+ * issue. Both are addressed: player is on fx, and the FilterSystem
+ * resolution patch (src/render/filterResolutionPatch.ts) ensures the
+ * bloom texture matches the renderer's DPR.
  */
 
 export interface PlayerController {
@@ -21,14 +26,15 @@ export interface PlayerController {
 export function mountPlayer(parent: Container): PlayerController {
   const subContainer = new Container();
   subContainer.label = "player:sub";
-  // The `subContainer` previously wore an AdvancedBloomFilter for the
-  // sub's emissive halo. Once the `near` layer gained its own
-  // DisplacementFilter (refraction), the nested filter stack
-  // (`bloom → displacement`) caused pixi to render the sub to a
-  // bounded texture that the displacement step then sampled outside,
-  // producing a fully-invisible sub. Removing the inner bloom: the
-  // mint-stroke hull + lamp gradient + halo ring already give the
-  // emissive identity without the bloom's compositional cost.
+  subContainer.filters = [
+    new AdvancedBloomFilter({
+      threshold: 0.45,
+      bloomScale: 0.85,
+      brightness: 1,
+      blur: 4,
+      quality: 4,
+    }),
+  ];
 
   const trail = new Graphics();
   const buff = new Graphics();

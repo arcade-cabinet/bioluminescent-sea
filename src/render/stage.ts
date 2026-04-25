@@ -1,4 +1,5 @@
 import { Application, Container } from "pixi.js";
+import { applyFilterResolutionPatch } from "./filterResolutionPatch";
 
 /**
  * PixiJS stage lifecycle + layer ordering.
@@ -33,6 +34,13 @@ export interface PixiStage {
 }
 
 export async function createStage(canvas: HTMLCanvasElement): Promise<PixiStage> {
+  // Workaround for pixijs/pixijs#11467 — filters at default
+  // resolution=1 render at lower res than a retina renderer,
+  // producing a quadrant-clipping artifact. Apply once before any
+  // app.init so the patched FilterSystem is in place when filters
+  // first push.
+  applyFilterResolutionPatch();
+
   const app = new Application();
   await app.init({
     canvas,
