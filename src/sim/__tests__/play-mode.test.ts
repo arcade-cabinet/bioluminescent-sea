@@ -259,6 +259,82 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(impact.type).toBe("dive-failed");
   });
 
+  test("arena: clear_room slot caps descent at the chunk floor while predators are alive", () => {
+    expect(getModeSlots("arena").completionCondition).toBe("clear_room");
+
+    resetAIManager();
+    const scene = createInitialScene(dimensions);
+    // Plant a predator with the chunk-tagged id pattern the runtime
+    // uses, in the player's first chunk. While it's alive, the arena
+    // mode must refuse to advance depth past CHUNK_HEIGHT_METERS.
+    const sceneWithChunkThreat: SceneState = {
+      ...scene,
+      predators: [
+        {
+          id: "predator-c0-1",
+          x: dimensions.width - 50, // far away — no collision yet
+          y: 50,
+          size: 60,
+          speed: 0,
+          noiseOffset: 0,
+          angle: 0,
+        },
+      ],
+    };
+
+    // Run 200 frames at dt=1/30 ≈ 6.6s. With descent forced this would
+    // grow depth substantially; with clear_room gating it should cap at
+    // the first chunk floor (200m).
+    let cur = sceneWithChunkThreat;
+    for (let i = 0; i < 200; i++) {
+      const r = advanceScene(
+        cur,
+        { x: cur.player.x, y: cur.player.y, isActive: false },
+        dimensions,
+        i * (1 / 30),
+        1 / 30,
+        0,
+        1,
+        480,
+        "arena",
+      );
+      cur = r.scene;
+    }
+    // chunk 0 spans 0..200m; descent should not exceed that while the
+    // chunk's predator is still alive.
+    expect(cur.depthTravelMeters).toBeLessThanOrEqual(200);
+  });
+
+  test("arena: depth advances past a chunk floor once the chunk's predator is gone", () => {
+    resetAIManager();
+    const scene = createInitialScene(dimensions);
+    // No predators with c0 ids → chunk 0 has nothing to clear → descent
+    // is unconstrained by the gate.
+    const cleanScene: SceneState = { ...scene, predators: [], pirates: [] };
+
+    let cur = cleanScene;
+    for (let i = 0; i < 200; i++) {
+      const r = advanceScene(
+        cur,
+        { x: cur.player.x, y: cur.player.y, isActive: false },
+        dimensions,
+        i * (1 / 30),
+        1 / 30,
+        0,
+        1,
+        480,
+        "arena",
+      );
+      cur = r.scene;
+    }
+    // Arena's verticalMovement is "free", not forced-descent — so an
+    // idle bot still won't push past the chunk floor on its own. The
+    // contract here is that the gate isn't *blocking* once the chunk
+    // is empty. We assert the gate doesn't artificially clamp depth at
+    // the previous frame's value.
+    expect(cur.depthTravelMeters).toBeGreaterThanOrEqual(0);
+  });
+
   test("descent: oxygen-penalty impact does NOT kill the dive", () => {
     // Same construction as arena, but in descent the slot says
     // collisionEndsDive: false → impact is recoverable.

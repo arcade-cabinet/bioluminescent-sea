@@ -12,7 +12,11 @@ QUEUE_FILE="$REPO/docs/PRODUCTION.md"
 
 OPEN_BOXES=0
 if [ -f "$QUEUE_FILE" ]; then
-  OPEN_BOXES=$(grep -c '^\- \[ \]' "$QUEUE_FILE" 2>/dev/null || echo 0)
+  # `grep -c` exits non-zero on zero matches; under `set -euo pipefail`
+  # `|| echo 0` runs in *addition* to grep's "0" and produces "0\n0".
+  # Use `|| true` and clamp via parameter expansion.
+  OPEN_BOXES=$(grep -c '^\- \[ \]' "$QUEUE_FILE" 2>/dev/null || true)
+  OPEN_BOXES=${OPEN_BOXES:-0}
 fi
 
 if [ "$OPEN_BOXES" = "0" ]; then

@@ -293,25 +293,42 @@ export function DiveScreen({
         depthTravelMeters: depthTravelMetersRef.current,
       }),
       score: scoreRef.current,
+      seed,
       telemetry: telemetryRef.current,
       timeLeft: timeLeftRef.current,
     });
-  }, [mode]);
+  }, [mode, seed]);
+
+  // Track every setTimeout we schedule so unmount can cancel them
+  // (otherwise the dismiss callback fires after the component is gone
+  // and React warns about state updates on unmounted components).
+  const pulseTimeoutsRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    const timeouts = pulseTimeoutsRef.current;
+    return () => {
+      for (const id of timeouts) window.clearTimeout(id);
+      timeouts.clear();
+    };
+  }, []);
 
   const showOxygenPulse = useCallback((bonusSeconds: number, totalTime: number) => {
     const id = `oxygen-${Math.round(totalTime * 1000)}`;
     setOxygenPulse({ bonusSeconds, id });
-    window.setTimeout(() => {
+    const handle = window.setTimeout(() => {
+      pulseTimeoutsRef.current.delete(handle);
       setOxygenPulse((current) => (current?.id === id ? null : current));
     }, 1_200);
+    pulseTimeoutsRef.current.add(handle);
   }, []);
 
   const showImpactPulse = useCallback((penaltySeconds: number, totalTime: number) => {
     const id = `impact-${Math.round(totalTime * 1000)}`;
     setImpactPulse({ id, penaltySeconds });
-    window.setTimeout(() => {
+    const handle = window.setTimeout(() => {
+      pulseTimeoutsRef.current.delete(handle);
       setImpactPulse((current) => (current?.id === id ? null : current));
     }, 1_300);
+    pulseTimeoutsRef.current.add(handle);
   }, []);
 
   useEffect(() => {
@@ -403,6 +420,16 @@ export function DiveScreen({
       particlesRef.current = result.scene.particles;
       depthTravelMetersRef.current = result.scene.depthTravelMeters;
 
+      // Expire stale collection bursts every frame, regardless of whether
+      // a new pickup happened. Otherwise the last burst lingers
+      // indefinitely if the player goes a long stretch without
+      // collecting — the renderer keeps drawing it past its 0.85s window.
+      if (collectionBurstsRef.current.length > 0) {
+        collectionBurstsRef.current = collectionBurstsRef.current.filter(
+          (burst) => effectiveTotalTime - burst.startedAt < 0.95,
+        );
+      }
+
       if (result.collection.collected.length > 0) {
         void playSfx("collect");
         collectionBurstsRef.current.push(
@@ -414,9 +441,6 @@ export function DiveScreen({
             x: creature.x,
             y: creature.y,
           })),
-        );
-        collectionBurstsRef.current = collectionBurstsRef.current.filter(
-          (burst) => effectiveTotalTime - burst.startedAt < 0.95,
         );
         multiplierRef.current = result.collection.multiplier;
         lastCollectTimeRef.current = result.collection.lastCollectTime;

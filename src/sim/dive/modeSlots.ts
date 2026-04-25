@@ -1,4 +1,5 @@
 import type { SessionMode } from "@/sim/_shared/sessionMode";
+import { GAME_DURATION } from "./constants";
 
 /**
  * Single declarative source of truth for what makes a dive mode different.
@@ -97,7 +98,10 @@ export const MODE_SLOTS: Record<SessionMode, ModeSlots> = {
     collectionOxygenScale: 1,
     predatorSpeedScale: 1,
     pirateSpeedScale: 1,
-    durationSeconds: 600, // GAME_DURATION
+    // Single source of truth: pull from GAME_DURATION so tuning that
+    // constant flows through cleanly. The mode.ts adapter no longer
+    // overrides this.
+    durationSeconds: GAME_DURATION,
   },
   arena: {
     verticalMovement: "free",

@@ -1,5 +1,4 @@
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
-import { GAME_DURATION } from "./constants";
 import { getModeSlots, type ModeSlots } from "./modeSlots";
 import type { DiveModeTuning } from "./types";
 import type { SubUpgrades } from "@/sim/meta/upgrades";
@@ -7,16 +6,13 @@ import type { SubUpgrades } from "@/sim/meta/upgrades";
 /**
  * Adapts the canonical `ModeSlots` record into the legacy `DiveModeTuning`
  * shape that older callers (`advanceScene`, `resolveDiveThreatImpact`) read.
- * The slot record is the source of truth — this is just a projection.
- *
- * `descent` mode pulls its base oxygen budget from `GAME_DURATION` so any
- * tuning to the global default flows through cleanly.
+ * The slot record is the single source of truth; this is just a projection.
  */
-function tuningFromSlots(slots: ModeSlots, isDescent: boolean): DiveModeTuning {
+function tuningFromSlots(slots: ModeSlots): DiveModeTuning {
   return {
     collectionOxygenScale: slots.collectionOxygenScale,
     collisionEndsDive: slots.collisionEndsDive,
-    durationSeconds: isDescent ? GAME_DURATION : slots.durationSeconds,
+    durationSeconds: slots.durationSeconds,
     impactGraceSeconds: slots.impactGraceSeconds,
     impactOxygenPenaltySeconds: slots.impactOxygenPenaltySeconds,
     pirateSpeedScale: slots.pirateSpeedScale,
@@ -37,7 +33,7 @@ export function getDiveModeTuning(
 ): DiveModeTuning {
   const sessionMode = normalizeSessionMode(mode);
   const slots = getModeSlots(sessionMode);
-  const base = tuningFromSlots(slots, sessionMode === "descent");
+  const base = tuningFromSlots(slots);
   if (!upgrades) return base;
 
   return {

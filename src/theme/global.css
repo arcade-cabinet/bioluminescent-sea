@@ -18,6 +18,10 @@
   --color-abyss: #0a1a2e;
   --color-deep: #0e4f55;
   --color-glow: #6be6c1;
+  /* Softened glow for the meditative exploration mode tile. Same family
+   * as --color-glow, paler. Stays inside the locked palette since it's
+   * a desaturation along the same hue. */
+  --color-glow-soft: #a4d8c5;
   --color-fg: #d9f2ec;
   --color-fg-muted: #8aa7a2;
   --color-warn: #ff6b6b;

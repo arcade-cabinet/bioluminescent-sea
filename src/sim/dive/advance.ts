@@ -4,6 +4,7 @@ import {
   advancePlayer,
   createInitialPlayer,
 } from "@/sim/entities";
+import { CHUNK_HEIGHT_METERS } from "@/sim/chunk";
 import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
 import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
 import { getDiveModeTuning } from "./mode";
@@ -124,9 +125,41 @@ export function advanceScene(
   const passiveDescent = deltaTime * DESCENT_SPEED_METERS_PER_SECOND * (isOverdrive ? 1.5 : 1);
   const targetDepthOffset = tuning.freeVerticalMovement ? Math.max(0, player.targetY - player.y) * 0.05 : passiveDescent;
 
-  const nextDepthTravelMeters = tuning.completionCondition === "infinite" 
-    ? scene.depthTravelMeters + targetDepthOffset
-    : Math.min(tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS, scene.depthTravelMeters + targetDepthOffset);
+  // clear_room gating: in arena mode, cap descent at the floor of the
+  // current chunk while predators belonging to that chunk are still
+  // alive. Once the room is cleared, the cap lifts and the player can
+  // advance into the next chunk's room. The chunk index is encoded in
+  // every spawner id (`predator-c<idx>-…`, `marauder-sub-c<idx>-…`,
+  // `leviathan-c<idx>`); we count how many of those still match the
+  // current chunk. Pirates count too — they're a chunk threat.
+  const currentChunkIndex = Math.floor(scene.depthTravelMeters / CHUNK_HEIGHT_METERS);
+  const chunkSuffix = `-c${currentChunkIndex}`;
+  const isThreatInCurrentChunk = (id: string): boolean => {
+    // Match `predator-c3-…`, `marauder-sub-c3-…`, `leviathan-c3`, `pirate-c3-…`.
+    if (id.endsWith(chunkSuffix)) return true; // leviathan, anomaly
+    return id.includes(`${chunkSuffix}-`);
+  };
+  const livePredatorsInChunk =
+    predators.filter((p) => isThreatInCurrentChunk(p.id)).length +
+    pirates.filter((p) => isThreatInCurrentChunk(p.id)).length;
+  const chunkLocked =
+    tuning.completionCondition === "clear_room" && livePredatorsInChunk > 0;
+  const chunkFloorMeters = (currentChunkIndex + 1) * CHUNK_HEIGHT_METERS;
+
+  let nextDepthTravelMeters: number;
+  if (chunkLocked) {
+    nextDepthTravelMeters = Math.min(
+      chunkFloorMeters,
+      scene.depthTravelMeters + targetDepthOffset,
+    );
+  } else if (tuning.completionCondition === "infinite") {
+    nextDepthTravelMeters = scene.depthTravelMeters + targetDepthOffset;
+  } else {
+    nextDepthTravelMeters = Math.min(
+      tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS,
+      scene.depthTravelMeters + targetDepthOffset,
+    );
+  }
 
   const nextPlayer = { 
     ...player, 

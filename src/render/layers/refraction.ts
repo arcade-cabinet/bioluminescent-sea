@@ -96,6 +96,12 @@ export function mountRefraction(
       displacementSprite.y = (totalTime * 8) % NOISE_SIZE;
     },
     destroy() {
+      // Detach the dead filters from each target before destroying them,
+      // otherwise pixi tries to use freed GL resources on the next frame.
+      targets.forEach((t, i) => {
+        const list = Array.isArray(t.filters) ? t.filters : t.filters ? [t.filters] : [];
+        t.filters = list.filter((f) => f !== filters[i]);
+      });
       for (const f of filters) f.destroy?.();
       displacementSprite.destroy();
       texture.destroy();

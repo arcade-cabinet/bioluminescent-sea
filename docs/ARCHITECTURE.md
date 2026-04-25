@@ -221,7 +221,7 @@ else who loaded that URL at the same commit.
 | ------------- | --------------------------------------------------------- |
 | src/sim/*     | src/sim/*, seedrandom, yuka, (pure stdlib)                |
 | src/ecs/*     | src/ecs/*, src/sim/*, koota                               |
-| src/render/*  | src/render/*, src/ecs/*, src/sim/* (types only), pixi.js  |
+| src/render/*  | src/render/*, src/ecs/*, src/sim/* (types only), pixi.js, pixi-filters |
 | src/audio/*   | src/audio/*, src/ecs/*, src/sim/* (types), tone, howler   |
 | src/platform/*| src/platform/*, @capacitor/*                              |
 | src/data/*    | src/data/*, src/sim/* (types), zod                        |

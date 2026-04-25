@@ -17,8 +17,13 @@ QUEUE_FILE="$REPO/docs/PRODUCTION.md"
   echo "Repo: $REPO"
   echo ""
   if [ -f "$QUEUE_FILE" ]; then
-    OPEN=$(grep -c '^\- \[ \]' "$QUEUE_FILE" 2>/dev/null || echo 0)
-    DONE=$(grep -c '^\- \[x\]' "$QUEUE_FILE" 2>/dev/null || echo 0)
+    # See pat-on-back-trap.sh: grep -c on zero matches needs `|| true`
+    # (not `|| echo 0`) under set -euo pipefail or the variable becomes
+    # "0\n0" and downstream string compares break.
+    OPEN=$(grep -c '^\- \[ \]' "$QUEUE_FILE" 2>/dev/null || true)
+    OPEN=${OPEN:-0}
+    DONE=$(grep -c '^\- \[x\]' "$QUEUE_FILE" 2>/dev/null || true)
+    DONE=${DONE:-0}
     echo "PRODUCTION queue: $DONE done · $OPEN open"
     echo ""
     if [ "$OPEN" != "0" ]; then
