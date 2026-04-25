@@ -79,11 +79,16 @@ describe("dive mode slot system", () => {
   });
 
   test("hull upgrade reduces impact penalty with a floor at 0", () => {
+    // Descent's base penalty is 25s after the balance pass (was 45s).
+    // Hull upgrade still subtracts 10s per level with a floor at 0.
     const baseSlots = getModeSlots("descent");
-    expect(baseSlots.impactOxygenPenaltySeconds).toBe(45);
+    expect(baseSlots.impactOxygenPenaltySeconds).toBe(25);
 
-    const lvl3 = getDiveModeTuning("descent", { hull: 3, battery: 0, motor: 0, lamp: 0 });
-    expect(lvl3.impactOxygenPenaltySeconds).toBe(15);
+    const lvl1 = getDiveModeTuning("descent", { hull: 1, battery: 0, motor: 0, lamp: 0 });
+    expect(lvl1.impactOxygenPenaltySeconds).toBe(15);
+
+    const lvl2 = getDiveModeTuning("descent", { hull: 2, battery: 0, motor: 0, lamp: 0 });
+    expect(lvl2.impactOxygenPenaltySeconds).toBe(5);
 
     // Beyond what the slot can absorb — clamps at 0, never goes negative.
     const lvl5 = getDiveModeTuning("descent", { hull: 5, battery: 0, motor: 0, lamp: 0 });

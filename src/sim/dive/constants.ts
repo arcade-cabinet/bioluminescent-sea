@@ -1,6 +1,10 @@
 export const GAME_DURATION = 600;
-export const MAX_CHAIN_MULTIPLIER = 5;
-export const STREAK_WINDOW_SECONDS = 2;
+export const MAX_CHAIN_MULTIPLIER = 6;
+// Chain decay window. Was 2s — too tight; casual play hovered at ×1
+// because the next beacon was rarely close enough to get to inside
+// 2s. Widened to 3.5s so a moderate pace sustains ×3-4, expert play
+// pushes to ×6 max.
+export const STREAK_WINDOW_SECONDS = 3.5;
 
 /**
  * Passive descent speed in world-meters per second. The sub drifts
