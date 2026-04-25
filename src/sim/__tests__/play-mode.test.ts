@@ -349,6 +349,99 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(cur.depthTravelMeters).toBeLessThanOrEqual(200);
   });
 
+  test("arena: a cleared pocket stays cleared even if respawned predators arrive later", () => {
+    // Pocket-clear is sticky: once a chunk's threat count hits zero in
+    // pocket mode, the chunk's index lands in scene.clearedChunks, and
+    // a future frame whose chunk is full of (respawned) predators
+    // reads that flag and refuses to re-lock the gate.
+    resetAIManager();
+    const scene = createInitialScene(dimensions);
+    const cleanScene: SceneState = { ...scene, predators: [], pirates: [] };
+
+    // Frame 1: no predators in chunk 0 → gate releases → chunk 0 is
+    // marked cleared.
+    const after1 = advanceScene(
+      cleanScene,
+      { x: cleanScene.player.x, y: cleanScene.player.y, isActive: false },
+      dimensions,
+      0,
+      1 / 30,
+      0,
+      1,
+      480,
+      "arena",
+    ).scene;
+    expect(after1.clearedChunks ?? []).toContain(0);
+
+    // Frame 2: pretend a respawn dropped a fresh predator into chunk 0,
+    // and seed the player just above the chunk-0 floor with strong
+    // downward input. With a *fresh* (uncleared) chunk this would clamp
+    // depth to 200m. With the chunk already on clearedChunks, the gate
+    // is dropped — depth must be allowed to grow past 200m.
+    const repopulated: SceneState = {
+      ...after1,
+      predators: [
+        {
+          id: "predator-c0-99",
+          x: dimensions.width - 50,
+          y: 50,
+          size: 60,
+          speed: 0,
+          noiseOffset: 0,
+          angle: 0,
+        },
+      ],
+      depthTravelMeters: 195,
+    };
+    const after2 = advanceScene(
+      repopulated,
+      { x: repopulated.player.x, y: repopulated.player.y + 5000, isActive: true },
+      dimensions,
+      1 / 30,
+      1 / 30,
+      0,
+      1,
+      480,
+      "arena",
+    ).scene;
+    expect(after2.depthTravelMeters).toBeGreaterThan(200);
+
+    // Sanity: a NEW chunk (chunk 1) freshly entered with predators
+    // would still clamp at the next chunk floor — only the cleared
+    // chunk is sticky.
+    const enterChunk1: SceneState = {
+      ...after2,
+      predators: [
+        {
+          id: "predator-c1-1",
+          x: dimensions.width - 50,
+          y: 50,
+          size: 60,
+          speed: 0,
+          noiseOffset: 0,
+          angle: 0,
+        },
+      ],
+      depthTravelMeters: 250,
+    };
+    let cur = enterChunk1;
+    for (let i = 0; i < 100; i++) {
+      const r = advanceScene(
+        cur,
+        { x: cur.player.x, y: cur.player.y + 5000, isActive: true },
+        dimensions,
+        i * (1 / 30),
+        1 / 30,
+        0,
+        1,
+        480,
+        "arena",
+      );
+      cur = r.scene;
+    }
+    expect(cur.depthTravelMeters).toBeLessThanOrEqual(400); // chunk 1 floor
+  });
+
   test("arena: depth advances past a chunk floor once the chunk's predator is gone", () => {
     resetAIManager();
     const scene = createInitialScene(dimensions);

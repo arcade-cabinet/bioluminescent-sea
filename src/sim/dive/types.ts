@@ -42,6 +42,14 @@ export interface SceneState {
    * `createObjectiveQueue(mode)` at dive start.
    */
   objectiveQueue: import("@/sim/factories/dive").ObjectiveProgress[];
+  /**
+   * Arena pocket-clear set. Once a chunk's threats are thinned to
+   * zero in pocket mode, the engine adds the chunk index here and
+   * the gate stays dropped — even if respawnThreats re-seeds new
+   * predators for the chunk later, the player can swim through.
+   * Empty/missing for non-pocket modes.
+   */
+  clearedChunks?: number[];
 }
 
 export interface CreatureCollectionResult {
