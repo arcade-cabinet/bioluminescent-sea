@@ -4,11 +4,11 @@ import { getArchetype } from "@/sim/factories/actor";
 import {
   EnemySubHuntBehavior,
   GameVehicle,
-  WanderBehavior,
   WrapPlayBandBehavior,
 } from "./steering";
 import { PredatorBrain } from "./predator-brain/PredatorBrain";
 import { profileForPredatorId } from "./predator-brain/archetype-profiles";
+import { PirateBrain } from "./pirate-brain/PirateBrain";
 import type { ViewportDimensions } from "@/sim/dive/types";
 import { resolveNumeric } from "@/sim/_shared/variance";
 
@@ -23,6 +23,10 @@ export class AIManager {
    *  vehicleMap because PredatorBrain has the StateMachine + memory
    *  + pack messaging surface that AIManager needs to tick + read. */
   private predatorBrainMap: Map<string, PredatorBrain> = new Map();
+  /** Pirate brains keyed by entity id. Same reason as
+   *  predatorBrainMap — the brain owns awareness + lantern-cone
+   *  detection that the renderer reads. */
+  private pirateBrainMap: Map<string, PirateBrain> = new Map();
   /** Wall-clock seconds since AIManager construction; pushed into
    *  every brain's tick() so memory + fuzzy "recent damage" maths
    *  work without each brain tracking its own clock. */
@@ -153,20 +157,23 @@ export class AIManager {
 
   syncPirates(pirates: Pirate[]) {
     for (const p of pirates) {
-      let vehicle = this.vehicleMap.get(p.id);
-      if (!vehicle) {
-        vehicle = new GameVehicle(p.id);
-        vehicle.position.set(p.x, p.y, 0);
-        vehicle.maxSpeed = p.speed * 60;
-        
-        const wander = new WanderBehavior(p.noiseOffset);
-        vehicle.steering.add(wander);
-        
-        const wrap = new WrapPlayBandBehavior(this.viewportWidth);
-        vehicle.steering.add(wrap);
-        
-        this.entityManager.add(vehicle);
-        this.vehicleMap.set(p.id, vehicle);
+      let brain = this.pirateBrainMap.get(p.id);
+      if (!brain) {
+        brain = new PirateBrain(p.id, p.speed * 60, this.viewportWidth, p.noiseOffset);
+        brain.position.set(p.x, p.y, 0);
+        brain.attachPlayer(this.playerVehicle);
+        this.entityManager.add(brain);
+        this.pirateBrainMap.set(p.id, brain);
+      }
+    }
+    // Prune brains for retired pirates so the entity manager doesn't
+    // accumulate ghost vehicles patrolling chunks the player has long
+    // since left.
+    const liveIds = new Set(pirates.map((p) => p.id));
+    for (const [id, brain] of this.pirateBrainMap.entries()) {
+      if (!liveIds.has(id)) {
+        this.entityManager.remove(brain);
+        this.pirateBrainMap.delete(id);
       }
     }
   }
@@ -242,6 +249,9 @@ export class AIManager {
     // when the integration step runs.
     for (const brain of this.predatorBrainMap.values()) {
       brain.tick(deltaTime, this.currentTime);
+    }
+    for (const brain of this.pirateBrainMap.values()) {
+      brain.tick(deltaTime);
     }
     this.entityManager.update(deltaTime);
   }
@@ -404,6 +414,16 @@ export class AIManager {
   }
 
   readPirate(p: Pirate): Pirate {
+    const brain = this.pirateBrainMap.get(p.id);
+    if (brain) {
+      return {
+        ...p,
+        x: brain.position.x,
+        y: brain.position.y,
+        angle: Math.atan2(brain.velocity.y, brain.velocity.x),
+        awareness: brain.awareness,
+      };
+    }
     const vehicle = this.vehicleMap.get(p.id);
     if (!vehicle) return p;
 
