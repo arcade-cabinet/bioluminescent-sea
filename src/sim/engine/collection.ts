@@ -50,6 +50,10 @@ export function collectCreatures(
   let nextLastCollectTime = lastCollectTime;
 
   for (const creature of creatures) {
+    if (creature.ambient) {
+      remaining.push(creature);
+      continue;
+    }
     const distance = Math.hypot(creature.x - player.x, creature.y - player.y);
 
     if (distance < creature.size * 0.56 + 30) {

@@ -29,6 +29,13 @@ export interface Creature {
    * World-space depth of the creature in meters.
    */
   worldYMeters?: number;
+  /**
+   * Atmospheric fish — small, dim, drift through the chunk to give a
+   * sense of life. Skipped by collection (no Lux, no oxygen, no chain
+   * impact) and rendered without bloom; their job is to keep the
+   * water from feeling empty between scoring beacons.
+   */
+  ambient?: boolean;
 }
 
 export interface Predator {
