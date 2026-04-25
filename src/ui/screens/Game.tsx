@@ -19,7 +19,6 @@ import { DrydockScreen } from "@/ui/shell/DrydockScreen";
 import {
   clearDeepSeaSnapshot,
   type DeepSeaRunSnapshot,
-  resolveDeepSeaSnapshot,
 } from "@/lib/diveSnapshot";
 import { recordScoreIfBest } from "@/lib/bestScore";
 import { CompletionBackdrop } from "./CompletionBackdrop";
@@ -103,14 +102,15 @@ export default function Game(props: GameProps = {}) {
   }, [gameState, finalScore]);
 
   const startDive = (seed: number) => {
-    const snapshot = resolveDeepSeaSnapshot();
-    // Resume the snapshot's *original* seed if present so the world
-    // matches the saved entities. Older snapshots (pre seed-storage)
-    // don't carry a seed; in that case fall back to the picker's seed.
-    const nextSeed = snapshot?.seed ?? seed;
-    setActiveSeed(nextSeed);
-    pushSeedToUrl(nextSeed);
-    setInitialSnapshot(snapshot);
+    // The user explicitly clicked "Begin Dive" with a fresh seed —
+    // they want a new dive, not a resumed one. Snapshot restore only
+    // makes sense for in-tab refreshes (browser reload), not for
+    // user-initiated session starts. Drop any persisted snapshot
+    // here so the dive starts clean.
+    clearDeepSeaSnapshot();
+    setActiveSeed(seed);
+    pushSeedToUrl(seed);
+    setInitialSnapshot(null);
     setPickerMode(null);
     setGameState("playing");
   };

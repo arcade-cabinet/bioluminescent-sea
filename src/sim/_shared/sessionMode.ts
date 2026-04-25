@@ -63,9 +63,12 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   exploration: {
     id: "exploration",
     label: "Exploration",
-    tagline: "Drift the photic shelf. Chart the reef at your own pace.",
+    // The player commands a submersible. Old taglines treated the
+    // player as the shelf itself ("drift the photic shelf"); rewritten
+    // to make the sub the subject and the shelf its environment.
+    tagline: "Glide the photic shelf in your sub. Chart the reef at your own pace.",
     description:
-      "A slow survey of the upper trench. Long oxygen, soft currents, free movement through bioluminescent gardens — the chart is yours to read.",
+      "Pilot the submersible through the upper trench. Long oxygen, soft currents, free movement past bioluminescent gardens — the chart is yours to read.",
     // Soft variant of --color-glow used for the meditative mode tile.
     accentHex: "#a4d8c5",
     accentVar: "var(--color-glow-soft, #a4d8c5)",

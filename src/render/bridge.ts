@@ -113,8 +113,16 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       // player swim away from the encounter.
       const targetScrollX = playerValue.x - v.widthPx * 0.5;
       const cameraTravel = root?.cameraTravel ?? "open";
+      const lateralCameraLocked = root?.lateralCameraLocked ?? false;
       let nextScrollX = targetScrollX;
-      if (cameraTravel === "locked-room" && root) {
+      // Mode-level camera pin (Descent). Holds scroll-x at zero so
+      // the world doesn't pan with the player even though the player
+      // can wiggle inside the visible viewport. Wins over chunk-
+      // level travel because Descent's lateral lock is a stronger
+      // claim than any per-chunk policy.
+      if (lateralCameraLocked) {
+        nextScrollX = 0;
+      } else if (cameraTravel === "locked-room" && root) {
         const minScrollX = root.activeChunkBoundsLeftPx;
         const maxScrollX = root.activeChunkBoundsRightPx - v.widthPx;
         nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));

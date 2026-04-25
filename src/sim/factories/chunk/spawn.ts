@@ -83,7 +83,11 @@ export function spawnPredatorsForChunk(
 ): Predator[] {
   const biome = biomeById(chunk.biome);
   const isStygian = chunk.biome === "stygian-abyss";
-  const baseCount = Math.round(biome.predatorDensity * 3);
+  // Density × 6 (was × 3): with the play band 7× the viewport wide,
+  // the previous count produced ~1 predator per chunk for twilight-
+  // shelf — most off-screen at any given moment. Doubled here so the
+  // player typically has 2-3 visible threats around them.
+  const baseCount = Math.round(biome.predatorDensity * 6);
   // Pattern scales the raw count: swarm doubles, shoal-press triples,
   // scattered stays at biome density. This keeps each chunk's pressure
   // tuneable from the mode slot alone.
@@ -313,6 +317,12 @@ export function spawnAmbientFishForChunk(
   const rng = createRng(chunk.seed + 31337);
   const { width, height } = viewport;
 
+  // Mix species: ~50% fish, ~30% jellyfish, ~20% plankton. The
+  // renderer branches on Creature.type so each shape paints
+  // differently — without this every ambient drifter rendered as a
+  // fish silhouette and the trench looked monotonous.
+  const ambientTypes: CreatureType[] = ["fish", "fish", "fish", "fish", "fish", "jellyfish", "jellyfish", "jellyfish", "plankton", "plankton"];
+
   return Array.from({ length: AMBIENT_FISH_PER_CHUNK }, (_, index) => {
     const worldYMeters = round(
       chunk.yTopMeters + rng.range(0.05, 0.95) * CHUNK_HEIGHT_METERS,
@@ -321,14 +331,20 @@ export function spawnAmbientFishForChunk(
     const chunkLocalY = (worldYMeters - chunk.yTopMeters) / CHUNK_HEIGHT_METERS;
     const xNorm = rng.range(0.02, 0.98);
     const yNorm = 0.05 + chunkLocalY * 0.9;
+    const type = rng.pick(ambientTypes);
+    // Each ambient species gets a slightly different muted palette
+    // so the eye reads variety even at small sizes / dim glow.
+    const palette =
+      type === "jellyfish"
+        ? { color: "#7a8aa6", glow: "#a0b8e0" }
+        : type === "plankton"
+          ? { color: "#94a8a0", glow: "#c2dccd" }
+          : { color: "#7896a3", glow: "#9fc8c0" };
 
     return {
       ambient: true,
-      // Brighter mint-tinted slate so ambient fish aren't pure
-      // grey-on-navy invisible. Their job is to populate the trench
-      // visually; a slight bioluminescence sells "this water is alive."
-      color: "#7896a3",
-      glowColor: "#9fc8c0",
+      color: palette.color,
+      glowColor: palette.glow,
       glowIntensity: round(0.42 + rng.range(0, 0.18), 3),
       id: `ambient-c${chunk.index}-${index + 1}`,
       noiseOffsetX: round(rng.range(0, 1000), 2),
@@ -336,7 +352,7 @@ export function spawnAmbientFishForChunk(
       pulsePhase: round(rng.range(0, Math.PI * 2), 3),
       size: round(rng.range(14, 22), 2),
       speed: round(rng.range(0.08, 0.22), 3),
-      type: "fish" as const,
+      type,
       worldYMeters,
       x: round(playBandMinX(width) + xNorm * playBandWidth(width), 2),
       y: round(yNorm * height, 2),

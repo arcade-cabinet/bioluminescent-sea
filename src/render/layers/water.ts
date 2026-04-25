@@ -67,9 +67,14 @@ export function mountWater(parent: Container): WaterController {
   surface.addChild(surfaceRect);
 
   const godray = new GodrayFilter({
-    // Slightly off-vertical so shafts feel cinematic rather than orthogonal.
-    angle: 28,
-    gain: 0.36,
+    // Reduced from 28° → 8°: at 28° the beams pile up in the upper-
+    // left quadrant of the viewport and read as a rectangular bright
+    // patch instead of full-width volumetric light. Near-vertical
+    // covers the whole top.
+    angle: 8,
+    // Gain dropped from 0.36 → 0.22 — beams were too saturated and
+    // bleached the top of the canvas.
+    gain: 0.22,
     lacunarity: 2.75,
     parallel: true,
   });
@@ -118,7 +123,7 @@ export function mountWater(parent: Container): WaterController {
         .fill({ color: 0x6be6c1, alpha: 0.055 * depthFade });
 
       godray.time = totalTime;
-      godray.gain = 0.36 * depthFade;
+      godray.gain = 0.22 * depthFade;
       godray.lacunarity = 2.75;
 
       // --- Paint caustics in a coarse grid -----------------------------------

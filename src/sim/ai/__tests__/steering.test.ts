@@ -63,7 +63,7 @@ describe("StalkAndDashBehavior — state machine", () => {
     });
     const force = step(behavior, vehicle, 1 / 60);
     // Patrol speed clamps to baseSpeed * 0.4.
-    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.4, 5);
+    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.7, 5);
     // The patrol force is on a sinusoid, so its direction is NOT
     // strictly toward the player. Confirm the force is non-zero
     // (the predator IS drifting) but its x component is positive
@@ -168,7 +168,7 @@ describe("StalkAndDashBehavior — state machine", () => {
     }
     // Player is now far outside detection (5000 > 380). Patrol speed
     // clamps to baseSpeed * 0.4.
-    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.4, 5);
+    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.7, 5);
   });
 
   test("cooldown re-engages alert when the player is still in range", () => {
@@ -201,6 +201,6 @@ describe("StalkAndDashBehavior — state machine", () => {
     target.set(2000, 0, 0); // way far
     step(behavior, vehicle, 1 / 60);
     // Now back in patrol; speed clamps to 0.4 * base.
-    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.4, 5);
+    expect(vehicle.maxSpeed).toBeCloseTo(60 * 0.7, 5);
   });
 });

@@ -30,22 +30,20 @@ export function advancePlayer(
   { width, height }: ViewportDimensions,
   totalTime: number,
   deltaTime: number,
-  lateralLocked = false
+  // The lateralLocked flag previously dropped lateral INPUT entirely,
+  // which locked the player from moving sideways at all. Wrong
+  // contract — Descent should lock the CAMERA (so the player feels
+  // pinned to the trench's centerline visually), not the player's
+  // ability to wiggle within the viewport. We keep the param for
+  // backward compatibility but no longer use it here; render/bridge
+  // owns the camera-pan suppression instead.
+  _lateralLocked = false
 ): Player {
   // Input comes in as pixel-x already offset by the camera scroll
   // (DeepSeaGame applies the scroll delta before the sim tick), so
   // here we clamp to the full lateral play band — the viewport is no
-  // longer the world. Y stays viewport-clamped: descent owns the
-  // vertical axis, player input is horizontal + pitch.
-  //
-  // Descent's lateralMovement="locked" slot pins the sub on its
-  // initial heading: lateral input is ignored, the engine still
-  // tracks vertical (input.y becomes the only steerable axis).
-  const targetX = lateralLocked
-    ? player.targetX
-    : input.isActive
-      ? clampToPlayBand(input.x, width)
-      : player.targetX;
+  // longer the world.
+  const targetX = input.isActive ? clampToPlayBand(input.x, width) : player.targetX;
   const targetY = input.isActive ? clamp(input.y, 0, height) : player.targetY;
   const dx = targetX - player.x;
   const dy = targetY - player.y;
