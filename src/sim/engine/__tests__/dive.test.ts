@@ -144,15 +144,22 @@ describe("deep sea simulation", () => {
     // holds across many seeds rather than any single seed's draw.
     const seeds = Array.from({ length: 12 }, (_, i) => 1000 + i * 137);
     for (const seed of seeds) {
-      expect(getDiveDurationSeconds("descent", seed)).toBeGreaterThanOrEqual(8 * 60);
+      // Every mode must be playable for at least 10 minutes.
+      expect(getDiveDurationSeconds("exploration", seed)).toBeGreaterThanOrEqual(600);
+      expect(getDiveDurationSeconds("descent", seed)).toBeGreaterThanOrEqual(600);
+      expect(getDiveDurationSeconds("arena", seed)).toBeGreaterThanOrEqual(600);
+      // Descent stays inside its authored envelope.
       expect(getDiveDurationSeconds("descent", seed)).toBeLessThanOrEqual(15 * 60);
-      // Exploration's envelope is strictly above Descent's.
-      expect(getDiveDurationSeconds("exploration", seed)).toBeGreaterThan(
-        getDiveDurationSeconds("descent", seed) - 60,
-      );
-      // Arena's envelope is strictly below Descent's.
-      expect(getDiveDurationSeconds("arena", seed)).toBeLessThan(
+      // Exploration is the most generous oxygen budget.
+      expect(getDiveDurationSeconds("exploration", seed)).toBeGreaterThanOrEqual(
         getDiveDurationSeconds("descent", seed),
+      );
+      // Arena's envelope ceiling is below Exploration's (the tightest
+      // budget of the three). Cross-comparison with Descent is
+      // intentionally not asserted — both modes have overlapping
+      // ranges around 600s.
+      expect(getDiveDurationSeconds("arena", seed)).toBeLessThanOrEqual(
+        getDiveDurationSeconds("exploration", seed),
       );
       // Arena's threat radius envelope is above Descent's.
       expect(getDiveModeTuning("arena", seed).threatRadiusScale).toBeGreaterThan(

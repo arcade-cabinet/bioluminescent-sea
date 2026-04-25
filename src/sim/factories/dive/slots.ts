@@ -146,7 +146,9 @@ const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
     collectionOxygenScale: [0.95, 1.25],
     predatorSpeedScale: [0.85, 1.15],
     pirateSpeedScale: [0.85, 1.15],
-    durationSeconds: [GAME_DURATION - 60, GAME_DURATION + 120],
+    // Floor at GAME_DURATION (10 min) — every dive is playable for at
+    // least 10 minutes regardless of seed.
+    durationSeconds: [GAME_DURATION, GAME_DURATION + 180],
   },
   arena: {
     // Arena strings together clear-to-advance pockets. Per-dive
@@ -169,7 +171,10 @@ const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
     collectionOxygenScale: [0.6, 0.9],
     predatorSpeedScale: [1.1, 1.4],
     pirateSpeedScale: [1.1, 1.4],
-    durationSeconds: [420, 540],
+    // Floor at 600s (10 min) — every dive is playable for at least
+    // 10 minutes regardless of seed. Arena's pace is faster so the
+    // ceiling is tighter than Descent's.
+    durationSeconds: [600, 720],
   },
 };
 
