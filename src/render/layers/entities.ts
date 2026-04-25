@@ -996,4 +996,30 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
       alpha: 0.18 * eyeAlpha,
     });
   }
+
+  // ---- Damage cracks — accumulate as the lamp wears the predator
+  //   down. Three pseudo-random kerf lines across the body, each
+  //   appearing at successive damage thresholds (33%, 66%, 95%) so
+  //   the player visibly sees the lamp working before the predator
+  //   actually breaks off.
+  const dmg = p.damageFraction ?? 0;
+  if (dmg > 0.05) {
+    const noise = p.noiseOffset;
+    const crackThresholds = [0.33, 0.66, 0.95];
+    for (let i = 0; i < crackThresholds.length; i++) {
+      if (dmg < crackThresholds[i] - 0.05) continue;
+      const phase = noise + i * 1.7;
+      const x0 = -p.size * 0.45 + Math.cos(phase) * p.size * 0.2;
+      const y0 = Math.sin(phase * 1.3) * p.size * 0.18 + undulation;
+      const x1 = -p.size * 0.15 + Math.cos(phase * 0.7) * p.size * 0.18;
+      const y1 = Math.sin(phase * 0.9) * p.size * 0.14 + undulation;
+      const x2 = p.size * 0.2 + Math.cos(phase * 1.1) * p.size * 0.18;
+      const y2 = Math.sin(phase * 1.4) * p.size * 0.16 + undulation;
+      g.moveTo(x0, y0);
+      g.lineTo(x1, y1);
+      g.lineTo(x2, y2);
+      const crackAlpha = Math.min(1, (dmg - (crackThresholds[i] - 0.1)) / 0.2);
+      g.stroke({ color: 0xff8a4a, alpha: 0.85 * crackAlpha, width: 1.2 });
+    }
+  }
 }

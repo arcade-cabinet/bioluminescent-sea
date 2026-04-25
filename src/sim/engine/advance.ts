@@ -89,6 +89,14 @@ export function advanceScene(
   ai.syncCreatures(scene.creatures);
   ai.update(deltaTime);
 
+  // Lamp-pressure: predators inside the player's lamp cone take
+  // damage and flip to FleeState. Lamp-flare buff doubles the cone.
+  // This is the player's only offensive tool — the lamp is the
+  // bridge between "vehicle with a light" and "predator deterrent."
+  const isLampFlareActive = player.activeBuffs.lampFlareUntil > totalTime;
+  const lampBoost = isLampFlareActive ? 1.35 : 1;
+  ai.applyLampPressure(player.x, player.y, player.angle, player.lampScale, lampBoost);
+
   // Lure buff: collectibles within the lure radius drift toward the
   // player. Only acts on non-ambient creatures (scoring beacons) so
   // ambient atmosphere doesn't get sucked in. Strength scales with
@@ -115,10 +123,15 @@ export function advanceScene(
     return { ...base, x: nx, y: ny };
   });
 
-  const predators = scene.predators.map((p) => {
-    const updated = ai.readPredator(p);
-    return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
-  });
+  // Prune predators the lamp killed last frame. The brain map cleanup
+  // happens on the next syncPredators tick (live-ids set drops them).
+  const deadIds = ai.getDeadPredatorIds();
+  const predators = scene.predators
+    .filter((p) => !deadIds.has(p.id))
+    .map((p) => {
+      const updated = ai.readPredator(p);
+      return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
+    });
 
   const pirates = scene.pirates.map((p) => {
     const updated = ai.readPirate(p);

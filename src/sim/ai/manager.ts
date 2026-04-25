@@ -234,6 +234,71 @@ export class AIManager {
     this.entityManager.update(deltaTime);
   }
 
+  /**
+   * Push the player's lamp cone against every predator brain. Any
+   * brain whose centre falls inside the cone takes damage — its
+   * StateMachine flips to FleeState (unless mid-strike) and its
+   * fuzzy "recentPain" axis lights up, so the predator visibly
+   * recoils, dims, and turns tail. Called once per frame from the
+   * sim's advance step.
+   *
+   * The lamp cone is the same geometry the renderer draws:
+   *   - origin: player position
+   *   - forward: player.angle
+   *   - length: 180 * lampScale * lampBoost
+   *   - half-spread (radians): atan(80*lampScale*lampBoost / length)
+   *
+   * Predators take damage at most once per
+   * `predatorLampDamageCooldownSeconds` so a stationary lamp doesn't
+   * spam the brain into a flee-loop forever.
+   */
+  applyLampPressure(
+    playerX: number,
+    playerY: number,
+    playerAngle: number,
+    lampScale: number,
+    lampBoost: number,
+  ): void {
+    const length = 180 * lampScale * lampBoost;
+    const halfSpread = 80 * lampScale * lampBoost;
+    const halfAngle = Math.atan2(halfSpread, length);
+    const lengthSq = length * length;
+    for (const brain of this.predatorBrainMap.values()) {
+      if (brain.currentAiState === "ambient") continue; // leviathans ignore lamp
+      // Skip brains we recently damaged so the cone doesn't lock a
+      // predator into permanent flee.
+      if (this.currentTime - brain.lastDamageReceivedTime < 1.2) continue;
+      const dx = brain.position.x - playerX;
+      const dy = brain.position.y - playerY;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > lengthSq) continue;
+      // Cone test: angle from player-forward to brain must be within
+      // halfAngle. Use atan2 of the rotated coordinates.
+      const cos = Math.cos(-playerAngle);
+      const sin = Math.sin(-playerAngle);
+      const localX = dx * cos - dy * sin;
+      const localY = dx * sin + dy * cos;
+      if (localX <= 0) continue; // behind the lamp
+      const angleFromAxis = Math.atan2(Math.abs(localY), localX);
+      if (angleFromAxis > halfAngle) continue;
+      brain.receiveDamage(this.currentTime);
+    }
+  }
+
+  /**
+   * IDs of predator brains whose HP has fallen to zero. The sim's
+   * advance() filters these out of the next scene tick, then
+   * syncPredators on the next call will prune them from the brain
+   * map. Returning a set keeps the lookup O(1) on the caller side.
+   */
+  getDeadPredatorIds(): Set<string> {
+    const dead = new Set<string>();
+    for (const [id, brain] of this.predatorBrainMap) {
+      if (brain.isDead()) dead.add(id);
+    }
+    return dead;
+  }
+
   readPredator(p: Predator): Predator {
     const brain = this.predatorBrainMap.get(p.id);
     if (brain) {
@@ -244,6 +309,7 @@ export class AIManager {
         angle: Math.atan2(brain.velocity.y, brain.velocity.x),
         aiState: brain.currentAiState,
         stateProgress: brain.currentStateProgress,
+        damageFraction: 1 - brain.hp,
       };
     }
     const vehicle = this.vehicleMap.get(p.id);

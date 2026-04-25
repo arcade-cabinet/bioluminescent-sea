@@ -116,8 +116,28 @@ export class PredatorBrain extends Vehicle {
   private patrolAnchor = new Vector3();
 
   /** When the brain last took damage. Drives flee transitions + the
-   *  fuzzy desirability "recent pain" axis. */
-  private lastDamageTime = -Infinity;
+   *  fuzzy desirability "recent pain" axis. Also read by the lamp-
+   *  pressure pass in AIManager to avoid spamming damage every frame
+   *  while the cone overlaps. */
+  public lastDamageReceivedTime = -Infinity;
+
+  /**
+   * Hull integrity 0..1. Lamp pressure deducts a fixed amount per
+   * hit; reaching 0 retires the brain (caller checks `isDead()`).
+   * The renderer reads this via the Predator entity's `aiState` +
+   * a future `damage` field — for now, falling HP just steepens the
+   * fuzzy "recentPain" weight so a damaged predator gets visibly
+   * less aggressive before it finally breaks off.
+   */
+  public hp = 1;
+
+  /**
+   * How much HP the lamp removes per damage pulse. Tuned so a player
+   * holding the lamp on a single predator for ~1.5 cone-cooldowns
+   * (≈ 1.8s of focused pressure) breaks it. Wider archetypes have
+   * thicker hides so they take longer.
+   */
+  public readonly lampDamagePerHit = 0.34;
 
   /**
    * When set, StalkState seeks this position instead of pursuing the
@@ -203,10 +223,15 @@ export class PredatorBrain extends Vehicle {
   }
 
   receiveDamage(currentTime: number): void {
-    this.lastDamageTime = currentTime;
+    this.lastDamageReceivedTime = currentTime;
+    this.hp = Math.max(0, this.hp - this.lampDamagePerHit);
     if (this.stateMachine.currentState !== this.stateMachine.states.get(STRIKE)) {
       this.stateMachine.changeTo(FLEE);
     }
+  }
+
+  isDead(): boolean {
+    return this.hp <= 0;
   }
 
   // ---- Per-tick API ------------------------------------------------------
@@ -386,7 +411,7 @@ export class PredatorBrain extends Vehicle {
 
   fuzzyAttackDesirability(): number {
     const distance = this.distanceToPlayer();
-    const timeSinceDamage = this.currentTime - this.lastDamageTime;
+    const timeSinceDamage = this.currentTime - this.lastDamageReceivedTime;
     const packCount = this.packMates.filter((p) => p.currentAiState === "stalk" || p.currentAiState === "charge").length;
     this.fuzzy.fuzzify("distance", Math.min(distance, 800));
     this.fuzzy.fuzzify("recentPain", Math.min(timeSinceDamage, 10));

@@ -79,6 +79,12 @@ export interface Predator {
    * the maw opens linearly across charge, strike fires at chargeProgress=1.
    */
   stateProgress?: number;
+  /**
+   * 0 = uninjured, 1 = fully damaged (about to die). Drives the
+   * renderer's crack overlay and stroke dimming so the player sees
+   * the lamp working before the predator actually breaks off.
+   */
+  damageFraction?: number;
 }
 
 export interface Pirate {
