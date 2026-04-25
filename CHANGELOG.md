@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.15.0...v0.16.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** predator death animation — sink, fade, bubbles ([#138](https://github.com/arcade-cabinet/bioluminescent-sea/issues/138)) ([3c13eb6](https://github.com/arcade-cabinet/bioluminescent-sea/commit/3c13eb6ac12953c8c6211567c07e5f5023b31096))
+
 ## [0.15.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.14.0...v0.15.0) (2026-04-25)
 
 
