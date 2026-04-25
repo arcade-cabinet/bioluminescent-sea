@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.7.1...v0.7.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **bs:** carousel nav arrows clipped off-screen on mobile ([#103](https://github.com/arcade-cabinet/bioluminescent-sea/issues/103)) ([645f991](https://github.com/arcade-cabinet/bioluminescent-sea/commit/645f99181f8e9e8b4c06aaeef0210eaac0c96057))
+* **bs:** refraction filter left a visible rectangle in upper-left ([#105](https://github.com/arcade-cabinet/bioluminescent-sea/issues/105)) ([8a6a3e8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/8a6a3e8348b07a8ad542da8e7101ccfc8fe71c38))
+* **bs:** water depth-tint filter clipped to half-screen rectangle ([#106](https://github.com/arcade-cabinet/bioluminescent-sea/issues/106)) ([124f2ac](https://github.com/arcade-cabinet/bioluminescent-sea/commit/124f2acdcf91aef21ee51c73ba42740653134052))
+
 ## [0.7.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.7.0...v0.7.1) (2026-04-25)
 
 
