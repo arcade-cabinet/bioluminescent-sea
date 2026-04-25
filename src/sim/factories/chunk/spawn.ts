@@ -237,11 +237,61 @@ export function spawnAnomaliesForChunk(
   }];
 }
 
+/**
+ * Atmospheric ambient fish — small, dim drifters scattered across the
+ * chunk. They never count for score, oxygen, or chain (collection
+ * skips `ambient: true`); their entire job is to make the water feel
+ * alive between bright scoring beacons. ~12 per chunk regardless of
+ * biome — a baseline density the player always sees.
+ */
+const AMBIENT_FISH_PER_CHUNK = 12;
+
+export function spawnAmbientFishForChunk(
+  chunk: Chunk,
+  viewport: ViewportDimensions,
+): Creature[] {
+  // Use a distinct rng offset from beacons/predators so adding ambient
+  // fish doesn't disturb the deterministic positions of scoring
+  // entities in saved seeds.
+  const rng = createRng(chunk.seed + 31337);
+  const { width, height } = viewport;
+
+  return Array.from({ length: AMBIENT_FISH_PER_CHUNK }, (_, index) => {
+    const worldYMeters = round(
+      chunk.yTopMeters + rng.range(0.05, 0.95) * CHUNK_HEIGHT_METERS,
+      2,
+    );
+    const chunkLocalY = (worldYMeters - chunk.yTopMeters) / CHUNK_HEIGHT_METERS;
+    const xNorm = rng.range(0.02, 0.98);
+    const yNorm = 0.05 + chunkLocalY * 0.9;
+
+    return {
+      ambient: true,
+      color: "#5a7d8a",
+      glowColor: "#5a7d8a",
+      glowIntensity: round(0.18 + rng.range(0, 0.12), 3),
+      id: `ambient-c${chunk.index}-${index + 1}`,
+      noiseOffsetX: round(rng.range(0, 1000), 2),
+      noiseOffsetY: round(rng.range(0, 1000), 2),
+      pulsePhase: round(rng.range(0, Math.PI * 2), 3),
+      size: round(rng.range(8, 14), 2),
+      speed: round(rng.range(0.08, 0.22), 3),
+      type: "fish" as const,
+      worldYMeters,
+      x: round(playBandMinX(width) + xNorm * playBandWidth(width), 2),
+      y: round(yNorm * height, 2),
+    };
+  });
+}
+
 export function spawnCreaturesForChunks(
   chunks: readonly Chunk[],
   viewport: ViewportDimensions,
 ): Creature[] {
-  return chunks.flatMap((c) => spawnCreaturesForChunk(c, viewport));
+  return chunks.flatMap((c) => [
+    ...spawnCreaturesForChunk(c, viewport),
+    ...spawnAmbientFishForChunk(c, viewport),
+  ]);
 }
 
 export function spawnPredatorsForChunks(

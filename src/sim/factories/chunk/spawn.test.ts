@@ -91,13 +91,16 @@ describe("spawnCreaturesForChunk", () => {
 });
 
 describe("spawnCreaturesForChunks", () => {
-  it("flatmaps creatures across chunks", () => {
+  it("flatmaps scoring beacons + ambient fish across chunks", () => {
     const chunks = [chunkAt(0, 42), chunkAt(1, 42), chunkAt(2, 42)];
     const creatures = spawnCreaturesForChunks(chunks, viewport);
-    const expected = chunks
+    const expectedBeacons = chunks
       .flatMap((c) => spawnCreaturesForChunk(c, viewport))
       .length;
-    expect(creatures.length).toBe(expected);
+    // Ambient fish also flow through spawnCreaturesForChunks; scoring
+    // beacons keep their 1:1 correspondence with spawnCreaturesForChunk.
+    expect(creatures.filter((c) => !c.ambient).length).toBe(expectedBeacons);
+    expect(creatures.filter((c) => c.ambient).length).toBeGreaterThan(0);
   });
 
   it("is deterministic across the trench for a given master seed", () => {

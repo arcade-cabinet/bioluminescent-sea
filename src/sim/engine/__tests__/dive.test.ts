@@ -85,6 +85,28 @@ describe("deep sea simulation", () => {
     expect(result.lastCollectTime).toBe(4);
   });
 
+  test("ambient creatures are atmosphere only — never collected, never score", () => {
+    // An ambient fish parked exactly on the player must not score, must
+    // not consume a chain, and must remain in the residual list for the
+    // next frame.
+    const ambient: Creature = {
+      ...createCreature("fish", 100, 100),
+      id: "ambient-c0-1",
+      ambient: true,
+    };
+    const result = collectCreatures(
+      [ambient],
+      createPlayer({ x: 100, y: 100 }),
+      4,
+      2.5,
+      2,
+    );
+    expect(result.collected).toHaveLength(0);
+    expect(result.creatures).toEqual([ambient]);
+    expect(result.scoreDelta).toBe(0);
+    expect(result.oxygenBonusSeconds).toBe(0);
+  });
+
   test("resets stale combo windows and caps active chains", () => {
     expect(calculateMultiplier(0, 1, 4)).toBe(1);
     expect(calculateMultiplier(3, 7.2, 4)).toBe(1);

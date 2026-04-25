@@ -238,10 +238,11 @@ export function retireChunkCreatures(
   for (const entity of w.creatureEntities) {
     const trait = entity.get(CreatureEntity);
     const id = trait?.value.id ?? "";
-    // chunked-spawn ids are shaped `beacon-c<idx>-<n>`. Parse the
+    // chunked-spawn ids are shaped `beacon-c<idx>-<n>` (scoring
+    // beacons) or `ambient-c<idx>-<n>` (atmospheric fish). Parse the
     // index out; non-chunked creatures (legacy seeded spawn) keep
     // their entities — the lifecycle only touches chunked ones.
-    const match = id.match(/^beacon-c(\d+)-/);
+    const match = id.match(/^(?:beacon|ambient)-c(\d+)-/);
     if (match && retiredSet.has(Number.parseInt(match[1], 10))) {
       entity.destroy();
       continue;
