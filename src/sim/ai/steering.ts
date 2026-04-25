@@ -160,7 +160,11 @@ export class StalkAndDashBehavior extends SteeringBehavior {
   private dashSpeed: number;
   private dashDistance: number;
   private stalkDistance: number;
-  
+  private detectionRadius: number;
+  // Per-instance phase so out-of-detection drift differs across
+  // predators in the same chunk.
+  private wanderSeed: number;
+
   constructor(target: Vector3, baseSpeed: number) {
     super();
     this.target = target;
@@ -168,11 +172,36 @@ export class StalkAndDashBehavior extends SteeringBehavior {
     this.dashSpeed = baseSpeed * 2.8; // Huge burst of speed
     this.dashDistance = 240; // Starts dash when close
     this.stalkDistance = 450; // Slows down to match speed when in this band
+    // Beyond this radius the predator drifts on its own loop instead
+    // of beelining toward the player. Gives the player a window to
+    // react after spawn — without it, a predator at y=0.08 of the
+    // viewport immediately heads for y=0.54 and the chunk-0 carve-out
+    // is defeated by global pursuit.
+    this.detectionRadius = 700;
+    // Seed the wander phase off the predator's spawn-time speed so
+    // each predator drifts on a different orbit. Avoids Math.random()
+    // (the sim layer must stay deterministic) without needing a full
+    // RNG plumb-through.
+    this.wanderSeed = (baseSpeed * 7919) % (Math.PI * 2);
   }
 
   calculate(vehicle: Vehicle, force: Vector3, _delta: number): Vector3 {
     const toTarget = new Vector3().subVectors(this.target, vehicle.position);
     const dist = toTarget.length();
+
+    // Out of detection range: drift on a slow sinusoid so predators
+    // patrol their pocket rather than beelining for the player.
+    if (dist > this.detectionRadius) {
+      vehicle.maxSpeed = this.baseSpeed * 0.45;
+      const t = vehicle.position.x * 0.001 + this.wanderSeed;
+      force.set(
+        Math.cos(t) * vehicle.maxSpeed,
+        Math.sin(t * 1.3) * vehicle.maxSpeed * 0.5,
+        0,
+      );
+      force.sub(vehicle.velocity);
+      return force;
+    }
 
     if (dist < this.dashDistance) {
       vehicle.maxSpeed = this.dashSpeed;

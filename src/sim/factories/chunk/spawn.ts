@@ -300,14 +300,17 @@ export function spawnAmbientFishForChunk(
 
     return {
       ambient: true,
-      color: "#5a7d8a",
-      glowColor: "#5a7d8a",
-      glowIntensity: round(0.18 + rng.range(0, 0.12), 3),
+      // Brighter mint-tinted slate so ambient fish aren't pure
+      // grey-on-navy invisible. Their job is to populate the trench
+      // visually; a slight bioluminescence sells "this water is alive."
+      color: "#7896a3",
+      glowColor: "#9fc8c0",
+      glowIntensity: round(0.42 + rng.range(0, 0.18), 3),
       id: `ambient-c${chunk.index}-${index + 1}`,
       noiseOffsetX: round(rng.range(0, 1000), 2),
       noiseOffsetY: round(rng.range(0, 1000), 2),
       pulsePhase: round(rng.range(0, Math.PI * 2), 3),
-      size: round(rng.range(8, 14), 2),
+      size: round(rng.range(14, 22), 2),
       speed: round(rng.range(0.08, 0.22), 3),
       type: "fish" as const,
       worldYMeters,
