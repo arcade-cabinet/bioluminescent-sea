@@ -148,6 +148,16 @@ export interface Player {
     lureUntil: number;
     /** Doubles lampScale + collection radius while > totalTime. */
     lampFlareUntil: number;
+    /**
+     * Adrenaline active window — when totalTime < this, the world
+     * runs in 0.7× time-scale and player input gain is boosted to
+     * 1.4× so the player can dodge a flank press. Triggered
+     * automatically when threat intensity hits 1.0 (4+ active
+     * threats), gated by `adrenalineCooldownUntil` so it can't
+     * trigger again until 8s after the previous burst ended.
+     */
+    adrenalineUntil: number;
+    adrenalineCooldownUntil: number;
   };
   /**
    * Wall-time seconds when the player last took an impact. Drives

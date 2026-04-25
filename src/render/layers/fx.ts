@@ -45,6 +45,10 @@ export interface FxController {
       age: number;
       lifetime: number;
     }[];
+    /** True while adrenaline is active. The FX layer paints a
+     *  cyan-edged chromatic vignette so the slow-mo state is
+     *  visually unmistakable. */
+    adrenalineActive: boolean;
   }): void;
   destroy(): void;
 }
@@ -62,6 +66,7 @@ export function mountFx(parent: Container): FxController {
   const impactRipples = new Graphics();
   const flankArcs = new Graphics();
   const leviathanVignette = new Graphics();
+  const adrenalineVignette = new Graphics();
   const threatFlash = new Graphics();
   parent.addChild(
     sonar,
@@ -70,6 +75,7 @@ export function mountFx(parent: Container): FxController {
     impactRipples,
     flankArcs,
     leviathanVignette,
+    adrenalineVignette,
     threatFlash,
   );
 
@@ -80,7 +86,7 @@ export function mountFx(parent: Container): FxController {
   let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive }) {
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -324,6 +330,32 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Adrenaline vignette — cyan-tinted radial inset that pulses
+      // sharply on the rising edge then settles into a calm border.
+      // Visually distinguishes the slow-mo state from the violet
+      // leviathan vignette so a player in adrenaline + leviathan
+      // proximity can read both cues at once.
+      adrenalineVignette.clear();
+      if (adrenalineActive) {
+        const breath = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 8));
+        const baseAlpha = 0.45 * breath;
+        const w = viewport.widthPx;
+        const h = viewport.heightPx;
+        const bandSteps = 4;
+        const bandW = w * 0.16;
+        const bandH = h * 0.18;
+        for (let i = 0; i < bandSteps; i++) {
+          const t = (i + 1) / bandSteps;
+          const a = baseAlpha * (1 - t * t * t);
+          const inset = t * bandW;
+          const insetH = t * bandH;
+          adrenalineVignette.rect(0, 0, w, insetH).fill({ color: 0x6be6c1, alpha: a });
+          adrenalineVignette.rect(0, h - insetH, w, insetH).fill({ color: 0x6be6c1, alpha: a });
+          adrenalineVignette.rect(0, 0, inset, h).fill({ color: 0x6be6c1, alpha: a });
+          adrenalineVignette.rect(w - inset, 0, inset, h).fill({ color: 0x6be6c1, alpha: a });
+        }
+      }
+
       threatFlash.clear();
       if (threatFlashAlpha > 0) {
         threatFlash.rect(0, 0, viewport.widthPx, viewport.heightPx).fill({
@@ -339,6 +371,7 @@ export function mountFx(parent: Container): FxController {
       impactRipples.destroy();
       flankArcs.destroy();
       leviathanVignette.destroy();
+      adrenalineVignette.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;
     },

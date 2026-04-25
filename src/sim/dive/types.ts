@@ -183,6 +183,14 @@ export interface SceneAdvanceResult {
     age: number;
     lifetime: number;
   }[];
+  /**
+   * True if Adrenaline is currently active. The runtime scales
+   * game-loop deltaTime to 0.7× while this is set, so the world
+   * runs in slow-mo and the player input gain is effectively 1.4×.
+   * Renderer reads it for a chromatic-pulse vignette + sonar
+   * acceleration — visually clear that time has changed.
+   */
+  adrenalineActive: boolean;
 }
 
 export interface DiveModeTuning {

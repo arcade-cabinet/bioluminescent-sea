@@ -22,6 +22,8 @@ export function createInitialPlayer({ width, height }: ViewportDimensions): Play
       overdriveUntil: 0,
       lureUntil: 0,
       lampFlareUntil: 0,
+      adrenalineUntil: 0,
+      adrenalineCooldownUntil: 0,
     },
   };
 }

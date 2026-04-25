@@ -187,7 +187,27 @@ export function advanceScene(
   let activeOverdrive = player.activeBuffs.overdriveUntil;
   let activeLure = player.activeBuffs.lureUntil;
   let activeLampFlare = player.activeBuffs.lampFlareUntil;
+  let activeAdrenaline = player.activeBuffs.adrenalineUntil;
+  let activeAdrenalineCooldown = player.activeBuffs.adrenalineCooldownUntil;
   let breathBonus = 0;
+
+  // Adrenaline trigger: when threat intensity is at full saturation
+  // (4+ active stalk/charge/strike predators near the player) and
+  // the cooldown gate is open, fire a 1.5s burst. While active,
+  // game-loop deltaTime is scaled 0.7× by the runtime — the player
+  // experiences slow-mo + ~1.4× input gain, can dodge a flank press
+  // that would otherwise be unwinnable. Cooldown locks for 8s after
+  // the burst ends so the mechanic stays meaningful.
+  const threatIntensityNow = ai.computeThreatIntensity(player.x, player.y);
+  const adrenalineActive = activeAdrenaline > totalTime;
+  if (
+    threatIntensityNow >= 0.95 &&
+    !adrenalineActive &&
+    totalTime >= activeAdrenalineCooldown
+  ) {
+    activeAdrenaline = totalTime + 1.5;
+    activeAdrenalineCooldown = totalTime + 1.5 + 8;
+  }
 
   for (const collected of anomalyCollection.collected) {
     if (collected.type === "repel") activeRepel = totalTime + 15;
@@ -296,6 +316,8 @@ export function advanceScene(
       overdriveUntil: activeOverdrive,
       lureUntil: activeLure,
       lampFlareUntil: activeLampFlare,
+      adrenalineUntil: activeAdrenaline,
+      adrenalineCooldownUntil: activeAdrenalineCooldown,
     },
     // Stamp impact wall-time for the renderer's hull flicker. The
     // 0.6s window matches the renderer's flicker duration; older
@@ -390,6 +412,7 @@ export function advanceScene(
     // Active flank broadcasts — fading arcs in FX layer that show
     // pack convergence vectors at the moment the engage call fires.
     flankBroadcasts: ai.recentFlankPairs(1.2),
+    adrenalineActive: activeAdrenaline > totalTime,
   };
 }
 
