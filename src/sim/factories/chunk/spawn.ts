@@ -15,6 +15,96 @@ import {
   type Predator,
   type Pirate,
 } from "@/sim/entities/types";
+import type { BiomeId } from "@/sim/factories/region/types";
+
+/**
+ * Biome-keyed species palettes. Same `CreatureType` (the renderer's
+ * shape selector) gets a different colour scheme per biome so each
+ * depth band reads as its own ecology — silver-green kelp glowfish
+ * in the photic gate, deep-amber dragonfish in the midnight column,
+ * crimson vent-fish in the abyssal trench. The `pick` function
+ * returns one variant per spawn (chunk-seeded RNG), so even within a
+ * biome a chunk can show 2-3 species shoaling together.
+ */
+const SPECIES_VARIANTS: Record<
+  BiomeId,
+  Record<CreatureType, ReadonlyArray<{ color: string; glow: string }>>
+> = {
+  "photic-gate": {
+    fish: [
+      { color: "#a8d8c5", glow: "#6be6c1" },     // mint kelp glowfish
+      { color: "#c8e6a0", glow: "#9ce86b" },     // chartreuse reef-darter
+    ],
+    jellyfish: [
+      { color: "#b3e8ff", glow: "#7dd3fc" },     // sky moon-jelly
+      { color: "#c4e8d0", glow: "#86efac" },     // pale spring-medusa
+    ],
+    plankton: [
+      { color: "#d8f3ff", glow: "#a5f3fc" },     // pale-cyan diatoms
+    ],
+  },
+  "twilight-shelf": {
+    fish: [
+      { color: "#9bb8d8", glow: "#7dd3fc" },     // chrome lanternfish
+      { color: "#a896d8", glow: "#c4b5fd" },     // violet flashlight-fish
+    ],
+    jellyfish: [
+      { color: "#a0d0e0", glow: "#67e8f9" },     // glow comb-jelly
+      { color: "#b08fd8", glow: "#a78bfa" },     // amethyst bell
+    ],
+    plankton: [
+      { color: "#b8d4e8", glow: "#7dd3fc" },     // lit-blue krill
+    ],
+  },
+  "midnight-column": {
+    fish: [
+      { color: "#5a3a2a", glow: "#fbbf24" },     // amber dragonfish
+      { color: "#3a2840", glow: "#a78bfa" },     // shadow lanternjaw
+    ],
+    jellyfish: [
+      { color: "#3a2030", glow: "#f472b6" },     // blood-bell siphonophore
+      { color: "#243450", glow: "#60a5fa" },     // sapphire pyrosome
+    ],
+    plankton: [
+      { color: "#604838", glow: "#fcd34d" },     // amber star-plankton
+    ],
+  },
+  "abyssal-trench": {
+    fish: [
+      { color: "#5a2620", glow: "#ff6b6b" },     // crimson vent-fish
+      { color: "#3a1a30", glow: "#fb7185" },     // ember chimera
+    ],
+    jellyfish: [
+      { color: "#48202a", glow: "#fb923c" },     // forge-jelly
+      { color: "#2a1a30", glow: "#f87171" },     // red-glow tube-jelly
+    ],
+    plankton: [
+      { color: "#5a2a20", glow: "#fbbf24" },     // ember plankton
+    ],
+  },
+  "stygian-abyss": {
+    fish: [
+      { color: "#1a0a14", glow: "#7c3aed" },     // void anglerjaw
+      { color: "#0a0418", glow: "#a78bfa" },     // ghost lanternjaw
+    ],
+    jellyfish: [
+      { color: "#1a0a18", glow: "#a855f7" },     // shadowbell
+    ],
+    plankton: [
+      { color: "#0a0418", glow: "#c4b5fd" },     // ghost-mote
+    ],
+  },
+};
+
+function pickSpeciesPalette(
+  biomeId: BiomeId,
+  type: CreatureType,
+  rng: { pick: <T>(arr: readonly T[]) => T },
+): { color: string; glow: string } {
+  const variants = SPECIES_VARIANTS[biomeId]?.[type];
+  if (!variants || variants.length === 0) return CREATURE_COLORS[type];
+  return rng.pick(variants);
+}
 
 /**
  * Spawn pattern — the *shape* of a chunk's threat layout. A slot value on
@@ -56,7 +146,7 @@ export function spawnCreaturesForChunk(
 
   return Array.from({ length: count }, (_, index) => {
     const type = rng.pick(types);
-    const colors = CREATURE_COLORS[type];
+    const colors = pickSpeciesPalette(chunk.biome, type, rng);
     const sizeScale = sizeForType(type);
 
     const worldYMeters = round(
