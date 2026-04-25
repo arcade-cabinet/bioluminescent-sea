@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
+import { budget, CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
 
 /**
  * Oxygen-depletion smoke. With `?devFastDive=80` the dive's oxygen
@@ -23,10 +23,11 @@ test.describe("Oxygen depletion", () => {
     });
 
     // With 80× burn, the dive's seed-resolved oxygen budget (Descent
-    // ranges 600–780s) drains in 7.5–9.75s wall clock. Add headroom
-    // for gameover transition + slow CI containers (tablet-portrait
-    // ran 18s on the run that flaked this test). 30s is the budget.
-    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: 30_000 });
+    // ranges 600–780s) drains in 7.5–9.75s wall clock. Local runs stay
+    // tight at 15s; CI doubles via the budget helper to absorb slow
+    // tablet-portrait containers (which ran 18s on the run that flaked
+    // this test before the bump).
+    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: budget(15_000) });
 
     // Final score + stats grid should be present on the surfaced screen.
     await expect(page.getByTestId("gameover-stats")).toBeVisible();
