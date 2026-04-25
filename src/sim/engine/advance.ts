@@ -136,10 +136,14 @@ export function advanceScene(
   // every spawner id (`predator-c<idx>-…`, `marauder-sub-c<idx>-…`,
   // `leviathan-c<idx>`); we count how many of those still match the
   // current chunk. Pirates count too — they're a chunk threat.
+  //
+  // The mode-wide `completionCondition === "clear_room"` check drives
+  // this for arena mode as a whole; per-chunk travel slots (open,
+  // corridor, locked-room) are a render-bridge concern — see
+  // factories/chunk/resolve.ts.
   const currentChunkIndex = Math.floor(scene.depthTravelMeters / CHUNK_HEIGHT_METERS);
   const chunkSuffix = `-c${currentChunkIndex}`;
   const isThreatInCurrentChunk = (id: string): boolean => {
-    // Match `predator-c3-…`, `marauder-sub-c3-…`, `leviathan-c3`, `pirate-c3-…`.
     if (id.endsWith(chunkSuffix)) return true; // leviathan, anomaly
     return id.includes(`${chunkSuffix}-`);
   };

@@ -1,10 +1,16 @@
-import { chunkLifecycleDelta, chunksInWindow } from "@/sim/factories/chunk";
+import {
+  chunkLifecycleDelta,
+  chunksInWindow,
+  pickChunkArchetype,
+  resolveRegionForChunk,
+} from "@/sim/factories/chunk";
 import {
   spawnAnomaliesForChunk,
   spawnCreaturesForChunk,
   spawnPiratesForChunk,
   spawnPredatorsForChunk,
 } from "@/sim/factories/chunk/spawn";
+import { getDefaultDiveArchetype } from "@/sim/factories/dive";
 import { advanceScene } from "@/sim/engine/advance";
 import { resolveDiveThreatImpact } from "@/sim/engine/impact";
 import type {
@@ -15,6 +21,7 @@ import type {
 } from "@/sim/dive/types";
 import { getModeSlots } from "@/sim/factories/dive/slots";
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
+import { playBandMaxX, playBandMinX } from "@/sim/_shared/playBand";
 import { DiveRoot } from "./traits";
 import {
   appendAnomaliesToWorld,
@@ -99,31 +106,50 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
   });
   const delta = chunkLifecycleDelta(args.world.liveChunkIndices, currentWindow);
 
-  // The mode's slots drive what spawns on each new chunk. In particular
-  // `threatPattern` chooses scattered vs swarm vs bullet-hell, and
-  // `respawnThreats` gates whether threats appear after the opening
-  // scene at all (exploration leaves the world static).
-  const slots = getModeSlots(normalizeSessionMode(args.mode));
+  // Resolve each new chunk to its ChunkArchetype via the factory
+  // pyramid: dive archetype → region sequence → per-chunk region
+  // lookup → region's chunk pool → weighted archetype pick. The chunk
+  // archetype's ChunkSlots drive what spawns; the dive-level ModeSlots
+  // (`respawnThreats`) gates whether threats appear at all.
+  const mode = normalizeSessionMode(args.mode);
+  const modeSlots = getModeSlots(mode);
+  const diveArchetype = getDefaultDiveArchetype(mode);
   const viewportOnly = {
     width: args.dimensions.width,
     height: args.dimensions.height,
   };
 
   if (delta.spawned.length > 0) {
-    const newCreatures = delta.spawned.flatMap((chunk) =>
-      spawnCreaturesForChunk(chunk, viewportOnly),
-    );
+    const chunkArchetypes = delta.spawned.map((chunk) => {
+      const region = resolveRegionForChunk(chunk, diveArchetype.regionSequence);
+      return { chunk, archetype: pickChunkArchetype(chunk, region.slots) };
+    });
+
+    const newCreatures = chunkArchetypes.flatMap(({ chunk, archetype }) => {
+      const baseSpawn = spawnCreaturesForChunk(chunk, viewportOnly);
+      // Chunk-level creatureDensity scales the count up or down; a
+      // density of 0 suppresses entirely (used by arena rooms).
+      const keep = Math.round(baseSpawn.length * archetype.slots.creatureDensity);
+      return baseSpawn.slice(0, Math.max(0, keep));
+    });
     nextWorld = appendCreaturesToWorld(nextWorld, newCreatures);
 
-    if (slots.respawnThreats) {
-      const newPredators = delta.spawned.flatMap((chunk) =>
-        spawnPredatorsForChunk(chunk, viewportOnly, slots.threatPattern),
+    if (modeSlots.respawnThreats) {
+      const newPredators = chunkArchetypes.flatMap(({ chunk, archetype }) => {
+        if (archetype.slots.predatorDensity === 0) return [];
+        const baseSpawn = spawnPredatorsForChunk(
+          chunk,
+          viewportOnly,
+          archetype.slots.threatPattern,
+        );
+        const keep = Math.round(baseSpawn.length * archetype.slots.predatorDensity);
+        return baseSpawn.slice(0, Math.max(0, keep));
+      });
+      const newPirates = chunkArchetypes.flatMap(({ chunk, archetype }) =>
+        archetype.slots.piratesAllowed ? spawnPiratesForChunk(chunk, viewportOnly) : [],
       );
-      const newPirates = delta.spawned.flatMap((chunk) =>
-        spawnPiratesForChunk(chunk, viewportOnly),
-      );
-      const newAnomalies = delta.spawned.flatMap((chunk) =>
-        spawnAnomaliesForChunk(chunk, viewportOnly),
+      const newAnomalies = chunkArchetypes.flatMap(({ chunk, archetype }) =>
+        archetype.slots.anomaliesAllowed ? spawnAnomaliesForChunk(chunk, viewportOnly) : [],
       );
       nextWorld = appendPredatorsToWorld(nextWorld, newPredators);
       nextWorld = appendPiratesToWorld(nextWorld, newPirates);
@@ -142,11 +168,35 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     liveChunkIndices: new Set(currentWindow.map((c) => c.index)),
   };
 
+  // Resolve the *active* chunk's archetype so the render bridge can
+  // pick follow-cam vs clamp-to-chunk. The active chunk is the one
+  // containing the player's current depth.
+  const activeChunk = currentWindow.find(
+    (c) => c.yTopMeters <= result.scene.depthTravelMeters &&
+           c.yBottomMeters > result.scene.depthTravelMeters,
+  ) ?? currentWindow[0];
+  let cameraTravel: "open" | "locked-room" | "corridor" = "open";
+  let activeChunkBoundsLeftPx = 0;
+  let activeChunkBoundsRightPx = 0;
+  if (activeChunk) {
+    const region = resolveRegionForChunk(activeChunk, diveArchetype.regionSequence);
+    const archetype = pickChunkArchetype(activeChunk, region.slots);
+    cameraTravel = archetype.slots.travel;
+    // The chunk's horizontal bounds are the play band. The render
+    // bridge divides by its viewport/pxPerMeter to turn this into the
+    // scrollXPx clamp range.
+    activeChunkBoundsLeftPx = playBandMinX(args.dimensions.width);
+    activeChunkBoundsRightPx = playBandMaxX(args.dimensions.width);
+  }
+
   nextWorld.rootEntity.set(DiveRoot, {
     totalTime: args.totalTime,
     threatFlashAlpha:
       nextWorld.rootEntity.get(DiveRoot)?.threatFlashAlpha ?? 0,
     depthTravelMeters: result.scene.depthTravelMeters,
+    cameraTravel,
+    activeChunkBoundsLeftPx,
+    activeChunkBoundsRightPx,
   });
 
   return { world: nextWorld, result };

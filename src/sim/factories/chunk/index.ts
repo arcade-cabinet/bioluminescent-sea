@@ -25,3 +25,8 @@ export {
   type ChunkSlots,
   type ChunkTravel,
 } from "./slots";
+
+export {
+  resolveRegionForChunk,
+  pickChunkArchetype,
+} from "./resolve";

@@ -87,4 +87,22 @@ export const DiveRoot = trait({
    * can read scene-wide depth without walking back to the sim.
    */
   depthTravelMeters: 0,
+  /**
+   * The active chunk's travel policy — "open", "locked-room", or
+   * "corridor". Resolved by the ECS action layer every frame from the
+   * dive archetype + current chunk and surfaced here so the render
+   * bridge's camera can pick follow-cam vs clamp-to-chunk without
+   * having to re-derive it. Mirror of the chunk archetype's
+   * `ChunkSlots.travel`.
+   */
+  cameraTravel: "open" as "open" | "locked-room" | "corridor",
+  /**
+   * The active chunk's horizontal bounds in world-pixels. The render
+   * bridge clamps `scrollXPx` to `[leftPx, rightPx - viewportWidth]`
+   * when `cameraTravel === "locked-room"` and follows the player
+   * freely otherwise. Split into primitive fields because Koota's
+   * trait schema rejects nested object literals.
+   */
+  activeChunkBoundsLeftPx: 0,
+  activeChunkBoundsRightPx: 0,
 });

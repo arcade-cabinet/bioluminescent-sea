@@ -104,6 +104,34 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       const playerValue = world.playerEntity.get(PlayerAvatar)?.value;
       if (!playerValue) return;
 
+      // Lateral follow-cam. The sim lives on a wider-than-viewport play
+      // band (see sim/_shared/playBand) so the viewport can scroll
+      // laterally without running out of world. By default the camera
+      // centers on the player's world-x; when the active chunk's
+      // archetype is locked-room the camera clamps to the chunk's
+      // horizontal bounds so a bullet-hell encounter doesn't let the
+      // player swim away from it.
+      const targetScrollX = playerValue.x - v.widthPx * 0.5;
+      const cameraTravel = root?.cameraTravel ?? "open";
+      let nextScrollX = targetScrollX;
+      if (cameraTravel === "locked-room" && root) {
+        const minScrollX = root.activeChunkBoundsLeftPx;
+        const maxScrollX = root.activeChunkBoundsRightPx - v.widthPx;
+        nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
+      } else if (cameraTravel === "corridor") {
+        // Corridor narrows lateral motion to a small band around the
+        // player-center. Render clamp follows the player but at 40% of
+        // the lateral play band.
+        const corridorHalfWidth = v.widthPx * 0.4;
+        const minScrollX = targetScrollX - corridorHalfWidth;
+        const maxScrollX = targetScrollX + corridorHalfWidth;
+        nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
+      }
+      // Ease toward the target so the camera glides instead of
+      // snapping when the player changes direction.
+      const easedScrollX = camera.scrollXPx + (nextScrollX - camera.scrollXPx) * 0.18;
+      camera.setScrollXPx(easedScrollX);
+
       const anomalies = collectTraitValues(
         world.anomalyEntities,
         AnomalyEntity,
