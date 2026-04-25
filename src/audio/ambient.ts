@@ -30,6 +30,15 @@ interface AmbientController {
    * smoothly so a passing predator doesn't pop the rumble in/out.
    */
   setThreatIntensity(intensity: number): void;
+  /**
+   * 0..1 leviathan proximity. Drives a separate ultra-low drone
+   * (E1) on its own gain so the player feels something MASSIVE
+   * is nearby even when the silhouette is hidden in the abyss
+   * tint. Independent of the threatRumble (predator pressure) so
+   * the two cues compose: a leviathan during a predator press is
+   * cinematic dread on top of skirmish urgency.
+   */
+  setLeviathanProximity(intensity: number): void;
   stop(): void;
 }
 
@@ -51,6 +60,11 @@ export function createAmbient(): AmbientController {
    *  same room. */
   let rumble: Tone.MonoSynth | null = null;
   let rumbleGain: Tone.Gain | null = null;
+  /** Ultra-low leviathan drone — even deeper than `rumble` (E1 vs
+   *  A1) so the two layers interlock without masking each other.
+   *  Independent gain ramps with leviathanProximity. */
+  let leviathan: Tone.MonoSynth | null = null;
+  let leviathanGain: Tone.Gain | null = null;
   let currentBiome: BiomeId = "photic-gate";
   let unsubMute: (() => void) | null = null;
 
@@ -98,6 +112,19 @@ export function createAmbient(): AmbientController {
       rumble.chain(rumbleGain, reverb);
       rumble.triggerAttack("A1");
 
+      // Leviathan drone — sub-bass E1 with a slow filter envelope.
+      // Sits a fifth below the threat rumble and rides on its own
+      // gain so the two layers interlock cleanly.
+      leviathanGain = new Tone.Gain(0);
+      leviathan = new Tone.MonoSynth({
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.8, decay: 0.4, sustain: 1, release: 2 },
+        filterEnvelope: { attack: 0.6, decay: 1, sustain: 0.7, baseFrequency: 40, octaves: 1 },
+        volume: -8,
+      });
+      leviathan.chain(leviathanGain, reverb);
+      leviathan.triggerAttack("E1");
+
       unsubMute = onMuteChange((muted) => {
         if (muted) Tone.getDestination().mute = true;
         else Tone.getDestination().mute = false;
@@ -131,6 +158,16 @@ export function createAmbient(): AmbientController {
       // of the camera-shake intensity ramp.
       filter.Q.rampTo(1.2 + clamped * 2.4, 0.6);
     },
+    setLeviathanProximity(intensity) {
+      if (!leviathanGain) return;
+      const clamped = Math.max(0, Math.min(1, intensity));
+      // Slower ramp than threat (1.2s vs 0.6s) — leviathan presence
+      // SHOULD feel like it's inevitably approaching, not snapping
+      // in/out as the player wiggles. Saturates at 0.85 gain so it
+      // never fully drowns the pad even when the player is right on
+      // top of the leviathan.
+      leviathanGain.gain.rampTo(clamped * 0.85, 1.2);
+    },
     stop() {
       if (!started) return;
       Tone.getTransport().stop();
@@ -142,11 +179,16 @@ export function createAmbient(): AmbientController {
       rumble?.triggerRelease();
       rumble?.dispose();
       rumbleGain?.dispose();
+      leviathan?.triggerRelease();
+      leviathan?.dispose();
+      leviathanGain?.dispose();
       synth = null;
       filter = null;
       reverb = null;
       rumble = null;
       rumbleGain = null;
+      leviathan = null;
+      leviathanGain = null;
       unsubMute?.();
       started = false;
     },

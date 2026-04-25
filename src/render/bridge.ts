@@ -75,6 +75,12 @@ export interface RenderFrameInput {
    * each entry as an expanding shockwave.
    */
   impactRippleAt?: { x: number; y: number } | null;
+  /**
+   * 0..1 leviathan proximity. Drives a subtle screen-edge vignette
+   * pulse so the player feels something massive nearby even when
+   * the silhouette is hidden in the abyss tint.
+   */
+  leviathanProximity?: number;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -144,7 +150,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -268,6 +274,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         lampScatterPoints: lampScatterPoints ?? [],
         threatBearings: threatBearings ?? [],
         impactRippleAt: impactRippleAt ?? null,
+        leviathanProximity: leviathanProximity ?? 0,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

@@ -541,6 +541,7 @@ export function DiveScreen({
       ambientRef.current?.setBiome(result.telemetry.biomeId);
       ambientRef.current?.setDepthMeters(result.telemetry.depthMeters);
       ambientRef.current?.setThreatIntensity(result.threatIntensity);
+      ambientRef.current?.setLeviathanProximity(result.leviathanProximity);
       if (previousBiomeRef.current !== result.telemetry.biomeId) {
         if (previousBiomeRef.current !== null) {
           void playSfx("biome-transition");
@@ -615,6 +616,7 @@ export function DiveScreen({
         lampScatterPoints: result.lampScatterPoints,
         threatBearings: result.threatBearings,
         impactRippleAt: result.impactRippleAt,
+        leviathanProximity: result.leviathanProximity,
       });
     },
     [

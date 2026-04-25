@@ -162,6 +162,13 @@ export interface SceneAdvanceResult {
    * during the impact's grace window).
    */
   impactRippleAt: { x: number; y: number } | null;
+  /**
+   * 0..1 leviathan proximity. 0 = no leviathan in scene, 1 = one
+   * is within 200px of the player. Drives ambient sub-bass drone +
+   * a cinematic edge-vignette pulse so the player feels the
+   * presence even when the silhouette is hidden in the abyss tint.
+   */
+  leviathanProximity: number;
 }
 
 export interface DiveModeTuning {
