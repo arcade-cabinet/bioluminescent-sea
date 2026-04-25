@@ -79,6 +79,17 @@ export function resolveDeepSeaSnapshot(): DeepSeaRunSnapshot | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!isDeepSeaSnapshot(parsed)) return null;
+    // Never restore a finished dive — even with the unmount race
+    // fixed in DiveScreen, an old localStorage entry from before the
+    // fix shipped could still surface a timeLeft=0 snapshot.
+    if (parsed.timeLeft <= 0) {
+      try {
+        localStorage.removeItem(DIVE_SAVE_KEY);
+      } catch {
+        // ignore
+      }
+      return null;
+    }
     return { ...parsed, scene: cloneSceneState(parsed.scene) };
   } catch {
     return null;

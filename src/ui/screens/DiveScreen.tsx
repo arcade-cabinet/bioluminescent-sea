@@ -344,6 +344,15 @@ export function DiveScreen({
     pulseTimeoutsRef.current.add(handle);
   }, []);
 
+  // Track game-over in a ref so the unmount cleanup can read the
+  // *current* value rather than the value captured when the effect
+  // last ran. Without this, the cleanup runs after onGameOver has
+  // cleared the snapshot, sees isGameOver=false (its captured value),
+  // and writes the dead state back — locking the next dive into an
+  // instant game-over loop.
+  const isGameOverRef = useRef(isGameOver);
+  isGameOverRef.current = isGameOver;
+
   useEffect(() => {
     if (isGameOver) return undefined;
 
@@ -353,7 +362,11 @@ export function DiveScreen({
     return () => {
       window.clearTimeout(initial);
       window.clearInterval(interval);
-      writeSnapshot();
+      // Never re-write a dead snapshot on unmount — the parent has
+      // already called clearDeepSeaSnapshot() in its terminal callback.
+      if (!isGameOverRef.current) {
+        writeSnapshot();
+      }
     };
   }, [isGameOver, writeSnapshot]);
 
