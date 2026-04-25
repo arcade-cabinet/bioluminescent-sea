@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.7.0...v0.7.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **bs:** Exploration idle descent never advanced past 0m ([#101](https://github.com/arcade-cabinet/bioluminescent-sea/issues/101)) ([c8bf6c7](https://github.com/arcade-cabinet/bioluminescent-sea/commit/c8bf6c7741c0f2d659dc87cc42c4c67b16bfd499))
+* **bs:** five gameplay regressions surfaced by live QA ([#99](https://github.com/arcade-cabinet/bioluminescent-sea/issues/99)) ([919a87c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/919a87ca2728ed31eeb371789b63f33829941e85))
+
 ## [0.7.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.6.1...v0.7.0) (2026-04-25)
 
 
