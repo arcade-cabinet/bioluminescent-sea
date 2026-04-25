@@ -189,46 +189,58 @@ function syncPredators(
       }
 
     } else {
-      // Normal predator rendering
+      // Normal predator rendering. Identity-coded warm: stroke uses
+      // warn-red (0xff6b6b) instead of mint so the player can never
+      // confuse it with their own sub at a glance. Eye glow is a
+      // slow amber pulse (was static cream) — sells the predator is
+      // *watching*, not just floating.
       g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).fill({
-        color: 0x081018,
-        alpha: 0.92,
+        color: 0x0c0508,
+        alpha: 0.95,
       });
       g.ellipse(0, 0, p.size * 0.7, p.size * 0.3).stroke({
-        color: 0x6be6c1,
-        alpha: 0.28,
+        color: 0xff6b6b,
+        alpha: 0.36,
         width: 1.4,
       });
 
+      // Dorsal fin
       g.moveTo(-p.size * 0.05, -p.size * 0.28);
       g.lineTo(p.size * 0.15, -p.size * 0.55);
       g.lineTo(p.size * 0.3, -p.size * 0.28);
-      g.fill({ color: 0x050a12, alpha: 0.98 });
+      g.fill({ color: 0x050207, alpha: 0.98 });
 
+      // Belly fin
       g.moveTo(p.size * 0.05, p.size * 0.22);
       g.lineTo(p.size * 0.22, p.size * 0.45);
       g.lineTo(p.size * 0.34, p.size * 0.22);
-      g.fill({ color: 0x050a12, alpha: 0.9 });
+      g.fill({ color: 0x050207, alpha: 0.9 });
 
+      // Tail
       g.moveTo(-p.size * 0.55, 0);
       g.lineTo(-p.size * 0.98, -p.size * 0.32);
       g.lineTo(-p.size * 0.78, 0);
       g.lineTo(-p.size * 0.96, p.size * 0.32);
       g.lineTo(-p.size * 0.55, 0);
-      g.fill({ color: 0x050a12, alpha: 0.97 });
+      g.fill({ color: 0x050207, alpha: 0.97 });
 
+      // Gills — faint warm-red rake near the head
       g.moveTo(p.size * 0.05, -p.size * 0.08);
       g.lineTo(p.size * 0.15, p.size * 0.05);
       g.lineTo(p.size * 0.12, -p.size * 0.12);
       g.lineTo(p.size * 0.22, 0);
-      g.stroke({ color: 0x6be6c1, alpha: 0.35, width: 1 });
+      g.stroke({ color: 0xff6b6b, alpha: 0.45, width: 1 });
 
+      // Eye — amber with a slow pulse. The pulse is a low-frequency
+      // sine on totalTime so it reads as breathing/watching, not a
+      // strobe. Pupil stays dark.
+      const eyePulse = 0.7 + 0.3 * Math.sin(totalTime * 1.4 + p.noiseOffset);
       g.circle(p.size * 0.55, -p.size * 0.08, p.size * 0.1).fill({
         color: 0xfde68a,
-        alpha: 0.9,
+        alpha: eyePulse,
       });
       g.circle(p.size * 0.58, -p.size * 0.08, p.size * 0.045).fill({
-        color: 0x050a12,
+        color: 0x050207,
         alpha: 1,
       });
     }
