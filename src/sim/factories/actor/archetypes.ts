@@ -162,6 +162,33 @@ export const ARCHETYPE_CATALOGUE = {
     speedRange: [0.5, 0.75],
   } satisfies PredatorArchetype,
 
+  // Torpedo-eel: long, sinuous, FAST. Same StalkAndDash AI for now
+  // but the renderer detects the id prefix and draws it as a wavy
+  // ribbon-eel with a glowing red maw + headlights. Visual diversity
+  // first; behaviour split lands when AIManager grows a sub-routing.
+  "torpedo-eel": {
+    id: "torpedo-eel",
+    kind: "predator",
+    behaviour: "stalk-and-dash",
+    glyph: "torpedo-eel",
+    baseSize: 70,
+    speedRange: [0.7, 1.0],
+    weight: 0.35,
+  } satisfies PredatorArchetype,
+
+  // Shadow-octopus: bulb body with eight curling tentacles that
+  // flickers in and out via a slow alpha sine. Renders distinctly via
+  // the id-prefix branch in entities.ts.
+  "shadow-octopus": {
+    id: "shadow-octopus",
+    kind: "predator",
+    behaviour: "stalk-and-dash",
+    glyph: "shadow-octopus",
+    baseSize: 80,
+    speedRange: [0.35, 0.55],
+    weight: 0.25,
+  } satisfies PredatorArchetype,
+
   "pirate-lantern": {
     id: "pirate-lantern",
     kind: "pirate",
