@@ -93,6 +93,12 @@ export interface RenderFrameInput {
     age: number;
     lifetime: number;
   }[];
+  /**
+   * True when adrenaline is active. Drives a chromatic-pulse
+   * vignette in the FX layer so the slow-mo is visually obvious
+   * (in addition to the deltaTime scaling).
+   */
+  adrenalineActive?: boolean;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -162,7 +168,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -288,6 +294,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         impactRippleAt: impactRippleAt ?? null,
         leviathanProximity: leviathanProximity ?? 0,
         flankBroadcasts: flankBroadcasts ?? [],
+        adrenalineActive: adrenalineActive ?? false,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

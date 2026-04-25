@@ -374,10 +374,21 @@ export function DiveScreen({
     };
   }, [isGameOver, writeSnapshot]);
 
+  /** Adrenaline scales the sim's deltaTime to 0.7× while active so
+   *  the world runs in slow-mo and the player input gain is
+   *  effectively 1.4×. The sim sets `result.adrenalineActive` based
+   *  on threat intensity; we read the previous frame's flag to scale
+   *  THIS frame's deltaTime so the player sees the slow-mo
+   *  immediately on trigger. */
+  const adrenalineActiveRef = useRef(false);
+
   const gameLoop = useCallback(
-    (deltaTime: number, totalTime: number) => {
+    (rawDeltaTime: number, totalTime: number) => {
       if (isGameOver) return;
 
+      // Apply adrenaline slow-mo to the sim's deltaTime. Wall-clock
+      // totalTime stays untouched so the oxygen budget isn't gamed.
+      const deltaTime = adrenalineActiveRef.current ? rawDeltaTime * 0.7 : rawDeltaTime;
       const effectiveTotalTime = elapsedOffsetRef.current + totalTime;
       // ?devFastDive=N scales how fast the oxygen budget burns. Production
       // is always 1; the Playwright oxygen-depletion spec passes ?devFastDive=80
@@ -433,6 +444,7 @@ export function DiveScreen({
         multiplier: multiplierRef.current,
       });
       worldRef.current = nextWorld;
+      adrenalineActiveRef.current = result.adrenalineActive;
 
       playerRef.current = result.scene.player;
       anomaliesRef.current = result.scene.anomalies;
@@ -618,6 +630,7 @@ export function DiveScreen({
         impactRippleAt: result.impactRippleAt,
         leviathanProximity: result.leviathanProximity,
         flankBroadcasts: result.flankBroadcasts,
+        adrenalineActive: result.adrenalineActive,
       });
     },
     [
