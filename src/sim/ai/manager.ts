@@ -124,18 +124,30 @@ export class AIManager {
       }
     }
 
-    // Wire pack-mates each tick: same-archetype brains within 1.5×
-    // detection radius are considered packmates for flank broadcasts.
-    // Done after pruning so retired brains can't be referenced.
-    const brains = Array.from(this.predatorBrainMap.values());
-    for (const brain of brains) {
-      const mates = brains.filter(
-        (m) =>
-          m !== brain &&
-          m.profile.id === brain.profile.id &&
-          m.position.distanceTo(brain.position) < brain.profile.detectionRadiusPx * 1.5,
-      );
-      brain.attachPackMates(mates);
+    // Pack-mate wiring is bucketed by archetype id so the inner
+    // distance check only walks same-archetype brains. With the
+    // typical predator population (<50 brains across 3 archetypes)
+    // each bucket is small and the work-per-frame is bounded by
+    // bucket-size² rather than total-population². The threshold
+    // (1.5× detection radius) matches broadcastEngage's filter so
+    // the pack-mate list is valid for the same set of telegrams.
+    const archetypeBuckets = new Map<string, PredatorBrain[]>();
+    for (const brain of this.predatorBrainMap.values()) {
+      let bucket = archetypeBuckets.get(brain.profile.id);
+      if (!bucket) {
+        bucket = [];
+        archetypeBuckets.set(brain.profile.id, bucket);
+      }
+      bucket.push(brain);
+    }
+    for (const bucket of archetypeBuckets.values()) {
+      for (const brain of bucket) {
+        const radius = brain.profile.detectionRadiusPx * 1.5;
+        const mates = bucket.filter(
+          (m) => m !== brain && m.position.distanceTo(brain.position) < radius,
+        );
+        brain.attachPackMates(mates);
+      }
     }
   }
 

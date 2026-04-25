@@ -200,7 +200,7 @@ export class RecoverState extends TimedState {
 export class FleeState extends TimedState {
   enter(owner: PredatorBrain): void {
     super.enter(owner);
-    this.duration = 2.5;
+    this.duration = owner.profile.fleeDurationSeconds;
     owner.activateFleeBehaviour();
     owner.publishAiState("flee");
   }

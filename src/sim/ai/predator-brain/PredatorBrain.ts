@@ -510,8 +510,16 @@ export class PredatorBrain extends Vehicle {
     arrive.weight = 1.4;
     arrive.active = false;
 
-    // PursuitBehavior needs an evader Vehicle. Set to a placeholder
-    // until attachPlayer wires the real one.
+    // PursuitBehavior's constructor demands a non-null `evader`
+    // Vehicle, so we pass `this` as a *placeholder* — the brain is a
+    // valid Vehicle, satisfying Yuka's invariant. Pursuit is
+    // immediately set inactive on the next line, so this self-
+    // referential evader is never consulted; activateStalkBehaviour()
+    // overwrites `pursue.evader` to the real player Vehicle before
+    // flipping `.active = true`. This is the cleanest pattern given
+    // Yuka's API; the alternative would be to construct the brain
+    // *after* the player vehicle, which couples spawn order in a way
+    // that breaks the EntityManager pattern.
     const pursue = new PursuitBehavior(this);
     pursue.weight = 1.4;
     pursue.active = false;

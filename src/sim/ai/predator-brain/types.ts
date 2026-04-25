@@ -52,6 +52,13 @@ export interface PredatorArchetypeProfile {
    *  offset this many radians off the engage angle. Per archetype
    *  because eels flank wider than octopi. */
   flankAngleOffset: number;
+  /**
+   * Seconds the brain spends in FleeState after taking damage.
+   * Per-archetype because the species each break differently:
+   * darters (eels) recover quickly and re-engage; grapplers
+   * (octopi) sulk longer; baseline predators sit in the middle.
+   */
+  fleeDurationSeconds: number;
 }
 
 /**

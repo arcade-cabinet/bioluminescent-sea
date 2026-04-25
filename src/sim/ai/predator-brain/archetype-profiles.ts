@@ -41,6 +41,7 @@ export const PREDATOR_PROFILES: Record<string, PredatorArchetypeProfile> = {
     fovRadians: Math.PI * 0.85,
     memorySpanSeconds: 4,
     flankAngleOffset: Math.PI / 5,
+    fleeDurationSeconds: 2.5,
   },
   "torpedo-eel": {
     id: "torpedo-eel",
@@ -56,6 +57,7 @@ export const PREDATOR_PROFILES: Record<string, PredatorArchetypeProfile> = {
     fovRadians: Math.PI * 1.0,
     memorySpanSeconds: 3,
     flankAngleOffset: Math.PI / 3,
+    fleeDurationSeconds: 1.6, // darters re-engage quickly
   },
   "shadow-octopus": {
     id: "shadow-octopus",
@@ -71,6 +73,7 @@ export const PREDATOR_PROFILES: Record<string, PredatorArchetypeProfile> = {
     fovRadians: Math.PI * 1.4,
     memorySpanSeconds: 6,
     flankAngleOffset: Math.PI / 6,
+    fleeDurationSeconds: 4, // grapplers sulk longer after a hit
   },
   default: {
     id: "default",
@@ -86,6 +89,7 @@ export const PREDATOR_PROFILES: Record<string, PredatorArchetypeProfile> = {
     fovRadians: Math.PI * 0.85,
     memorySpanSeconds: 4,
     flankAngleOffset: Math.PI / 5,
+    fleeDurationSeconds: 2.5,
   },
 };
 
