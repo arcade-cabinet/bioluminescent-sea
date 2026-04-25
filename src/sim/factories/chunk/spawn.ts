@@ -385,7 +385,13 @@ export function spawnAnomaliesForChunk(
   const rng = createRng(chunk.seed + 9999);
   if (rng.next() > 0.2) return [];
 
-  const types: AnomalyType[] = ["repel", "overdrive"];
+  const types: AnomalyType[] = [
+    "repel",
+    "overdrive",
+    "breath",
+    "lure",
+    "lamp-flare",
+  ];
   const { width, height } = viewport;
   const worldYMeters = round(chunk.yTopMeters + rng.range(0.2, 0.8) * CHUNK_HEIGHT_METERS, 2);
   const xNorm = rng.range(0.1, 0.9);

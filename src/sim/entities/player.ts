@@ -20,6 +20,8 @@ export function createInitialPlayer({ width, height }: ViewportDimensions): Play
     activeBuffs: {
       repelUntil: 0,
       overdriveUntil: 0,
+      lureUntil: 0,
+      lampFlareUntil: 0,
     },
   };
 }

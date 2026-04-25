@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { GlowFilter } from "pixi-filters";
 import type { Camera } from "@/render/camera";
 import { drawProceduralCreature } from "./creature-factory";
 import type {
@@ -21,6 +22,26 @@ export interface EntityController {
 }
 
 export function mountEntities(parent: Container): EntityController {
+  // Anomalies live in their own sub-container with a GlowFilter so
+  // the buff pickups read as emissive even at a distance — they're
+  // strategic prizes, the player should be able to spot one across
+  // the playfield. The FilterSystem patch
+  // (src/render/filterResolutionPatch.ts) auto-stamps the filter's
+  // resolution to match the renderer so it doesn't quadrant-clip on
+  // retina canvases.
+  const anomalyHost = new Container();
+  anomalyHost.label = "entities:anomalies";
+  anomalyHost.filters = [
+    new GlowFilter({
+      distance: 18,
+      outerStrength: 1.6,
+      innerStrength: 0.2,
+      color: 0xffffff,
+      quality: 0.35,
+    }),
+  ];
+  parent.addChild(anomalyHost);
+
   const anomalies = new Map<string, Graphics>();
   const creatures = new Map<string, Graphics>();
   const predators = new Map<string, Graphics>();
@@ -28,7 +49,7 @@ export function mountEntities(parent: Container): EntityController {
 
   return {
     sync({ anomalies: as, creatures: cs, predators: ps, pirates: ks, totalTime, camera }) {
-      syncAnomalies(parent, anomalies, as, camera);
+      syncAnomalies(anomalyHost, anomalies, as, camera);
       syncCreatures(parent, creatures, cs, camera);
       syncPredators(parent, predators, ps, totalTime);
       syncPirates(parent, pirates, ks, totalTime);
@@ -42,6 +63,8 @@ export function mountEntities(parent: Container): EntityController {
       creatures.clear();
       predators.clear();
       pirates.clear();
+      anomalyHost.filters = [];
+      anomalyHost.destroy();
     },
   };
 }
@@ -72,7 +95,18 @@ function syncAnomalies(
     
     const pulse = 1 + Math.sin(a.pulsePhase) * 0.15;
     const glowRadius = a.size * 2 * pulse;
-    const color = a.type === "repel" ? 0x8b5cf6 : 0xfde68a; // Purple for repel, Amber for overdrive
+    // Anomaly identity by type. Each buff carries its own colour
+    // hint so the player learns "this glyph means X" without text.
+    const color =
+      a.type === "repel"
+        ? 0x8b5cf6 // violet — wards predators
+        : a.type === "overdrive"
+          ? 0xfde68a // amber — speed boost
+          : a.type === "breath"
+            ? 0x6be6c1 // mint — instant oxygen burst
+            : a.type === "lure"
+              ? 0xa5f3fc // pale cyan — pulls collectibles
+              : 0xfbbf24; // gold — lamp-flare
     
     for (let i = 0; i < 3; i++) {
       const t = (i + 1) / 3;

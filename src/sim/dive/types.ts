@@ -102,6 +102,13 @@ export interface SceneAdvanceResult {
   collidedWithPredator: boolean;
   scene: SceneState;
   telemetry: DiveTelemetry;
+  /**
+   * Oxygen seconds added by `breath` anomaly pickups this frame.
+   * The runtime adds these to its `timeModifier` so the HUD shows a
+   * positive jump and the dive duration extends. Sim itself stays
+   * pure — no localStorage / React calls. 0 most frames.
+   */
+  oxygenBonusSeconds: number;
 }
 
 export interface DiveModeTuning {
