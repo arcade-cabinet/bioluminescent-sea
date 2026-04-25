@@ -4,14 +4,13 @@ import type { Player } from "@/sim/entities/types";
 /**
  * Player submersible + headlamp cone.
  *
- * Two Graphics: the lamp cone (under the hull) and the hull itself
- * (over the cone). Glow intensity drives the lamp alpha breathing.
- *
- * An `AdvancedBloomFilter` is applied to the player's sub-container so
- * the lamp cone + mint strokes read as emissive — the player's position
- * has to pop out of the fluidic backdrop or the eye loses the subject.
- * Tuned conservatively so the bloom supports the silhouette rather than
- * smearing it.
+ * Four Graphics: trail, buff halo, lamp cone, hull silhouette. Glow
+ * intensity drives the lamp alpha breathing; the hull's mint stroke
+ * + lamp's gradient fill carry the emissive identity directly without
+ * a post-process bloom — earlier versions wore an `AdvancedBloomFilter`
+ * on the sub container, but that nested poorly with the parent
+ * (`near` layer) refraction filter and rendered the entire sub
+ * invisibly when both filters stacked.
  */
 
 export interface PlayerController {
@@ -30,8 +29,6 @@ export function mountPlayer(parent: Container): PlayerController {
   // producing a fully-invisible sub. Removing the inner bloom: the
   // mint-stroke hull + lamp gradient + halo ring already give the
   // emissive identity without the bloom's compositional cost.
-  // Verified by live QA on Pages — sub silhouette renders correctly
-  // on `near` alongside creatures and predators with no extra filter.
 
   const trail = new Graphics();
   const buff = new Graphics();
