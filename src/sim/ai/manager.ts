@@ -64,7 +64,19 @@ export class AIManager {
           );
           vehicle.steering.add(hunt);
         } else {
-          const stalk = new StalkAndDashBehavior(this.playerVehicle.position, baseSpeed);
+          // Per-predator subseed so two predators in the same dive
+          // don't share commit/cooldown/dash cadence. Mixing position
+          // + speed gives a stable but uncorrelated seed across the
+          // population.
+          const stalkSeed =
+            Math.floor(p.x * 1000) +
+            Math.floor(p.y * 1000) * 31 +
+            Math.floor(p.speed * 1000) * 1009;
+          const stalk = new StalkAndDashBehavior(
+            this.playerVehicle.position,
+            baseSpeed,
+            stalkSeed,
+          );
           vehicle.steering.add(stalk);
         }
 

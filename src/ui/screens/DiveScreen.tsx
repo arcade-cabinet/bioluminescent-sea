@@ -115,7 +115,7 @@ export function DiveScreen({
   onGameOver,
   inputProvider,
 }: DiveScreenProps) {
-  const durationSeconds = getDiveDurationSeconds(mode, upgrades);
+  const durationSeconds = getDiveDurationSeconds(mode, seed, upgrades);
   const fastDiveScale = useDevFastDive();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -149,7 +149,7 @@ export function DiveScreen({
   // mounted component, destroyed in the cleanup.
   const worldRef = useRef<DiveWorld | null>(null);
   if (worldRef.current === null) {
-    worldRef.current = createDiveWorld(initialScene, seed);
+    worldRef.current = createDiveWorld(initialScene, seed, mode);
   }
 
   const playerRef = useRef<Player>(initialScene.player);
@@ -515,7 +515,7 @@ export function DiveScreen({
           }
         }
       }
-      if (isDiveComplete(result.scene, mode)) {
+      if (isDiveComplete(result.scene, mode, seed)) {
         setIsGameOver(true);
         void playSfx("dive-complete");
         onComplete(
@@ -549,6 +549,7 @@ export function DiveScreen({
           collided: result.collidedWithPredator,
           lastImpactTimeSeconds: lastImpactTimeRef.current,
           mode,
+          seed,
           timeLeft: newTimeLeft,
           totalTimeSeconds: effectiveTotalTime,
         });
@@ -589,6 +590,7 @@ export function DiveScreen({
       onComplete,
       durationSeconds,
       mode,
+      seed,
       showOxygenPulse,
       showImpactPulse,
       inputProvider,

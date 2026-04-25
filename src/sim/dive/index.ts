@@ -10,7 +10,12 @@
 export * from "./types";
 export { GAME_DURATION, MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
 export { getDiveDurationSeconds, getDiveModeTuning } from "@/sim/engine/mode";
-export { MODE_SLOTS, getModeSlots, type ModeSlots } from "@/sim/factories/dive/slots";
+export {
+  MODE_TEMPLATES,
+  getModeSlots,
+  resolveModeSlots,
+  type ModeSlots,
+} from "@/sim/factories/dive/slots";
 export { advanceScene, createInitialScene, resetAIManager } from "@/sim/engine/advance";
 export {
   calculateMultiplier,

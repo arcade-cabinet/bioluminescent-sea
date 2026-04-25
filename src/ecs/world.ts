@@ -1,9 +1,12 @@
 import { createWorld, type Entity, type World } from "koota";
 import type { SceneState } from "@/sim/dive/types";
+import type { SessionMode } from "@/sim/_shared/sessionMode";
+import { resolveModeSlots } from "@/sim/factories/dive/slots";
 import {
   AnomalyEntity,
   CreatureEntity,
   DiveRoot,
+  DiveSeedDerived,
   ParticleEntity,
   PirateEntity,
   PlayerAvatar,
@@ -43,14 +46,30 @@ export interface DiveWorld {
   masterSeed: number;
 }
 
-export function createDiveWorld(scene: SceneState, masterSeed = 0): DiveWorld {
+export function createDiveWorld(
+  scene: SceneState,
+  masterSeed: number,
+  mode: SessionMode,
+): DiveWorld {
   const world = createWorld();
+
+  // Resolve every seed-derived gameplay parameter ONCE at world
+  // creation and store the bundle in a trait. Per-frame consumers
+  // read it from the trait instead of re-resolving — there's no
+  // observable difference, but the resolution work happens at dive
+  // start instead of every advance.
+  const slots = resolveModeSlots(mode, masterSeed);
 
   const rootEntity = world.spawn(
     DiveRoot({
       totalTime: 0,
       threatFlashAlpha: 0,
       objectiveQueueJson: JSON.stringify(scene.objectiveQueue),
+    }),
+    DiveSeedDerived({
+      seed: masterSeed,
+      mode,
+      modeSlotsJson: JSON.stringify(slots),
     }),
   );
   const playerEntity = world.spawn(PlayerAvatar({ value: scene.player }));

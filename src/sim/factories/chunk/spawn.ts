@@ -24,24 +24,33 @@ import {
  */
 export type { ThreatPattern };
 
-// Base count for a chunk's charted creatures (the objective-relevant
-// beacons). The play band is 2.4× the viewport wide; at the previous
-// value of 3 the world looked empty on every viewport. 10 gives a
-// continuous field of bioluminescent targets across the band without
-// crowding — biome multipliers still scale densities from 0.7 to 1.4.
-export const BASE_CREATURES_PER_CHUNK = 10;
+// Authored envelope for a chunk's charted creatures. Biome multipliers
+// scale on top (0.7–1.4× depending on biome.creatureDensity); the
+// chunk's own seed picks where in the envelope it lands so two chunks
+// with the same biome don't necessarily have the same count.
+export const BASE_CREATURES_PER_CHUNK_RANGE = [8, 14] as const;
 
 export function spawnCreaturesForChunk(
   chunk: Chunk,
   viewport: ViewportDimensions,
 ): Creature[] {
   const biome = biomeById(chunk.biome);
+  const baseRng = createRng(chunk.seed);
+  const baseCount = baseRng.int(
+    BASE_CREATURES_PER_CHUNK_RANGE[0],
+    BASE_CREATURES_PER_CHUNK_RANGE[1],
+  );
   const count = Math.max(
     1,
-    Math.round(BASE_CREATURES_PER_CHUNK * biome.creatureDensity * 1.3),
+    Math.round(baseCount * biome.creatureDensity * 1.3),
   );
 
-  const rng = createRng(chunk.seed);
+  // Distinct subseed: baseRng above already burned chunk.seed's first
+  // draw to pick the count. Reuse that stream for placement so two
+  // chunks with the same seed produce identical layouts (deterministic
+  // replay) without the count-pick perturbing every downstream draw if
+  // the count envelope changes.
+  const rng = baseRng;
   const types: CreatureType[] = ["plankton", "jellyfish", "fish"];
   const { width, height } = viewport;
 
@@ -83,11 +92,13 @@ export function spawnPredatorsForChunk(
 ): Predator[] {
   const biome = biomeById(chunk.biome);
   const isStygian = chunk.biome === "stygian-abyss";
-  // Density × 6 (was × 3): with the play band 7× the viewport wide,
-  // the previous count produced ~1 predator per chunk for twilight-
-  // shelf — most off-screen at any given moment. Doubled here so the
-  // player typically has 2-3 visible threats around them.
-  const baseCount = Math.round(biome.predatorDensity * 6);
+  // Multiplier on biome.predatorDensity is seed-derived per chunk so
+  // dives feel different even at the same depth band. Authored
+  // envelope [4, 8] keeps things in the same density family but avoids
+  // every chunk landing on the same number.
+  const predatorRng = createRng(chunk.seed + 7777);
+  const densityMultiplier = predatorRng.range(4, 8);
+  const baseCount = Math.round(biome.predatorDensity * densityMultiplier);
   // Pattern scales the raw count: swarm doubles, shoal-press triples,
   // scattered stays at biome density. This keeps each chunk's pressure
   // tuneable from the mode slot alone.
@@ -97,7 +108,9 @@ export function spawnPredatorsForChunk(
 
   if (count === 0 && !isStygian) return [];
 
-  const rng = createRng(chunk.seed + 7777);
+  // Reuse the predator RNG stream so the count-pick above and the
+  // placement draws below come from the same deterministic sequence.
+  const rng = predatorRng;
   const { width, height } = viewport;
   const baseSize = clamp(640 * 0.14, 54, 94);
   const results: Predator[] = [];

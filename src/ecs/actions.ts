@@ -89,7 +89,8 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     args.lastCollectTime,
     args.multiplier,
     args.timeLeft,
-    args.mode
+    args.mode,
+    args.world.masterSeed,
   );
 
   let nextWorld = writeSceneToWorld(args.world, result.scene);
@@ -113,7 +114,7 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
   // archetype's ChunkSlots drive what spawns; the dive-level ModeSlots
   // (`respawnThreats`) gates whether threats appear at all.
   const mode = normalizeSessionMode(args.mode);
-  const modeSlots = getModeSlots(mode);
+  const modeSlots = getModeSlots(mode, args.world.masterSeed);
   const diveArchetype = getDefaultDiveArchetype(mode);
   const viewportOnly = {
     width: args.dimensions.width,

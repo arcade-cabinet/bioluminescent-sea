@@ -12,7 +12,7 @@ describe("createDiveWorld", () => {
 
   it("spawns one entity per creature / predator / pirate / particle plus root + player", () => {
     const scene = createInitialScene(viewport);
-    const w = createDiveWorld(scene);
+    const w = createDiveWorld(scene, 0xCAFE, "descent");
 
     expect(w.creatureEntities.length).toBe(scene.creatures.length);
     expect(w.predatorEntities.length).toBe(scene.predators.length);
@@ -22,7 +22,7 @@ describe("createDiveWorld", () => {
 
   it("readSceneFromWorld round-trips the initial scene", () => {
     const scene = createInitialScene(viewport);
-    const w = createDiveWorld(scene);
+    const w = createDiveWorld(scene, 0xCAFE, "descent");
     const readBack = readSceneFromWorld(w);
 
     expect(readBack.creatures.length).toBe(scene.creatures.length);
@@ -39,7 +39,7 @@ describe("createDiveWorld", () => {
       ...base,
       creatures: Array.from({ length: 10 }, (_, i) => ({ id: `c-${i}`, type: "fish" as const, x: 0, y: 0, size: 10, color: "#fff", glowColor: "#fff", glowIntensity: 1, noiseOffsetX: 0, noiseOffsetY: 0, pulsePhase: 0, speed: 1 })),
     };
-    const w = createDiveWorld(scene);
+    const w = createDiveWorld(scene, 0xCAFE, "descent");
     const shorter = {
       ...scene,
       creatures: scene.creatures.slice(0, 5),
@@ -63,7 +63,7 @@ describe("advanceDiveFrame", () => {
       ...base,
       creatures: Array.from({ length: 2 }, (_, i) => ({ id: `c-${i}`, type: "fish" as const, x: 0, y: 0, size: 10, color: "#fff", glowColor: "#fff", glowIntensity: 1, noiseOffsetX: 0, noiseOffsetY: 0, pulsePhase: 0, speed: 1 })),
     };
-    const world = createDiveWorld(scene);
+    const world = createDiveWorld(scene, 0xCAFE, "descent");
 
     const { result } = advanceDiveFrame({
       world,
@@ -85,8 +85,8 @@ describe("advanceDiveFrame", () => {
   it("is deterministic — identical inputs produce identical outputs across worlds", () => {
     const sceneA = createInitialScene(viewport);
     const sceneB = createInitialScene(viewport);
-    const worldA = createDiveWorld(sceneA);
-    const worldB = createDiveWorld(sceneB);
+    const worldA = createDiveWorld(sceneA, 0xCAFE, "descent");
+    const worldB = createDiveWorld(sceneB, 0xCAFE, "descent");
 
     const commonInput = {
       input: { x: 640, y: 360, isActive: false },
