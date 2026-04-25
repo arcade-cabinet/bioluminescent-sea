@@ -1,4 +1,11 @@
-import type { ThreatPattern } from "./spawn";
+/**
+ * Shape of a chunk's threat layout. The spawner dispatches on this
+ * value to lay out predators/pirates inside a newly-streamed chunk.
+ * Lives in the slot schema so downstream consumers (chunk archetypes,
+ * dive-mode slots) don't need to import spawn.ts. The spawner re-
+ * exports this union for back-compat.
+ */
+export type ThreatPattern = "scattered" | "swarm" | "bullet-hell";
 
 /**
  * What kind of traversal a chunk offers.

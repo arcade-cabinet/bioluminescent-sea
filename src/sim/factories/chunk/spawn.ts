@@ -5,7 +5,7 @@ import { playBandMinX, playBandWidth } from "@/sim/_shared/playBand";
 import { biomeById } from "@/sim/factories/region/biomes";
 import type { Chunk } from "@/sim/factories/region/types";
 import type { ViewportDimensions } from "@/sim/dive/types";
-import type { ModeSlots } from "@/sim/factories/dive/slots";
+import type { ThreatPattern } from "./slots";
 import {
   CREATURE_COLORS,
   type Creature,
@@ -26,7 +26,7 @@ import {
  *   bullet-hell — dense grid of small fast predators. Used by arena mode
  *                 to produce clear-room encounters.
  */
-export type ThreatPattern = ModeSlots["threatPattern"];
+export type { ThreatPattern };
 
 export const BASE_CREATURES_PER_CHUNK = 3;
 

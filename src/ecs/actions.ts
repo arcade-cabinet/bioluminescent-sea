@@ -170,24 +170,69 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
 
   // Resolve the *active* chunk's archetype so the render bridge can
   // pick follow-cam vs clamp-to-chunk. The active chunk is the one
-  // containing the player's current depth.
-  const activeChunk = currentWindow.find(
-    (c) => c.yTopMeters <= result.scene.depthTravelMeters &&
-           c.yBottomMeters > result.scene.depthTravelMeters,
-  ) ?? currentWindow[0];
+  // containing the player's current depth. currentWindow is empty only
+  // in the first frame before chunksInWindow seeds anything — in that
+  // case keep the default open-cam.
+  const activeChunk = currentWindow.length
+    ? (currentWindow.find(
+        (c) => c.yTopMeters <= result.scene.depthTravelMeters &&
+               c.yBottomMeters > result.scene.depthTravelMeters,
+      ) ?? currentWindow[0])
+    : undefined;
   let cameraTravel: "open" | "locked-room" | "corridor" = "open";
   let activeChunkBoundsLeftPx = 0;
   let activeChunkBoundsRightPx = 0;
+  let activeChunkArchetypeSlots: { travel: "open" | "locked-room" | "corridor" } | null = null;
   if (activeChunk) {
     const region = resolveRegionForChunk(activeChunk, diveArchetype.regionSequence);
     const archetype = pickChunkArchetype(activeChunk, region.slots);
     cameraTravel = archetype.slots.travel;
-    // The chunk's horizontal bounds are the play band. The render
-    // bridge divides by its viewport/pxPerMeter to turn this into the
-    // scrollXPx clamp range.
+    activeChunkArchetypeSlots = archetype.slots;
     activeChunkBoundsLeftPx = playBandMinX(args.dimensions.width);
     activeChunkBoundsRightPx = playBandMaxX(args.dimensions.width);
   }
+
+  // Chunks-cleared tally. A locked-room chunk is "cleared" the first
+  // frame its threats hit zero. Compare against the previous-frame
+  // count so the counter only ticks up on the transition.
+  const prevRoot = nextWorld.rootEntity.get(DiveRoot);
+  let chunksClearedCount = prevRoot?.chunksClearedCount ?? 0;
+  if (
+    activeChunk &&
+    activeChunkArchetypeSlots?.travel === "locked-room"
+  ) {
+    const chunkSuffix = `-c${activeChunk.index}`;
+    const livePredators = result.scene.predators.filter(
+      (p) => p.id.endsWith(chunkSuffix) || p.id.includes(`${chunkSuffix}-`),
+    ).length;
+    const livePirates = result.scene.pirates.filter(
+      (p) => p.id.endsWith(chunkSuffix) || p.id.includes(`${chunkSuffix}-`),
+    ).length;
+    if (livePredators + livePirates === 0) {
+      // Only increment once per chunk — dedupe via a per-chunk
+      // sentinel in the JSON state. We store the latest cleared
+      // chunk index; if it matches, don't re-tick.
+      const clearedKey = `cleared:${activeChunk.index}`;
+      const json = prevRoot?.objectiveQueueJson ?? "[]";
+      if (!json.includes(clearedKey)) {
+        chunksClearedCount += 1;
+      }
+    }
+  }
+
+  // Re-advance objectives with the real chunksClearedCount. The engine
+  // also ran the pass but passed 0; we correct it here with the
+  // lifetime count so clear-regions objectives progress.
+  const queueWithClearTally = result.scene.objectiveQueue.map((entry) => {
+    if (entry.completed) return entry;
+    if (entry.objective.kind !== "clear-regions") return entry;
+    const next = Math.min(entry.objective.target, chunksClearedCount);
+    return {
+      objective: entry.objective,
+      current: next,
+      completed: next >= entry.objective.target,
+    };
+  });
 
   nextWorld.rootEntity.set(DiveRoot, {
     totalTime: args.totalTime,
@@ -197,10 +242,14 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     cameraTravel,
     activeChunkBoundsLeftPx,
     activeChunkBoundsRightPx,
-    objectiveQueueJson: JSON.stringify(result.scene.objectiveQueue),
+    objectiveQueueJson: JSON.stringify(queueWithClearTally),
+    chunksClearedCount,
   });
 
-  return { world: nextWorld, result };
+  return {
+    world: nextWorld,
+    result: { ...result, scene: { ...result.scene, objectiveQueue: queueWithClearTally } },
+  };
 }
 
 export function recordThreatFlash(world: DiveWorld): void {

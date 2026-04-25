@@ -118,13 +118,20 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         const minScrollX = root.activeChunkBoundsLeftPx;
         const maxScrollX = root.activeChunkBoundsRightPx - v.widthPx;
         nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
-      } else if (cameraTravel === "corridor") {
-        // Corridor narrows lateral motion to a small band around the
-        // player-center. Render clamp follows the player but at 40% of
-        // the lateral play band.
+      } else if (cameraTravel === "corridor" && root) {
+        // Corridor narrows lateral motion to a band centered on the
+        // chunk's mid-x rather than the player's current x. The
+        // chunk bounds define the world extent of the corridor; the
+        // camera tracks the player inside it but can't wander past
+        // 40% of the corridor width either side of the corridor
+        // center, so you get the forward-pointing "glide down the
+        // channel" feel without losing contact with the chunk edges.
+        const corridorCenterX =
+          (root.activeChunkBoundsLeftPx + root.activeChunkBoundsRightPx) * 0.5 -
+          v.widthPx * 0.5;
         const corridorHalfWidth = v.widthPx * 0.4;
-        const minScrollX = targetScrollX - corridorHalfWidth;
-        const maxScrollX = targetScrollX + corridorHalfWidth;
+        const minScrollX = corridorCenterX - corridorHalfWidth;
+        const maxScrollX = corridorCenterX + corridorHalfWidth;
         nextScrollX = Math.max(minScrollX, Math.min(maxScrollX, targetScrollX));
       }
       // Ease toward the target so the camera glides instead of

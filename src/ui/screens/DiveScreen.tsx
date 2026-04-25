@@ -438,14 +438,27 @@ export function DiveScreen({
       piratesRef.current = result.scene.pirates;
       particlesRef.current = result.scene.particles;
       depthTravelMetersRef.current = result.scene.depthTravelMeters;
-      // Queue diff heuristic: if any entry's current or completed
-      // changed, update state so the HUD panel re-renders. Reference
-      // equality is fine because the engine builds a new array on
-      // every progress change.
-      if (objectiveQueueRef.current !== result.scene.objectiveQueue) {
-        objectiveQueueRef.current = result.scene.objectiveQueue;
-        setObjectiveQueueState(result.scene.objectiveQueue);
+      // Sync the panel state only when progress semantically changed.
+      // The engine rebuilds the queue array every frame so reference
+      // equality would re-render every tick; compare current + completed
+      // per entry instead. This keeps the HUD panel idle during steady
+      // gameplay and re-renders only when an objective ticks.
+      const prevQ = objectiveQueueRef.current;
+      const nextQ = result.scene.objectiveQueue;
+      let queueChanged = prevQ.length !== nextQ.length;
+      if (!queueChanged) {
+        for (let i = 0; i < prevQ.length; i += 1) {
+          if (
+            prevQ[i].current !== nextQ[i].current ||
+            prevQ[i].completed !== nextQ[i].completed
+          ) {
+            queueChanged = true;
+            break;
+          }
+        }
       }
+      objectiveQueueRef.current = nextQ;
+      if (queueChanged) setObjectiveQueueState(nextQ);
 
       // Expire stale collection bursts every frame, regardless of whether
       // a new pickup happened. Otherwise the last burst lingers

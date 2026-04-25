@@ -123,10 +123,18 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
     }),
     player,
     depthTravelMeters: root?.depthTravelMeters ?? 0,
-    objectiveQueue: root?.objectiveQueueJson
-      ? (JSON.parse(root.objectiveQueueJson) as SceneState["objectiveQueue"])
-      : [],
+    objectiveQueue: parseObjectiveQueueJson(root?.objectiveQueueJson),
   };
+}
+
+function parseObjectiveQueueJson(json: string | undefined): SceneState["objectiveQueue"] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? (parsed as SceneState["objectiveQueue"]) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**

@@ -22,7 +22,7 @@ export interface RegionSlots {
    */
   chunkPool: readonly { archetype: ChunkArchetypeId; weight: number }[];
   /**
-   * Whether the region as a whole allows free traversal. When `locked`,
+   * Whether the region as a whole allows free traversal. When `gated`,
    * the player cannot leave the region until the region-level objective
    * resolves — used by the arena-hall region where you must clear every
    * room before the hall opens back up.

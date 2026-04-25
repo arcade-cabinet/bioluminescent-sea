@@ -1,11 +1,29 @@
 import { Check } from "lucide-react";
-import type { ObjectiveProgress } from "@/sim/factories/dive";
+
+/**
+ * UI-layer view of a single objective's progress. Shape matches the
+ * dive engine's `ObjectiveProgress` exactly — colocated here so the
+ * component has a local contract, even though screens read directly
+ * from `result.scene.objectiveQueue` and pass it through. Keep this
+ * type in sync with `@/sim/factories/dive/objective.ObjectiveProgress`
+ * when the engine-side shape changes.
+ */
+export interface ObjectiveRow {
+  readonly objective: {
+    readonly id: string;
+    readonly label: string;
+    readonly areaLabel: string;
+    readonly target: number;
+  };
+  readonly current: number;
+  readonly completed: boolean;
+}
 
 interface ObjectivePanelProps {
   /** Live objective queue from the dive scene — read-only. The engine
    * advances `current` / `completed` each frame; this component renders
    * the result with progress bars. */
-  queue: readonly ObjectiveProgress[];
+  queue: readonly ObjectiveRow[];
 }
 
 /**

@@ -37,8 +37,8 @@ export interface SceneState {
    * Per-mode objective queue with live progress. The active objective
    * is the first entry with `completed === false`; entries before it
    * are complete, entries after are queued. The engine's
-   * `advanceObjectives` mutates this every frame; the HUD panel reads
-   * it to render the progress list. Seeded from
+   * `advanceObjectiveQueue` rebuilds this every frame; the HUD panel
+   * reads it to render the progress list. Seeded from
    * `createObjectiveQueue(mode)` at dive start.
    */
   objectiveQueue: import("@/sim/factories/dive").ObjectiveProgress[];

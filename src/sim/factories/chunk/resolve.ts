@@ -20,12 +20,16 @@ export function resolveRegionForChunk(
   chunk: Chunk,
   regionSequence: readonly RegionArchetypeId[],
 ): { id: RegionArchetypeId; slots: RegionSlots } {
-  // The chunk's yTopMeters is its shallow edge. Pick the first region
-  // whose depth window contains it; fall back to the last region.
+  // Resolve by the chunk's vertical midpoint so a boundary-straddling
+  // chunk inherits the region that contains most of it. Using the
+  // shallow edge would pull a 400m-tall chunk spanning 500m-900m into
+  // the 300m-600m twilight-shelf region even though 300m of it is in
+  // the midnight column.
+  const midpoint = (chunk.yTopMeters + chunk.yBottomMeters) * 0.5;
   for (const id of regionSequence) {
     const archetype = getRegionArchetype(id);
     const { start, end } = archetype.slots.depthSpanMeters;
-    if (chunk.yTopMeters >= start && chunk.yTopMeters < end) {
+    if (midpoint >= start && midpoint < end) {
       return { id, slots: archetype.slots };
     }
   }

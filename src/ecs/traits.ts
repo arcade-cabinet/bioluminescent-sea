@@ -114,4 +114,12 @@ export const DiveRoot = trait({
    * advance copies it through.
    */
   objectiveQueueJson: "[]",
+  /**
+   * Monotonic counter for locked-room chunks the player has cleared.
+   * Ticks up once per chunk the first time its threats hit zero. The
+   * engine's "clear-regions" objective reads this via the scene bridge
+   * to drive progress. Stored on DiveRoot (not SceneState) so resume
+   * preserves lifetime progress across reloads.
+   */
+  chunksClearedCount: 0,
 });

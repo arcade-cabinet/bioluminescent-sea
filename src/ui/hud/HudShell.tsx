@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useDeviceClass } from "@/hooks/useDeviceClass";
 import { setRuntimePaused } from "@/lib/runtimePause";
 
@@ -40,6 +40,8 @@ export function HudShell({
 }: HudShellProps) {
   const { isCompact, klass } = useDeviceClass();
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -49,11 +51,51 @@ export function HudShell({
     return undefined;
   }, [open]);
 
-  // ESC closes the panel.
+  // Focus management: move focus into the panel on open, restore focus
+  // to the trigger on close. Combined with the keydown handler below
+  // this gives the modal dialog real keyboard support — screen reader
+  // users land inside the panel and tab never leaks to the gameplay
+  // behind.
+  useEffect(() => {
+    if (!open) return undefined;
+    const panel = panelRef.current;
+    if (panel) {
+      const focusable = panel.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      focusable?.focus();
+    }
+    return () => {
+      triggerRef.current?.focus();
+    };
+  }, [open]);
+
+  // ESC closes the panel; Tab traps focus inside the panel while open.
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusables = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("disabled"));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -82,6 +124,7 @@ export function HudShell({
         )}
 
         <button
+          ref={triggerRef}
           type="button"
           aria-label="Open dive details"
           aria-expanded={open}
@@ -120,6 +163,7 @@ export function HudShell({
              * phone-portrait drops from the top — both maximize legibility
              * while keeping the playfield orientation hint visible. */}
             <motion.aside
+              ref={panelRef}
               key="hud-panel"
               role="dialog"
               aria-modal="true"
