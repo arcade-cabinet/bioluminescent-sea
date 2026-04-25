@@ -117,6 +117,14 @@ export interface SceneAdvanceResult {
    * to RecoverState.
    */
   predatorStrikeNearPlayer: boolean;
+  /**
+   * 0..1 active-threat intensity. Counts stalking/charging/striking
+   * predator brains within their own detection radius of the player,
+   * weighted by state. Consumed by the ambient audio layer to ramp
+   * a low rumble + tighten the pad filter Q so the music thickens
+   * with predator pressure.
+   */
+  threatIntensity: number;
 }
 
 export interface DiveModeTuning {

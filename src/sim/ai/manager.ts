@@ -312,6 +312,33 @@ export class AIManager {
   }
 
   /**
+   * Threat intensity in 0..1, computed from the count of predator
+   * brains currently in stalk/charge/strike near the given point.
+   * Used by the audio layer to ramp the ambient rumble + filter Q
+   * — the music thickens as predators close in.
+   *
+   * Each archetype's detection radius defines "near". A single
+   * stalking predator returns ~0.3, a full pack converging returns
+   * ~1.0. Saturates at 4 active threats so a swarm chunk doesn't
+   * pin the rumble at max forever.
+   */
+  computeThreatIntensity(x: number, y: number): number {
+    let active = 0;
+    for (const brain of this.predatorBrainMap.values()) {
+      const state = brain.currentAiState;
+      if (state !== "stalk" && state !== "charge" && state !== "strike") continue;
+      const dx = brain.position.x - x;
+      const dy = brain.position.y - y;
+      const distSq = dx * dx + dy * dy;
+      const radius = brain.profile.detectionRadiusPx;
+      if (distSq > radius * radius) continue;
+      const weight = state === "strike" ? 1.5 : state === "charge" ? 1.2 : 1;
+      active += weight;
+    }
+    return Math.min(1, active / 4);
+  }
+
+  /**
    * Returns true if any predator brain is currently inside its
    * StrikeState within `radiusPx` of the given point. Used by the
    * sim to trigger a screen-shake/flash burst when a lunge lands

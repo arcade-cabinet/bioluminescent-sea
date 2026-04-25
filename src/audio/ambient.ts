@@ -22,6 +22,14 @@ interface AmbientController {
   start(): Promise<void>;
   setBiome(biome: BiomeId): void;
   setDepthMeters(m: number): void;
+  /**
+   * 0..1 threat intensity, set every frame from the active stalk +
+   * charge predator count near the player. Drives a low rumble
+   * sub-synth and tightens the pad's filter Q so the music
+   * thickens + grits when predators are pressing in. Ramped
+   * smoothly so a passing predator doesn't pop the rumble in/out.
+   */
+  setThreatIntensity(intensity: number): void;
   stop(): void;
 }
 
@@ -38,6 +46,11 @@ export function createAmbient(): AmbientController {
   let filter: Tone.Filter | null = null;
   let reverb: Tone.Reverb | null = null;
   let synth: Tone.PolySynth<Tone.AMSynth> | null = null;
+  /** Sub-bass rumble that fades in with threat intensity. The
+   *  filter+reverb chain is shared with the pad so it sits in the
+   *  same room. */
+  let rumble: Tone.MonoSynth | null = null;
+  let rumbleGain: Tone.Gain | null = null;
   let currentBiome: BiomeId = "photic-gate";
   let unsubMute: (() => void) | null = null;
 
@@ -70,6 +83,21 @@ export function createAmbient(): AmbientController {
       });
       synth.chain(filter, reverb, Tone.getDestination());
 
+      // Threat rumble — sub-bass note at A1 that sustains as long as
+      // the dive runs. Volume rides through `rumbleGain` so the
+      // runtime can ramp it up/down each frame from
+      // setThreatIntensity. Routed through the same reverb so the
+      // rumble inhabits the same acoustic space as the pad.
+      rumbleGain = new Tone.Gain(0); // start silent
+      rumble = new Tone.MonoSynth({
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.4, decay: 0.2, sustain: 1, release: 1.5 },
+        filterEnvelope: { attack: 0.3, decay: 0.5, sustain: 0.6, baseFrequency: 60, octaves: 1 },
+        volume: -10,
+      });
+      rumble.chain(rumbleGain, reverb);
+      rumble.triggerAttack("A1");
+
       unsubMute = onMuteChange((muted) => {
         if (muted) Tone.getDestination().mute = true;
         else Tone.getDestination().mute = false;
@@ -91,6 +119,18 @@ export function createAmbient(): AmbientController {
       const cutoff = 2400 - (clamped / 3600) * 2080;
       filter.frequency.rampTo(cutoff, 0.5);
     },
+    setThreatIntensity(intensity) {
+      if (!rumbleGain || !filter) return;
+      const clamped = Math.max(0, Math.min(1, intensity));
+      // Linear ramp over 0.6s — fast enough to feel responsive when
+      // the player whips the lamp around, slow enough that a single
+      // predator passing through the cone doesn't pulse the rumble.
+      rumbleGain.gain.rampTo(clamped * 0.7, 0.6);
+      // Tighten the pad filter Q with intensity so the chord becomes
+      // narrower / more focused as threat builds — sonic equivalent
+      // of the camera-shake intensity ramp.
+      filter.Q.rampTo(1.2 + clamped * 2.4, 0.6);
+    },
     stop() {
       if (!started) return;
       Tone.getTransport().stop();
@@ -99,9 +139,14 @@ export function createAmbient(): AmbientController {
       synth?.dispose();
       filter?.dispose();
       reverb?.dispose();
+      rumble?.triggerRelease();
+      rumble?.dispose();
+      rumbleGain?.dispose();
       synth = null;
       filter = null;
       reverb = null;
+      rumble = null;
+      rumbleGain = null;
       unsubMute?.();
       started = false;
     },
