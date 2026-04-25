@@ -242,14 +242,18 @@ export function HUD({
         <motion.div
           aria-hidden="true"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
+          // Reduced from 0.6 — the wash was bleaching the playfield
+          // every time a predator entered the close-contact threshold.
+          // 0.3 still reads as a clear warning ring without making
+          // the rest of the world unviewable.
+          animate={{ opacity: 0.3 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 50% 52%, transparent 40%, rgba(255, 107, 107, 0.35) 100%)",
+              "radial-gradient(circle at 50% 52%, transparent 50%, rgba(255, 107, 107, 0.28) 100%)",
             pointerEvents: "none",
             zIndex: 5,
           }}
