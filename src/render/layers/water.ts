@@ -58,49 +58,46 @@ function smoothNoise(x: number, y: number, t: number): number {
 }
 
 export function mountWater(parent: Container): WaterController {
-  // --- God-ray surface layer -------------------------------------------------
-  const surface = new Container();
-  surface.label = "water:surface";
-  parent.addChild(surface);
-
+  // FLAT filter chain on the parent container — no nested filtered
+  // sub-containers. Pixi v8 nesting filters compounds the
+  // resolution-inheritance bug: when an inner filter renders to a
+  // texture and an outer filter samples that texture, both passes go
+  // through resolution math and one of them ends up at resolution=1,
+  // producing the upper-left quadrant artifact.
+  //
+  // All paint targets (surfaceRect, caustics, leviathanShadow) are
+  // siblings under `parent`, and BOTH the godray and the adjustment
+  // filter live on `parent.filters` — a single filter pass over the
+  // whole layer.
   const surfaceRect = new Graphics();
-  surface.addChild(surfaceRect);
-
-  // Volumetric light columns over the surfaceRect. Filter resolution
-  // follows the renderer's resolution because `Filter.defaultOptions
-  // .resolution = "inherit"` is set globally in src/render/stage.ts —
-  // see pixijs/pixijs#11467 for the long-standing artifact this
-  // resolves (filters at resolution=1 on a DPR=2 canvas render at
-  // half size and composite into the upper-left quadrant).
-  const godray = new GodrayFilter({
-    angle: 8,
-    gain: 0.22,
-    lacunarity: 2.75,
-    parallel: true,
-  });
-  // Belt-and-suspenders: explicit per-instance resolution = 'inherit'
-  // because pixi-filters subclasses sometimes pass their own
-  // defaults to super() that override Filter.defaultOptions.
-  godray.resolution = "inherit";
-  surface.filters = [godray];
+  surfaceRect.label = "water:surface";
+  parent.addChild(surfaceRect);
 
   // --- Caustics layer --------------------------------------------------------
-  // A coarse grid of bright spots. The grid resolution is fixed so the cost
-  // stays O(cols × rows) per frame independently of viewport size.
   const caustics = new Graphics();
   caustics.label = "water:caustics";
   caustics.blendMode = "add";
   parent.addChild(caustics);
 
   // --- Leviathan shadow layer -----------------------------------------------
-  // A huge ellipse glides slowly across the deep band of the viewport.
-  // Periodic reveal — alpha pulses on a Sin curve so most of the time
-  // it's not visible. Sells "the abyss is alive" without distracting.
   const leviathanShadow = new Graphics();
   leviathanShadow.label = "water:leviathan-shadow";
   parent.addChild(leviathanShadow);
 
-  // --- Depth tint -----------------------------------------------------------
+  // --- Filter chain ---------------------------------------------------------
+  // GodrayFilter + AdjustmentFilter stacked on the same container so
+  // pixi runs them as a single filter pass against one render target,
+  // not two nested passes. With Filter.defaultOptions.resolution =
+  // "inherit" set in stage.ts, both filters bind to the renderer's
+  // DPR.
+  const godray = new GodrayFilter({
+    angle: 8,
+    gain: 0.22,
+    lacunarity: 2.75,
+    parallel: true,
+  });
+  godray.resolution = "inherit";
+
   const adjustment = new AdjustmentFilter({
     saturation: 1,
     gamma: 1,
@@ -108,7 +105,8 @@ export function mountWater(parent: Container): WaterController {
     brightness: 1,
   });
   adjustment.resolution = "inherit";
-  parent.filters = [adjustment];
+
+  parent.filters = [godray, adjustment];
 
   return {
     draw({ widthPx, heightPx, totalTime, depthMeters, biomeTintHex }) {
@@ -207,7 +205,7 @@ export function mountWater(parent: Container): WaterController {
       // visible area.
     },
     destroy() {
-      surface.destroy({ children: true });
+      surfaceRect.destroy();
       caustics.destroy();
       leviathanShadow.destroy();
       parent.filters = [];
