@@ -614,6 +614,7 @@ export function DiveScreen({
         biomeTintHex: result.telemetry.biomeTintHex,
         lampScatterPoints: result.lampScatterPoints,
         threatBearings: result.threatBearings,
+        impactRippleAt: result.impactRippleAt,
       });
     },
     [
