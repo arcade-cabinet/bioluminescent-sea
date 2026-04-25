@@ -1,5 +1,5 @@
 import { Container, Graphics, Rectangle } from "pixi.js";
-import { AdjustmentFilter } from "pixi-filters";
+import { AdjustmentFilter, GodrayFilter } from "pixi-filters";
 
 /**
  * Fluidic-space layer — the cues that make a 2D dark-blue scene read
@@ -66,17 +66,20 @@ export function mountWater(parent: Container): WaterController {
   const surfaceRect = new Graphics();
   surface.addChild(surfaceRect);
 
-  // GodrayFilter consistently rendered as a hard-edged upper-left
-  // quadrant (the "square" artifact) regardless of how we sized
-  // `filterArea`, what `angle`/`gain`/`lacunarity` we picked, or how
-  // we composed surrounding filters. The fix that finally landed: cut
-  // the filter entirely. Caustics, biome tint, depth tint, and the
-  // pixi-fluidic light from the surfaceRect alone provide enough of a
-  // "lit shallows" feel without the buggy ray pass. Keeping the godray
-  // import + Rectangle stub for archaeology — if a future Pixi version
-  // fixes the rendering pathology, swapping it back in is a one-line
-  // change.
-  surface.filters = [];
+  // Volumetric light columns over the surfaceRect. Note the
+  // `resolution` stamp below — without it the filter renders to a
+  // 1×-resolution texture even though the renderer runs at
+  // devicePixelRatio (typically 2× on retina). On a 2× canvas that
+  // produced a hard-edged "square" artifact in the upper-left
+  // quadrant, because the smaller filter texture composited over
+  // only half the screen. See pixijs/pixijs#11467.
+  const godray = new GodrayFilter({
+    angle: 8,
+    gain: 0.22,
+    lacunarity: 2.75,
+    parallel: true,
+  });
+  surface.filters = [godray];
   surface.filterArea = new Rectangle(0, 0, 1, 1);
 
   // --- Caustics layer --------------------------------------------------------
@@ -131,7 +134,9 @@ export function mountWater(parent: Container): WaterController {
         .rect(0, 0, widthPx, heightPx)
         .fill({ color: 0x6be6c1, alpha: 0.055 * depthFade });
 
-      // GodrayFilter removed — see mountWater header comment.
+      godray.time = totalTime;
+      godray.gain = 0.22 * depthFade;
+      godray.lacunarity = 2.75;
 
       // --- Paint caustics in a coarse grid -----------------------------------
       caustics.clear();
