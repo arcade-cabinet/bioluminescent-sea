@@ -597,7 +597,15 @@ export function DiveScreen({
   );
 
   useGameLoop(gameLoop, !isGameOver);
-  const threatAlert = telemetry.nearestThreatDistance < 180;
+  // Threat alert was firing whenever nearest threat was within 180px,
+  // which kept the warm-red wash on screen permanently with the new
+  // predator AI (predators patrol 380px around the player). Tighter
+  // threshold: only flag a "real" alert when something is truly
+  // closing — within 90px — and the radial wash at the canvas level
+  // gets dropped entirely (the HUD's threatFlash motion overlay
+  // covers actual collisions; we don't need a second always-on
+  // vignette).
+  const threatAlert = telemetry.nearestThreatDistance < 90;
   // Low-oxygen warning vignette: below 25% oxygen the viewport breathes
   // a warn-red halo, strength climbing as oxygen falls further. Purely
   // a visual beat — the sim's oxygen logic is unaffected.
@@ -619,14 +627,20 @@ export function DiveScreen({
         height={dimensions.height}
         className="block h-full w-full"
       />
+      {/* Soft mint vignette around the canvas — always on. The
+       *   warm-red threat overlay is now handled exclusively by the
+       *   HUD's `threatAlert` motion-div on actual close-contact
+       *   (<90px). The previous double-overlay was painting the
+       *   whole screen red whenever any predator was within 180px,
+       *   which became "always" with the new AI's 380px patrol
+       *   radius. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 transition-opacity duration-200"
         style={{
-          background: threatAlert
-            ? "radial-gradient(circle at 50% 52%, transparent 48%, rgba(255, 107, 107, 0.26) 100%)"
-            : "radial-gradient(circle at 50% 52%, transparent 62%, rgba(107, 230, 193, 0.07) 100%)",
-          opacity: threatAlert ? 1 : 0.72,
+          background:
+            "radial-gradient(circle at 50% 52%, transparent 62%, rgba(107, 230, 193, 0.07) 100%)",
+          opacity: 0.72,
         }}
       />
       {oxygenWarnStrength > 0 && (
