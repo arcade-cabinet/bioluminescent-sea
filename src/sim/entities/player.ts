@@ -29,14 +29,23 @@ export function advancePlayer(
   input: DiveInput,
   { width, height }: ViewportDimensions,
   totalTime: number,
-  deltaTime: number
+  deltaTime: number,
+  lateralLocked = false
 ): Player {
   // Input comes in as pixel-x already offset by the camera scroll
   // (DeepSeaGame applies the scroll delta before the sim tick), so
   // here we clamp to the full lateral play band — the viewport is no
   // longer the world. Y stays viewport-clamped: descent owns the
   // vertical axis, player input is horizontal + pitch.
-  const targetX = input.isActive ? clampToPlayBand(input.x, width) : player.targetX;
+  //
+  // Descent's lateralMovement="locked" slot pins the sub on its
+  // initial heading: lateral input is ignored, the engine still
+  // tracks vertical (input.y becomes the only steerable axis).
+  const targetX = lateralLocked
+    ? player.targetX
+    : input.isActive
+      ? clampToPlayBand(input.x, width)
+      : player.targetX;
   const targetY = input.isActive ? clamp(input.y, 0, height) : player.targetY;
   const dx = targetX - player.x;
   const dy = targetY - player.y;
