@@ -1,21 +1,60 @@
 import { useEffect, useRef } from "react";
 
+/**
+ * Landing backdrop — abyssal water, full submerged, no horizon.
+ *
+ * Identity rule: this canvas IS the trench. Not a surface scene with
+ * waves, not a generic-game-startup gradient. Players landing here
+ * should feel they're already underwater, the sub somewhere far above
+ * them and the deep ahead.
+ *
+ * Layers, back to front:
+ *   1. Vertical depth gradient — abyss-navy at the bottom, slightly
+ *      lifted near the top (light still penetrates a little).
+ *   2. Slow leviathan shadow — a huge silhouette gliding very slowly
+ *      across the deep band. Periodic; mostly hidden, occasionally
+ *      revealed by caustics.
+ *   3. God-ray curtains pouring straight down from the unseen surface.
+ *      Wider, slower, more diffuse than the gameplay rays.
+ *   4. Procedural caustic shimmer — sparse bright peaks drifting on a
+ *      curl-noise field.
+ *   5. Kelp silhouettes — dark fronds at the left and right edges,
+ *      swaying on a sinusoid. Reads as "edge of the reef."
+ *   6. Marine snow — slow downward drift with horizontal sway.
+ *   7. Vignette — pulls focus to the center where the title lives.
+ *
+ * No submersible — the player IS the sub; they shouldn't see another
+ * one floating in the chrome.
+ */
 const PALETTE = {
-  skyTop: "#020611",
-  skyBottom: "#0b1b36",
-  waterTop: "#072033",
-  waterBottom: "#050a14",
-  abyss: "#050a14",
-  deep: "#0e4f55",
-  glow: "#6be6c1",
-  fgMuted: "#8aa7a2",
+  surface: "#072033", // very top, the only light
+  midwater: "#0a1a2e",
+  deepwater: "#050a14",
+  abyss: "#020611",
+  kelp: "#031218",
+  glowMint: "#6be6c1",
+  snowMint: "#9fc8c0",
 };
 
-interface Wave {
-  amplitude: number;
-  period: number;
-  phase: number;
+interface SnowParticle {
+  baseX: number;
+  baseY: number;
+  yOffset: number;
   speed: number;
+  swayAmp: number;
+  swayPhase: number;
+  size: number;
+  alpha: number;
+}
+
+interface KelpFrond {
+  rootX: number;
+  height: number;
+  width: number;
+  swayPhase: number;
+  swaySpeed: number;
+  swayAmp: number;
+  segments: number;
 }
 
 export function LandingHero() {
@@ -33,20 +72,24 @@ export function LandingHero() {
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    let snow: SnowParticle[] = [];
+    let kelpLeft: KelpFrond[] = [];
+    let kelpRight: KelpFrond[] = [];
+
     function resize() {
       if (!canvas || !ctx) return;
       const rect = canvas.getBoundingClientRect();
       canvas.width = Math.floor(rect.width * dpr);
       canvas.height = Math.floor(rect.height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Re-seed particles + kelp to viewport — keeps them deterministic
+      // per-resize so a new tab opens to the same arrangement, but a
+      // resize re-fills the new dimensions.
+      snow = seedSnow(rect.width, rect.height);
+      kelpLeft = seedKelp(rect.width, rect.height, "left");
+      kelpRight = seedKelp(rect.width, rect.height, "right");
     }
     resize();
-
-    const waves: Wave[] = [
-      { amplitude: 8, period: 0.005, phase: 0, speed: 0.8 },
-      { amplitude: 4, period: 0.012, phase: 2, speed: 1.4 },
-      { amplitude: 2, period: 0.025, phase: 4, speed: 2.2 },
-    ];
 
     let t0 = performance.now();
 
@@ -57,150 +100,142 @@ export function LandingHero() {
       const rect = canvas.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
-
-      // Bail when the canvas hasn't been laid out yet — createRadialGradient
-      // throws on non-finite radii, and h*0.3 / w*0.5 propagate NaN/0 here.
       if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) {
         rafRef.current = requestAnimationFrame(frame);
         return;
       }
 
-      const horizonY = h * 0.45;
+      // ---- 1. Depth gradient ------------------------------------------------
+      const depth = ctx.createLinearGradient(0, 0, 0, h);
+      depth.addColorStop(0, PALETTE.surface);
+      depth.addColorStop(0.35, PALETTE.midwater);
+      depth.addColorStop(0.75, PALETTE.deepwater);
+      depth.addColorStop(1, PALETTE.abyss);
+      ctx.fillStyle = depth;
+      ctx.fillRect(0, 0, w, h);
 
-      // Draw Sky
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-      skyGrad.addColorStop(0, PALETTE.skyTop);
-      skyGrad.addColorStop(1, PALETTE.skyBottom);
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, w, horizonY);
-
-      // Draw Stars/Distant lights in the sky
-      ctx.fillStyle = "rgba(107, 230, 193, 0.4)";
-      for (let i = 0; i < 20; i++) {
-        const sx = ((i * 37) % w);
-        const sy = ((i * 19) % horizonY);
-        const twinkle = Math.sin(now * 0.001 + i) * 0.5 + 0.5;
-        ctx.globalAlpha = twinkle;
+      // ---- 2. Leviathan shadow ---------------------------------------------
+      // Phase 0..1, takes ~45s to traverse. The silhouette is a big
+      // soft ellipse with a tail; alpha pulses so it sometimes
+      // disappears entirely — the abyss IS alive, but you don't always
+      // see what's down there.
+      const leviPhase = ((now * 0.0001) % 1 + 1) % 1;
+      const leviX = -w * 0.4 + leviPhase * (w * 1.8);
+      const leviY = h * 0.78 + Math.sin(now * 0.0002) * h * 0.04;
+      // Reveal alpha ramps up in the middle of the pass and fades at edges.
+      const reveal = Math.sin(leviPhase * Math.PI);
+      const leviAlpha = 0.18 * reveal * reveal;
+      if (leviAlpha > 0.01) {
+        const lw = w * 0.45;
+        const lh = h * 0.18;
+        const grad = ctx.createRadialGradient(leviX, leviY, 0, leviX, leviY, Math.max(lw, lh));
+        grad.addColorStop(0, `rgba(2, 6, 17, ${leviAlpha * 1.2})`);
+        grad.addColorStop(0.6, `rgba(2, 6, 17, ${leviAlpha * 0.4})`);
+        grad.addColorStop(1, "rgba(2, 6, 17, 0)");
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(sx, sy, 1, 0, Math.PI * 2);
+        ctx.ellipse(leviX, leviY, lw, lh, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Tail tendril — a softer ellipse stretched behind the head.
+        const tailX = leviX - lw * 0.85 * Math.sign(0.5 - leviPhase + 0.001);
+        const tg = ctx.createRadialGradient(tailX, leviY, 0, tailX, leviY, lw * 0.5);
+        tg.addColorStop(0, `rgba(2, 6, 17, ${leviAlpha * 0.7})`);
+        tg.addColorStop(1, "rgba(2, 6, 17, 0)");
+        ctx.fillStyle = tg;
+        ctx.beginPath();
+        ctx.ellipse(tailX, leviY, lw * 0.5, lh * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.globalAlpha = 1.0;
 
-      // Draw Water
-      const waterGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-      waterGrad.addColorStop(0, PALETTE.waterTop);
-      waterGrad.addColorStop(1, PALETTE.waterBottom);
-      ctx.fillStyle = waterGrad;
-      ctx.fillRect(0, horizonY, w, h - horizonY);
-
-      // Draw Waves at Horizon
-      for (const wave of waves) {
-        wave.phase += dt * wave.speed;
-      }
-
-      ctx.beginPath();
-      ctx.moveTo(0, h);
-      ctx.lineTo(0, horizonY);
-      for (let x = 0; x <= w; x += 10) {
-        let yOffset = 0;
-        for (const wave of waves) {
-          yOffset += Math.sin(x * wave.period + wave.phase) * wave.amplitude;
-        }
-        ctx.lineTo(x, horizonY + yOffset);
-      }
-      ctx.lineTo(w, h);
-      ctx.closePath();
-      ctx.fillStyle = "rgba(5, 10, 20, 0.4)"; // Darken the waves
-      ctx.fill();
-      
-      // Draw horizon glow
-      ctx.beginPath();
-      for (let x = 0; x <= w; x += 10) {
-        let yOffset = 0;
-        for (const wave of waves) {
-          yOffset += Math.sin(x * wave.period + wave.phase) * wave.amplitude;
-        }
-        if (x === 0) ctx.moveTo(x, horizonY + yOffset);
-        else ctx.lineTo(x, horizonY + yOffset);
-      }
-      ctx.strokeStyle = "rgba(107, 230, 193, 0.15)";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = PALETTE.glow;
-      ctx.shadowBlur = 15;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // God-ray beams cast down from a few points on the horizon. Same
-      // language as the in-game water layer's GodrayFilter so the
-      // landing reads as a continuous space with the dive scene.
+      // ---- 3. God-ray curtains ---------------------------------------------
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const beamCount = 5;
+      const beamCount = 4;
       for (let i = 0; i < beamCount; i++) {
-        const beamX = ((i + 0.5) / beamCount) * w + Math.sin(now * 0.0004 + i) * 30;
-        const beamGrad = ctx.createLinearGradient(beamX, horizonY, beamX + 80, h);
-        beamGrad.addColorStop(0, "rgba(107, 230, 193, 0.18)");
-        beamGrad.addColorStop(1, "rgba(107, 230, 193, 0)");
+        const phase = (i + 0.5) / beamCount;
+        const sway = Math.sin(now * 0.0003 + i * 1.7) * w * 0.08;
+        const x = phase * w + sway;
+        const angle = Math.sin(now * 0.0002 + i) * 0.08; // Slight tilt
+        const halfWidthTop = w * 0.06;
+        const halfWidthBottom = w * 0.14;
+        const grad = ctx.createLinearGradient(x, 0, x, h * 0.72);
+        grad.addColorStop(0, "rgba(155, 220, 200, 0.10)");
+        grad.addColorStop(0.4, "rgba(107, 230, 193, 0.04)");
+        grad.addColorStop(1, "rgba(107, 230, 193, 0)");
         ctx.beginPath();
-        ctx.moveTo(beamX, horizonY);
-        ctx.lineTo(beamX + 90, h);
-        ctx.lineTo(beamX + 130, h);
-        ctx.lineTo(beamX + 30, horizonY);
+        ctx.moveTo(x - halfWidthTop, 0);
+        ctx.lineTo(x + halfWidthTop, 0);
+        ctx.lineTo(x + halfWidthBottom + Math.sin(angle) * h * 0.72, h * 0.72);
+        ctx.lineTo(x - halfWidthBottom + Math.sin(angle) * h * 0.72, h * 0.72);
         ctx.closePath();
-        ctx.fillStyle = beamGrad;
+        ctx.fillStyle = grad;
         ctx.fill();
       }
       ctx.restore();
 
-      // Caustic spots — bright thresholded noise peaks on the upper
-      // water band. Tinted mint, additive blend; same shape language
-      // as the in-game caustics pass.
+      // ---- 4. Caustic shimmer ----------------------------------------------
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      const spotCount = 22;
-      for (let i = 0; i < spotCount; i++) {
-        const sx = ((i * 113) % w);
-        const sy = horizonY + (((i * 71) % (h - horizonY)) * 0.6);
-        const wobble =
-          Math.sin(now * 0.0008 + i * 0.5) +
-          Math.cos(now * 0.0011 + i * 0.7);
-        if (wobble > 0.3) {
-          const intensity = (wobble - 0.3) / 1.7;
-          const r = 12 + intensity * 22;
-          const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-          grad.addColorStop(0, `rgba(107, 230, 193, ${0.18 * intensity})`);
-          grad.addColorStop(1, "rgba(107, 230, 193, 0)");
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(sx, sy, r, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      const causticCount = 30;
+      for (let i = 0; i < causticCount; i++) {
+        // Each caustic point drifts on its own slow loop in x and y.
+        const baseX = (i * 137) % w;
+        const baseY = ((i * 73) % (h * 0.55)) + h * 0.05;
+        const drift =
+          Math.sin(now * 0.0006 + i * 0.4) +
+          Math.cos(now * 0.0009 + i * 0.7);
+        if (drift <= 0.4) continue;
+        const intensity = (drift - 0.4) / 1.6;
+        const r = 6 + intensity * 14;
+        const cx = baseX + Math.cos(now * 0.0004 + i) * 12;
+        const cy = baseY + Math.sin(now * 0.0005 + i) * 8;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grad.addColorStop(0, `rgba(107, 230, 193, ${0.22 * intensity})`);
+        grad.addColorStop(1, "rgba(107, 230, 193, 0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
 
-      // Calculate Submersible Y offset based on waves at center
-      const subX = w * 0.5;
-      let waveYOffset = 0;
-      for (const wave of waves) {
-        waveYOffset += Math.sin(subX * wave.period + wave.phase) * wave.amplitude;
+      // ---- 5. Kelp fronds at the edges -------------------------------------
+      drawKelpStand(ctx, kelpLeft, h, now, "left");
+      drawKelpStand(ctx, kelpRight, h, now, "right");
+
+      // ---- 6. Marine snow --------------------------------------------------
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const p of snow) {
+        if (!reducedMotion) {
+          p.yOffset += p.speed * dt * 14;
+        }
+        const sway = Math.sin(now * 0.0008 + p.swayPhase) * p.swayAmp;
+        const x = p.baseX + sway;
+        let y = p.baseY + p.yOffset;
+        // Wrap vertically once a particle drifts past the bottom.
+        if (y > h + 10) {
+          p.yOffset = -h - 10 + (p.yOffset - h);
+          y = p.baseY + p.yOffset;
+        }
+        ctx.fillStyle = `rgba(159, 200, 192, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
       }
-      const bobbing = Math.sin(now * 0.0015) * 4;
-      const subY = horizonY + waveYOffset + bobbing;
+      ctx.restore();
 
-      drawSubmersible(ctx, subX, subY, Math.min(w, h) * 0.06);
-
-      // Vignette
+      // ---- 7. Vignette -----------------------------------------------------
       const vig = ctx.createRadialGradient(
         w * 0.5,
         h * 0.5,
-        Math.min(w, h) * 0.3,
+        Math.min(w, h) * 0.25,
         w * 0.5,
-        h * 0.5,
-        Math.max(w, h) * 0.9,
+        h * 0.55,
+        Math.max(w, h) * 0.85,
       );
       vig.addColorStop(0, "rgba(5, 10, 20, 0)");
-      vig.addColorStop(1, "rgba(5, 10, 20, 0.8)");
+      vig.addColorStop(1, "rgba(2, 6, 17, 0.85)");
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, w, h);
 
@@ -214,7 +249,6 @@ export function LandingHero() {
     window.addEventListener("resize", onResize);
 
     if (reducedMotion) {
-      // Paint one static frame
       frame(performance.now());
     } else {
       rafRef.current = requestAnimationFrame(frame);
@@ -242,58 +276,105 @@ export function LandingHero() {
   );
 }
 
-function drawSubmersible(
+function seedSnow(w: number, h: number): SnowParticle[] {
+  const count = Math.round(Math.min(220, (w * h) / 7000));
+  const out: SnowParticle[] = [];
+  for (let i = 0; i < count; i++) {
+    const r = pseudoRand(i * 7 + 1);
+    out.push({
+      baseX: pseudoRand(i * 11) * w,
+      baseY: pseudoRand(i * 13) * h,
+      yOffset: 0,
+      speed: 0.4 + pseudoRand(i * 19) * 0.9,
+      swayAmp: 4 + pseudoRand(i * 23) * 14,
+      swayPhase: pseudoRand(i * 29) * Math.PI * 2,
+      size: 0.8 + r * 1.6,
+      alpha: 0.12 + r * 0.18,
+    });
+  }
+  return out;
+}
+
+function seedKelp(w: number, h: number, side: "left" | "right"): KelpFrond[] {
+  const count = 5;
+  const out: KelpFrond[] = [];
+  const bandWidth = Math.min(160, w * 0.18);
+  for (let i = 0; i < count; i++) {
+    const t = pseudoRand(i * 31 + (side === "left" ? 1 : 100));
+    const xInBand = (i / count) * bandWidth + t * 18;
+    const rootX = side === "left" ? xInBand : w - xInBand;
+    out.push({
+      rootX,
+      height: h * (0.45 + pseudoRand(i * 41) * 0.35),
+      width: 5 + pseudoRand(i * 43) * 4,
+      swayPhase: pseudoRand(i * 47) * Math.PI * 2,
+      swaySpeed: 0.3 + pseudoRand(i * 53) * 0.5,
+      swayAmp: 18 + pseudoRand(i * 59) * 22,
+      segments: 14,
+    });
+  }
+  return out;
+}
+
+function drawKelpStand(
   ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  scale: number,
+  fronds: KelpFrond[],
+  h: number,
+  now: number,
+  _side: "left" | "right",
 ) {
-  // Draw light beam pointing up and out into the water/sky
-  const coneLen = scale * 8;
-  const coneGrad = ctx.createLinearGradient(cx, cy, cx + coneLen * 0.8, cy + coneLen);
-  coneGrad.addColorStop(0, "rgba(107, 230, 193, 0.4)");
-  coneGrad.addColorStop(1, "rgba(107, 230, 193, 0)");
-  ctx.beginPath();
-  ctx.moveTo(cx + scale * 0.8, cy + scale * 0.1);
-  ctx.lineTo(cx + scale * 0.8 + coneLen * 0.8, cy + coneLen);
-  ctx.lineTo(cx + scale * 0.8 - coneLen * 0.3, cy + coneLen * 1.2);
-  ctx.closePath();
-  ctx.fillStyle = coneGrad;
-  ctx.fill();
-
   ctx.save();
-  ctx.translate(cx, cy);
-  
-  // Bobbing angle
-  const pitch = Math.sin(Date.now() * 0.001) * 0.05;
-  ctx.rotate(pitch);
-
-  ctx.fillStyle = "#0a1a2e";
-  ctx.strokeStyle = "rgba(107, 230, 193, 0.4)";
-  ctx.lineWidth = 1.5;
-
-  // Main body
-  ctx.beginPath();
-  ctx.ellipse(0, 0, scale * 1.2, scale * 0.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // Glass dome
-  ctx.beginPath();
-  ctx.ellipse(scale * 0.2, -scale * 0.15, scale * 0.6, scale * 0.3, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(107, 230, 193, 0.25)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(107, 230, 193, 0.6)";
-  ctx.stroke();
-
-  // Inner glow (pilot light)
-  ctx.beginPath();
-  ctx.arc(scale * 0.4, -scale * 0.05, scale * 0.12, 0, Math.PI * 2);
-  ctx.fillStyle = "#d9f2ec";
-  ctx.shadowColor = PALETTE.glow;
-  ctx.shadowBlur = 12;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
+  for (const k of fronds) {
+    const segH = k.height / k.segments;
+    ctx.beginPath();
+    ctx.moveTo(k.rootX - k.width * 0.5, h);
+    // Walk up the stem in segments, sway each segment by a sinusoid
+    // whose phase shifts with height — the tip waves more than the base.
+    const points: Array<[number, number]> = [];
+    for (let s = 0; s <= k.segments; s++) {
+      const segPhase = k.swayPhase + (s / k.segments) * 1.5;
+      const sway =
+        Math.sin(now * 0.001 * k.swaySpeed + segPhase) * k.swayAmp * (s / k.segments);
+      const x = k.rootX + sway;
+      const y = h - s * segH;
+      points.push([x, y]);
+    }
+    // Stem outline (right side going up)
+    for (let s = 0; s <= k.segments; s++) {
+      const [x, y] = points[s];
+      const taper = 1 - s / k.segments;
+      const halfWidth = k.width * 0.5 * (taper * 0.6 + 0.4);
+      if (s === 0) ctx.moveTo(x + halfWidth, y);
+      else ctx.lineTo(x + halfWidth, y);
+    }
+    // Coming back down the left side
+    for (let s = k.segments; s >= 0; s--) {
+      const [x, y] = points[s];
+      const taper = 1 - s / k.segments;
+      const halfWidth = k.width * 0.5 * (taper * 0.6 + 0.4);
+      ctx.lineTo(x - halfWidth, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = PALETTE.kelp;
+    ctx.fill();
+    // Faint mint highlight on the tip — bioluminescent kelp
+    const tipY = points[k.segments][1];
+    const tipX = points[k.segments][0];
+    const grad = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, 30);
+    grad.addColorStop(0, "rgba(107, 230, 193, 0.18)");
+    grad.addColorStop(1, "rgba(107, 230, 193, 0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
+}
+
+// Deterministic [0,1) PRNG seeded by integer i. Used for placing kelp
+// + snow so reloads pick the same arrangement and resize reseeds
+// without flicker.
+function pseudoRand(i: number): number {
+  const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
 }

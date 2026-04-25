@@ -35,16 +35,30 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-deep bg-abyss/95 p-6 text-fg shadow-[0_30px_80px_rgba(5,10,20,0.65)] backdrop-blur-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        // No hard border, no opaque tile — the dialog is a luminous
+        // chart unrolled over the trench. Soft mint hairline, deep
+        // backdrop wash with a radial glow at the centre, and a
+        // strong drop-shadow so the chart feels like it's sitting in
+        // front of the water.
+        "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 p-7 text-fg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         className,
       )}
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse at center, rgba(14, 79, 85, 0.35) 0%, rgba(10, 26, 46, 0.92) 45%, rgba(5, 10, 20, 0.96) 100%)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        boxShadow:
+          "0 28px 80px rgba(2, 6, 17, 0.65), 0 0 60px rgba(107, 230, 193, 0.15) inset",
+      }}
       {...props}
     >
       {children}
       {!hideClose && (
         <DialogPrimitive.Close
           aria-label="Close"
-          className="absolute right-4 top-4 rounded-md p-1 text-fg-muted opacity-80 transition-opacity hover:bg-deep/40 hover:text-fg hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-glow/60"
+          className="absolute right-4 top-4 bg-transparent p-1 text-fg-muted opacity-80 transition-all hover:text-glow hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-glow/60"
+          style={{ filter: "url(#bs-soft-glow)" }}
         >
           <X size={18} aria-hidden="true" />
         </DialogPrimitive.Close>
@@ -82,9 +96,14 @@ export const DialogTitle = forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "bs-display text-2xl font-medium tracking-tight text-glow",
+      "bs-display text-2xl font-medium tracking-wide text-glow",
       className,
     )}
+    style={{
+      filter: "url(#bs-emboss-glow)",
+      textShadow:
+        "0 0 16px rgba(107,230,193,0.45), 0 0 32px rgba(107,230,193,0.18)",
+    }}
     {...props}
   />
 ));
@@ -96,7 +115,8 @@ export const DialogDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm leading-relaxed text-fg-muted", className)}
+    className={cn("text-sm leading-relaxed text-fg-muted italic", className)}
+    style={{ fontFamily: "var(--font-body)", fontWeight: 300 }}
     {...props}
   />
 ));

@@ -1,9 +1,16 @@
-@import "@fontsource/cormorant-garamond/400.css";
-@import "@fontsource/cormorant-garamond/500.css";
-@import "@fontsource/cormorant-garamond/600.css";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
+/* Display: Cinzel — Roman-inscription serif. Stately, engraved,
+ * suits the "ancient hidden chart" mood of the abyss. Replaces
+ * Cormorant Garamond which was reading as generic "elegant serif."
+ * Body: Spectral — literary serif body with ample x-height.
+ * Replaces Inter, which read as tech-product across HUD/labels and
+ * fought the trench's organic identity. */
+@import "@fontsource/cinzel/400.css";
+@import "@fontsource/cinzel/500.css";
+@import "@fontsource/cinzel/600.css";
+@import "@fontsource/spectral/300.css";
+@import "@fontsource/spectral/400.css";
+@import "@fontsource/spectral/500.css";
+@import "@fontsource/spectral/600.css";
 @import "tailwindcss";
 
 /* Tailwind v4 theme — palette is carved from the same tokens that
@@ -32,26 +39,28 @@
   --shadow-hud-panel: 0 12px 32px color-mix(in srgb, var(--color-bg) 60%, transparent);
   --shadow-hud-panel-side: -12px 0 32px color-mix(in srgb, var(--color-bg) 60%, transparent);
 
-  --font-display: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua",
-    Palatino, serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  --font-display: "Cinzel", "Trajan Pro", "Cormorant Garamond",
+    "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-body: "Spectral", "Iowan Old Style", Cambria, "Georgia",
+    "Palatino Linotype", "Book Antiqua", serif;
 }
 
 /*
  * Fontography rationale — see docs/DESIGN.md
  *
- * Cormorant Garamond is a late-19th-century revival with liquid,
- * almost-dripping terminals. The italic has swashes that curve like
- * tentacles. It sets the mood on the landing and for the run summary.
- * It is NOT used for in-game HUD — at small sizes its fine hairlines
- * disappear against the abyssal backdrop.
+ * Display = Cinzel. A geometric Roman-inscription serif. Reads as
+ * "ancient chart pulled from the deep" — exactly the identity the
+ * trench wants. Pairs the engraved capitals against a literary
+ * body without fighting the abyssal mood. Wide letterspacing on
+ * the title sells the "carved into stone" feel.
  *
- * Inter is the small-text workhorse: high x-height, lined-up numbers,
- * legible at 12px on mobile over the dark teal-navy gradient.
+ * Body = Spectral. A literary serif with high x-height, real
+ * italics, and tabular figures. Replaces Inter (tech, neutral) so
+ * HUD readouts feel like field-journal entries rather than a
+ * dashboard. Pairs naturally with Cinzel's caps.
  *
- * Font stack falls back to system serif / system sans so a failed
- * font load still renders something readable.
+ * Both have system-serif fallbacks so a failed webfont load still
+ * renders correctly.
  */
 
 :root {
@@ -63,10 +72,10 @@
   --color-fg-muted: #8aa7a2;
   --color-warn: #ff6b6b;
 
-  --font-display: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua",
-    Palatino, serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  --font-display: "Cinzel", "Trajan Pro", "Cormorant Garamond",
+    "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-body: "Spectral", "Iowan Old Style", Cambria, "Georgia",
+    "Palatino Linotype", "Book Antiqua", serif;
 
   /* Spacing scale — 4px base. */
   --space-1: 0.25rem;
@@ -120,11 +129,30 @@ body {
   position: relative;
 }
 
-/* Display face only on headings that explicitly opt in. */
+/* Display face. Cinzel is engraved-Roman: wide letterspacing
+ * carves the title into the screen instead of pasting it on top. */
 .bs-display {
   font-family: var(--font-display);
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
+}
+
+/* Field-journal label — small caps Spectral with wide tracking,
+ * for HUD readouts and chart annotations. Replaces the boxed
+ * uppercase chips with something that reads like ink on a chart. */
+.bs-label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-feature-settings: "smcp" 1, "c2sc" 1, "tnum" 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Tabular numerals for HUD readouts — keeps oxygen, depth, score
+ * counters from juddering as digits change. */
+.bs-numeral {
+  font-family: var(--font-body);
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
 /* Focus ring — visible on keyboard navigation. */
@@ -141,15 +169,11 @@ button {
   cursor: pointer;
 }
 
-/* The phone-landscape landing layout pins the mode triptych to viewport
- * bottom (see LandingScreen.tsx). Framer-motion stacks a translateY on
- * each ModeCard's wrapper that getBoundingClientRect picks up even at
- * rest, pushing the rect ~12px past the section edge and tripping the
- * playwright clipping check. Force-reset transforms on every wrapper
- * inside the triptych on landscape phones so bounding rects match the
- * visual layout. */
+/* Carousel slides legitimately extend past the viewport — that's
+ * the contract. Suppress framer-motion's at-rest transform on the
+ * carousel container so the playwright clipping diagnostic doesn't
+ * trip on a translateY left over after the entry animation. */
 @media (max-height: 500px) and (orientation: landscape) {
-  [data-testid="landing-screen"] [data-testid="mode-triptych"] *,
   [data-testid="landing-screen"] [data-testid="mode-triptych"] {
     transform: none !important;
   }
