@@ -64,6 +64,24 @@ export class AIManager {
     this.playerVehicle.position.set(player.x, player.y, 0);
   }
 
+  /**
+   * Push the current biome's aggression multiplier into every
+   * predator brain. Called once per tick from the runtime with the
+   * player's depth-derived multiplier:
+   *   - photic-gate    1.0 (baseline)
+   *   - twilight-shelf 1.15
+   *   - midnight-column 1.3
+   *   - abyssal-trench 1.45
+   *   - stygian-abyss  1.6
+   * Each brain then uses its `effective*` accessors so detection
+   * radius, charge windup, and strike speed scale together.
+   */
+  setBiomeAggression(multiplier: number): void {
+    for (const brain of this.predatorBrainMap.values()) {
+      brain.biomeAggression = multiplier;
+    }
+  }
+
   syncPredators(predators: Predator[]) {
     for (const p of predators) {
       // Marauder-subs run on their own EnemySubHuntBehavior pipeline.

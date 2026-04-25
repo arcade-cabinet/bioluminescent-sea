@@ -150,6 +150,19 @@ export class PredatorBrain extends Vehicle {
   /** Wall time when HP hit 0. POSITIVE_INFINITY = still alive. */
   public deathStartTime = Number.POSITIVE_INFINITY;
 
+  /**
+   * Biome aggression multiplier (1.0 baseline at photic-gate, scales
+   * up with depth). Applied to detectionRadius, charge windup
+   * (inverted — deeper = shorter telegraph), strike speed, and
+   * fuzzy desirability. Set every tick by AIManager from the
+   * current player depth.
+   *
+   * 1.0 = surface, 1.6 = stygian abyss. Tuned so a player descending
+   * into the trench notices a sharp tonal shift — the deeper biomes
+   * don't just look more dangerous, they ACT more dangerous.
+   */
+  public biomeAggression = 1;
+
   /** Set true once AIManager has issued the loot drop for this brain;
    *  prevents the drop from re-firing each frame the brain is dying. */
   public lootDropped = false;
@@ -271,6 +284,35 @@ export class PredatorBrain extends Vehicle {
     return Math.min(1, (this.currentTime - this.deathStartTime) / this.deathAnimationSeconds);
   }
 
+  // ---- Biome-scaled profile accessors ----------------------------------
+  // Each one applies `biomeAggression` to its corresponding profile knob
+  // so deeper biomes feel meaningfully more dangerous without authoring
+  // multiple profiles per archetype × biome.
+
+  /** Detection radius scales LINEARLY with aggression — deeper biomes
+   *  see the player from farther away. */
+  effectiveDetectionRadius(): number {
+    return this.profile.detectionRadiusPx * this.biomeAggression;
+  }
+
+  /** Commit radius scales similarly so the predator commits earlier
+   *  when stalking from the deep. */
+  effectiveCommitRadius(): number {
+    return this.profile.commitRadiusPx * this.biomeAggression;
+  }
+
+  /** Charge windup INVERSELY scales: deeper biomes shorten the
+   *  telegraph, making strikes harder to read. Floored at 0.18s so
+   *  the windup is still readable at max aggression. */
+  effectiveChargeWindup(): number {
+    return Math.max(0.18, this.profile.chargeWindupSeconds / this.biomeAggression);
+  }
+
+  /** Strike speed scales LINEARLY — deeper biomes lunge faster. */
+  effectiveStrikeSpeed(): number {
+    return this.profile.strikeMaxSpeed * this.biomeAggression;
+  }
+
   // ---- Per-tick API ------------------------------------------------------
 
   tick(delta: number, currentTime: number): void {
@@ -384,7 +426,7 @@ export class PredatorBrain extends Vehicle {
   }
 
   activateStrikeBehaviour(direction: Vector3): void {
-    this.maxSpeed = this.profile.strikeMaxSpeed;
+    this.maxSpeed = this.effectiveStrikeSpeed();
     // Project the strike target far enough that velocity points
     // through the player and out the other side. Use a dedicated
     // local Vector3 — the previous code aliased `_scratch` as both
@@ -430,7 +472,7 @@ export class PredatorBrain extends Vehicle {
   canSeePlayer(): boolean {
     if (!this.playerRef) return false;
     const distance = this.playerRef.position.distanceTo(this.position);
-    if (distance > this.profile.detectionRadiusPx) return false;
+    if (distance > this.effectiveDetectionRadius()) return false;
     // Cone test: dot of forward vs to-player must exceed the half-angle
     this._toPlayer
       .copy(this.playerRef.position)

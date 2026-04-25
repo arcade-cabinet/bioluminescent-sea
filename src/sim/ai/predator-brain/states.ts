@@ -109,7 +109,7 @@ export class StalkState extends TimedState {
       return;
     }
 
-    if (owner.distanceToPlayer() <= owner.profile.commitRadiusPx) {
+    if (owner.distanceToPlayer() <= owner.effectiveCommitRadius()) {
       owner.stateMachine.changeTo(CHARGE);
       return;
     }
@@ -131,7 +131,7 @@ export class ChargeState extends TimedState {
 
   enter(owner: PredatorBrain): void {
     super.enter(owner);
-    this.duration = owner.profile.chargeWindupSeconds;
+    this.duration = owner.effectiveChargeWindup();
     this.chargeTarget.copy(owner.lastKnownPlayerPosition);
     owner.activateChargeBehaviour(this.chargeTarget);
     owner.publishAiState("charge");
