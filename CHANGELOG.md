@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.23.0...v0.24.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** leviathan presence cue — sub-bass drone + violet edge vignette ([#155](https://github.com/arcade-cabinet/bioluminescent-sea/issues/155)) ([70ddf1e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/70ddf1e2802a19bbcac3906e6da78a509ab4653f))
+
 ## [0.23.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.22.0...v0.23.0) (2026-04-25)
 
 
