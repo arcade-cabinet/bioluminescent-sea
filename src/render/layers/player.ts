@@ -1,4 +1,4 @@
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Rectangle } from "pixi.js";
 import { AdvancedBloomFilter } from "pixi-filters";
 import type { Player } from "@/sim/entities/types";
 
@@ -23,6 +23,13 @@ export interface PlayerController {
 export function mountPlayer(parent: Container): PlayerController {
   const subContainer = new Container();
   subContainer.label = "player:sub";
+  // The AdvancedBloomFilter renders the player's emissive look. It
+  // needs an EXPLICIT filterArea — without one, pixi auto-fits to the
+  // subContainer's children's bounds, and once the parent (`near`
+  // layer) gains its own DisplacementFilter the nested filter stack
+  // ends up sampling beyond the bloom's filterArea and the entire
+  // sub renders invisibly. We pin the area to a generous 800x800 box
+  // anchored at origin, big enough to cover the sub at any viewport.
   subContainer.filters = [
     new AdvancedBloomFilter({
       threshold: 0.45,
@@ -32,6 +39,8 @@ export function mountPlayer(parent: Container): PlayerController {
       quality: 4,
     }),
   ];
+  // Updated each frame in `sync()` to track the player.
+  subContainer.filterArea = new Rectangle(0, 0, 1, 1);
 
   const trail = new Graphics();
   const buff = new Graphics();
@@ -51,6 +60,24 @@ export function mountPlayer(parent: Container): PlayerController {
       // glint + propeller wash were invisible. Larger silhouette
       // gives detail room to read.
       const s = Math.max(1.4, viewportScale);
+
+      // Pin the bloom filter's render area around the player every
+      // frame. Without an explicit filterArea, pixi falls back to the
+      // child Graphics' bounds — which produces the correct result
+      // when this is the only filter in play, but breaks when the
+      // parent (`near` layer) ALSO carries a filter (refraction's
+      // DisplacementFilter). The combined filter stack ends up
+      // sampling outside the bloom's auto-fitted area and the sub
+      // renders invisibly. A generous box anchored on the player's
+      // position covers every Graphics this layer draws (trail back
+      // ~25 frames, lamp cone forward, halo around hull).
+      const filterPad = 360;
+      subContainer.filterArea = new Rectangle(
+        player.x - filterPad,
+        player.y - filterPad,
+        filterPad * 2,
+        filterPad * 2,
+      );
 
       // Record trail
       trailPositions.unshift({ x: player.x, y: player.y, time: totalTime });
