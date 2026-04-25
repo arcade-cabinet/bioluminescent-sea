@@ -468,6 +468,38 @@ export class AIManager {
     return out;
   }
 
+  /**
+   * 0..1 leviathan-proximity intensity, computed from how close any
+   * leviathan brain is to the player. Returns 0 if no leviathan is
+   * spawned. Saturates at 1 when a leviathan is within 200px and
+   * decays linearly to 0 by 1200px.
+   *
+   * Drives the audio layer's sub-bass drone (`leviathan-rumble`) and
+   * the renderer's edge-vignette pulse so the player gets a
+   * cinematic "something is here, something is enormous, you do
+   * NOT want it to find you" cue without needing to spot the
+   * silhouette in the darkness.
+   *
+   * Detection uses `isLeviathan` predator entries (the Predator
+   * type's existing flag) — they're tracked through the same
+   * brain map as organic predators but pinned to AmbientState by
+   * `pinAsLeviathan()` so they don't pursue.
+   */
+  leviathanProximity(x: number, y: number): number {
+    let nearest = Infinity;
+    for (const brain of this.predatorBrainMap.values()) {
+      if (brain.currentAiState !== "ambient") continue;
+      const dx = brain.position.x - x;
+      const dy = brain.position.y - y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < nearest) nearest = dist;
+    }
+    if (nearest === Infinity) return 0;
+    if (nearest <= 200) return 1;
+    if (nearest >= 1200) return 0;
+    return 1 - (nearest - 200) / 1000;
+  }
+
   anyPredatorStrikingNear(x: number, y: number, radiusPx: number): boolean {
     const radiusSq = radiusPx * radiusPx;
     for (const brain of this.predatorBrainMap.values()) {

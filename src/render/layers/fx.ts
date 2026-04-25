@@ -31,6 +31,10 @@ export interface FxController {
       nearness: number;
     }[];
     impactRippleAt: { x: number; y: number } | null;
+    /** 0..1 leviathan proximity. Drives a subtle violet edge
+     *  vignette pulse so the player feels something enormous is
+     *  nearby. Independent of `threatFlashAlpha`. */
+    leviathanProximity: number;
   }): void;
   destroy(): void;
 }
@@ -46,8 +50,16 @@ export function mountFx(parent: Container): FxController {
   const bursts = new Graphics();
   const lampScatter = new Graphics();
   const impactRipples = new Graphics();
+  const leviathanVignette = new Graphics();
   const threatFlash = new Graphics();
-  parent.addChild(sonar, bursts, lampScatter, impactRipples, threatFlash);
+  parent.addChild(
+    sonar,
+    bursts,
+    lampScatter,
+    impactRipples,
+    leviathanVignette,
+    threatFlash,
+  );
 
   /** Active ripples — short ring buffer, entries auto-prune past
    *  the 0.7s lifetime. Edge-detected against the last impact
@@ -56,7 +68,7 @@ export function mountFx(parent: Container): FxController {
   let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity }) {
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -230,6 +242,44 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Leviathan presence vignette — four edge bands that ramp
+      // alpha with proximity, breathing on a slow sine. Color is
+      // dusky violet (0x3a1d5a — same as midnight-column tint) so
+      // it reads as ambient dread, not a damage flash. Visible only
+      // when `leviathanProximity > 0.05` to avoid burning fill rate
+      // on empty frames.
+      leviathanVignette.clear();
+      if (leviathanProximity > 0.05) {
+        // 1.6 Hz breathing — a 2/3 second cycle, feels like a deep
+        // breath rather than a heartbeat. Modulates the band alpha
+        // 70%–100% so the vignette is always visibly present at
+        // proximity > 0, never strobes off.
+        const breath = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 1.6));
+        const baseAlpha = leviathanProximity * 0.5 * breath;
+        const w = viewport.widthPx;
+        const h = viewport.heightPx;
+        const bandW = w * 0.18;
+        const bandH = h * 0.22;
+        // Top + bottom + left + right bands, each fading inward.
+        // Three concentric rectangles per side give a soft falloff
+        // without a real radial-gradient shader.
+        const bandSteps = 3;
+        for (let i = 0; i < bandSteps; i++) {
+          const t = (i + 1) / bandSteps;
+          const a = baseAlpha * (1 - t * t);
+          const inset = t * bandW;
+          const insetH = t * bandH;
+          // Top
+          leviathanVignette.rect(0, 0, w, insetH).fill({ color: 0x3a1d5a, alpha: a });
+          // Bottom
+          leviathanVignette.rect(0, h - insetH, w, insetH).fill({ color: 0x3a1d5a, alpha: a });
+          // Left
+          leviathanVignette.rect(0, 0, inset, h).fill({ color: 0x3a1d5a, alpha: a });
+          // Right
+          leviathanVignette.rect(w - inset, 0, inset, h).fill({ color: 0x3a1d5a, alpha: a });
+        }
+      }
+
       threatFlash.clear();
       if (threatFlashAlpha > 0) {
         threatFlash.rect(0, 0, viewport.widthPx, viewport.heightPx).fill({
@@ -243,6 +293,7 @@ export function mountFx(parent: Container): FxController {
       bursts.destroy();
       lampScatter.destroy();
       impactRipples.destroy();
+      leviathanVignette.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;
     },

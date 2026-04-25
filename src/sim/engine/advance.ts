@@ -383,6 +383,10 @@ export function advanceScene(
     // `lastImpactSeconds` rising so re-emitting during the grace
     // window doesn't fire a ring per frame.
     impactRippleAt: isCollision ? { x: player.x, y: player.y } : null,
+    // Leviathan presence — used by audio (sub-bass drone) +
+    // renderer (edge-vignette pulse). 0 most frames; non-zero only
+    // when a leviathan-flagged predator is within 1200px.
+    leviathanProximity: ai.leviathanProximity(player.x, player.y),
   };
 }
 
