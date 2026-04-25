@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.19.0...v0.20.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** predator wake trails — water streaks behind moving predators ([#146](https://github.com/arcade-cabinet/bioluminescent-sea/issues/146)) ([aa97450](https://github.com/arcade-cabinet/bioluminescent-sea/commit/aa97450eeb1a186953146953ddb598876f65413e))
+
 ## [0.19.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.18.0...v0.19.0) (2026-04-25)
 
 
