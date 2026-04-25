@@ -11,6 +11,10 @@ interface HudShellProps {
   /** Compact always-visible primary HUD: oxygen + score + chain. Only
    * surfaces when the device class is compact. */
   compactPrimary: ReactNode;
+  /** Objective progression list. Always shown inside the slide-out
+   * panel regardless of device class — tablet/desktop players open
+   * the hamburger to see quest progress too. */
+  objectivePanel: ReactNode;
   /** Threat-alert pulse — surfaced even on compact HUD because it's a
    * critical immediate signal. */
   threatAlert?: boolean;
@@ -28,18 +32,14 @@ interface HudShellProps {
  * glance. Everything else (codename, biome chip, landmark, depth,
  * charted%) is one tap away.
  */
-export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps) {
+export function HudShell({
+  fullHud,
+  compactPrimary,
+  objectivePanel,
+  threatAlert,
+}: HudShellProps) {
   const { isCompact, klass } = useDeviceClass();
   const [open, setOpen] = useState(false);
-
-  // Reset `open` when the device class crosses out of compact (e.g. a
-  // foldable unfolds, or the user resizes the window past the tablet
-  // breakpoint). Without this, the panel-driven pause effect would never
-  // unwind because we'd return early at the inline-HUD path before the
-  // pause cleanup ran.
-  useEffect(() => {
-    if (!isCompact && open) setOpen(false);
-  }, [isCompact, open]);
 
   useEffect(() => {
     if (open) {
@@ -59,14 +59,14 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (!isCompact) {
-    // Tablet, desktop, foldable unfolded — render the full HUD inline.
-    return <>{fullHud}</>;
-  }
-
-  // Phone — compact primary + hamburger button.
+  // Tablet/desktop: inline HUD + a hamburger button anchored top-right
+  // that opens the slide-out for objectives (the HUD itself is already
+  // visible so the panel only carries the objective list).
+  // Phone: compact primary + hamburger; the panel carries HUD + objectives.
   return (
     <>
+      {!isCompact && fullHud}
+
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-3 pt-3"
         style={{
@@ -75,12 +75,12 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
           paddingRight: "max(env(safe-area-inset-right), 0.5rem)",
         }}
       >
-        {/* Compact primary cluster on the left — pointer events on so
-         * the SFX toggle inside it stays tappable. */}
-        <div className="pointer-events-auto">{compactPrimary}</div>
+        {isCompact ? (
+          <div className="pointer-events-auto">{compactPrimary}</div>
+        ) : (
+          <div />
+        )}
 
-        {/* Hamburger — opens the full-HUD panel. Threat-alert ring
-         * pulses when something dangerous is closing in. */}
         <button
           type="button"
           aria-label="Open dive details"
@@ -128,26 +128,29 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
               className={
                 klass === "phone-landscape"
                   ? "absolute bottom-0 right-0 top-0 z-50 flex w-[min(20rem,80vw)] flex-col gap-3 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-4"
-                  : "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto border-b border-deep/60 bg-abyss/95 p-4"
+                  : klass === "phone-portrait"
+                    ? "absolute inset-x-0 top-0 z-50 flex max-h-[85vh] flex-col gap-3 overflow-y-auto border-b border-deep/60 bg-abyss/95 p-4"
+                    // Tablet / desktop: fixed-width right-side drawer.
+                    : "absolute bottom-0 right-0 top-0 z-50 flex w-[min(26rem,60vw)] flex-col gap-4 overflow-y-auto border-l border-deep/60 bg-abyss/95 p-5"
               }
               style={{
                 paddingTop: "max(env(safe-area-inset-top), 1rem)",
                 paddingBottom: "max(env(safe-area-inset-bottom), 1rem)",
                 boxShadow:
-                  klass === "phone-landscape"
-                    ? "var(--shadow-hud-panel-side)"
-                    : "var(--shadow-hud-panel)",
+                  klass === "phone-portrait"
+                    ? "var(--shadow-hud-panel)"
+                    : "var(--shadow-hud-panel-side)",
               }}
               initial={
-                klass === "phone-landscape"
-                  ? { x: "100%", opacity: 0 }
-                  : { y: "-100%", opacity: 0 }
+                klass === "phone-portrait"
+                  ? { y: "-100%", opacity: 0 }
+                  : { x: "100%", opacity: 0 }
               }
               animate={{ x: 0, y: 0, opacity: 1 }}
               exit={
-                klass === "phone-landscape"
-                  ? { x: "100%", opacity: 0 }
-                  : { y: "-100%", opacity: 0 }
+                klass === "phone-portrait"
+                  ? { y: "-100%", opacity: 0 }
+                  : { x: "100%", opacity: 0 }
               }
               transition={{ type: "spring", damping: 28, stiffness: 240 }}
             >
@@ -166,8 +169,27 @@ export function HudShell({ fullHud, compactPrimary, threatAlert }: HudShellProps
                 </button>
               </header>
 
-              {/* The full HUD lives inside the panel on compact viewports. */}
-              <div className="contents">{fullHud}</div>
+              {/* Objective progression — always shown, tablet/desktop
+               * included, because the hamburger is the canonical place
+               * to check quest progress. */}
+              <div className="flex flex-col gap-2">
+                <h3 className="m-0 font-body text-xs uppercase tracking-[0.18em] text-fg-muted">
+                  Objectives
+                </h3>
+                {objectivePanel}
+              </div>
+
+              {/* On compact viewports the full HUD also lives inside
+               * the panel (on tablet/desktop it's already inline so no
+               * need to duplicate). */}
+              {isCompact && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="m-0 font-body text-xs uppercase tracking-[0.18em] text-fg-muted">
+                    Dive Details
+                  </h3>
+                  <div className="contents">{fullHud}</div>
+                </div>
+              )}
             </motion.aside>
           </>
         )}

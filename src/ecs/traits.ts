@@ -105,4 +105,13 @@ export const DiveRoot = trait({
    */
   activeChunkBoundsLeftPx: 0,
   activeChunkBoundsRightPx: 0,
+  /**
+   * Serialized JSON of the SceneState.objectiveQueue. Koota's trait
+   * schema rejects arbitrary nested-object arrays, so we carry the
+   * live queue on DiveRoot as a string and decode on read. The bridge
+   * writes after each advance; the HUD reads at render time. Starts
+   * empty until `createInitialScene` seeds it and the first ECS
+   * advance copies it through.
+   */
+  objectiveQueueJson: "[]",
 });

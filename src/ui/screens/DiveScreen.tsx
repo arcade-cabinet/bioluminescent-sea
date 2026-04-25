@@ -36,6 +36,7 @@ import type { SubUpgrades } from "@/sim/meta/upgrades";
 import { CompactPrimary } from "@/ui/hud/CompactPrimary";
 import { HUD } from "@/ui/hud/HUD";
 import { HudShell } from "@/ui/hud/HudShell";
+import { ObjectivePanel } from "@/ui/hud/ObjectivePanel";
 import {
   cloneSceneState,
   type DeepSeaRunSnapshot,
@@ -123,7 +124,7 @@ export function DiveScreen({
   if (!initialSceneRef.current) {
     initialSceneRef.current = initialSnapshot
       ? cloneSceneState(initialSnapshot.scene)
-      : createInitialScene(initialDimensionsRef.current, upgrades);
+      : createInitialScene(initialDimensionsRef.current, upgrades, mode);
   }
 
   const initialScene = initialSceneRef.current;
@@ -137,6 +138,9 @@ export function DiveScreen({
   const [telemetry, setTelemetry] = useState<DiveTelemetry>(
     () =>
       initialSnapshot?.telemetry ?? getDiveTelemetry(initialScene, durationSeconds, durationSeconds),
+  );
+  const [objectiveQueueState, setObjectiveQueueState] = useState(
+    () => initialSnapshot?.scene.objectiveQueue ?? initialScene.objectiveQueue,
   );
 
   // Lazy one-shot world creation: useRef evaluates its arg on every render,
@@ -170,6 +174,9 @@ export function DiveScreen({
   const previousBiomeRef = useRef<string | null>(null);
   const previousLowOxRef = useRef(false);
   const depthTravelMetersRef = useRef(initialSnapshot?.scene.depthTravelMeters ?? 0);
+  const objectiveQueueRef = useRef(
+    initialSnapshot?.scene.objectiveQueue ?? initialScene.objectiveQueue,
+  );
 
   useEffect(() => {
     return () => {
@@ -268,6 +275,7 @@ export function DiveScreen({
           player: playerRef.current,
           predators: predatorsRef.current,
           depthTravelMeters: depthTravelMetersRef.current,
+          objectiveQueue: objectiveQueueRef.current,
         },
         timeLeft,
         durationSeconds,
@@ -295,6 +303,7 @@ export function DiveScreen({
         player: playerRef.current,
         predators: predatorsRef.current,
         depthTravelMeters: depthTravelMetersRef.current,
+        objectiveQueue: objectiveQueueRef.current,
       }),
       score: scoreRef.current,
       seed,
@@ -377,6 +386,7 @@ export function DiveScreen({
             player: playerRef.current,
             predators: predatorsRef.current,
             depthTravelMeters: depthTravelMetersRef.current,
+            objectiveQueue: objectiveQueueRef.current,
           },
           scoreRef.current,
           timeLeftForSummary,
@@ -428,6 +438,14 @@ export function DiveScreen({
       piratesRef.current = result.scene.pirates;
       particlesRef.current = result.scene.particles;
       depthTravelMetersRef.current = result.scene.depthTravelMeters;
+      // Queue diff heuristic: if any entry's current or completed
+      // changed, update state so the HUD panel re-renders. Reference
+      // equality is fine because the engine builds a new array on
+      // every progress change.
+      if (objectiveQueueRef.current !== result.scene.objectiveQueue) {
+        objectiveQueueRef.current = result.scene.objectiveQueue;
+        setObjectiveQueueState(result.scene.objectiveQueue);
+      }
 
       // Expire stale collection bursts every frame, regardless of whether
       // a new pickup happened. Otherwise the last burst lingers
@@ -626,6 +644,7 @@ export function DiveScreen({
       </AnimatePresence>
       <HudShell
         threatAlert={threatAlert}
+        objectivePanel={<ObjectivePanel queue={objectiveQueueState} />}
         compactPrimary={
           <CompactPrimary
             score={score}

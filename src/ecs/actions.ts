@@ -197,6 +197,7 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
     cameraTravel,
     activeChunkBoundsLeftPx,
     activeChunkBoundsRightPx,
+    objectiveQueueJson: JSON.stringify(result.scene.objectiveQueue),
   });
 
   return { world: nextWorld, result };

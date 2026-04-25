@@ -5,6 +5,10 @@ import {
   createInitialPlayer,
 } from "@/sim/entities";
 import { CHUNK_HEIGHT_METERS } from "@/sim/factories/chunk";
+import { createObjectiveQueue } from "@/sim/factories/dive";
+import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
+import { biomeAtDepth } from "@/sim/factories/region/biomes";
+import { advanceObjectiveQueue, tallyBeaconCharted } from "./objective";
 import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
 import {
   DESCENT_SPEED_METERS_PER_SECOND,
@@ -23,7 +27,11 @@ import type {
 
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
-export function createInitialScene(dimensions: ViewportDimensions, upgrades?: SubUpgrades): SceneState {
+export function createInitialScene(
+  dimensions: ViewportDimensions,
+  upgrades?: SubUpgrades,
+  mode: string | null | undefined = "descent",
+): SceneState {
   const player = createInitialPlayer(dimensions);
   if (upgrades) {
     player.speedScale = 1 + (upgrades.motor * 0.15); // +15% per level
@@ -37,6 +45,7 @@ export function createInitialScene(dimensions: ViewportDimensions, upgrades?: Su
     player,
     predators: [],
     depthTravelMeters: 0,
+    objectiveQueue: createObjectiveQueue(normalizeSessionMode(mode)),
   };
 }
 
@@ -174,7 +183,7 @@ export function advanceScene(
     activeBuffs: { repelUntil: activeRepel, overdriveUntil: activeOverdrive } 
   };
 
-  const nextScene: SceneState = {
+  const nextSceneBase: SceneState = {
     anomalies: anomalyCollection.anomalies.map(a => ({ ...a, pulsePhase: a.pulsePhase + deltaTime * 3 })),
     creatures: collection.creatures,
     particles,
@@ -182,6 +191,31 @@ export function advanceScene(
     player: nextPlayer,
     predators,
     depthTravelMeters: nextDepthTravelMeters,
+    objectiveQueue: scene.objectiveQueue,
+  };
+
+  // Objective progress advance. First apply per-frame increments
+  // (reach-depth, sustain-chain) via advanceObjectiveQueue, then tally
+  // any beacons charted this frame against
+  // `collect-beacons-in-region` objectives whose region matches the
+  // biome where each creature lived.
+  let nextObjectiveQueue = advanceObjectiveQueue(
+    scene.objectiveQueue,
+    nextSceneBase,
+    collection.multiplier,
+    0,
+  );
+  if (collection.collected.length > 0) {
+    for (const creature of collection.collected) {
+      const y = creature.worldYMeters ?? scene.depthTravelMeters;
+      const biome = biomeAtDepth(y);
+      nextObjectiveQueue = tallyBeaconCharted(nextObjectiveQueue, biome.id);
+    }
+  }
+
+  const nextScene: SceneState = {
+    ...nextSceneBase,
+    objectiveQueue: nextObjectiveQueue,
   };
 
   return {

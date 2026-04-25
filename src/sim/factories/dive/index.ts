@@ -14,3 +14,13 @@ export {
   DESCENT_DEFAULT,
   ARENA_DEFAULT,
 } from "./archetypes";
+
+export {
+  type Objective,
+  type ObjectiveKind,
+  type ObjectiveProgress,
+  type ObjectiveSet,
+  OBJECTIVE_SETS,
+  getObjectiveSet,
+  createObjectiveQueue,
+} from "./objective";
