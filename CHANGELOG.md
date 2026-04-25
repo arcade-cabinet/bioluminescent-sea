@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.24.0...v0.25.0) (2026-04-25)
+
+
+### Features
+
+* **bs:** pack-flank convergence arcs — visualise the engage call ([#157](https://github.com/arcade-cabinet/bioluminescent-sea/issues/157)) ([e3ae80c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e3ae80c04ec4ad9a4bf1b68a5f80b600e7e2685e))
+
 ## [0.24.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.23.0...v0.24.0) (2026-04-25)
 
 
