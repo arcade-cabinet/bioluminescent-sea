@@ -4,11 +4,12 @@ import { Application, Container } from "pixi.js";
  * PixiJS stage lifecycle + layer ordering.
  *
  * Layers, back to front:
- *   far      — abyss gradient, distant silhouettes
- *   mid      — parallax particles, ridges
- *   near     — entities (creatures, predators, pirates, player)
- *   fx       — sonar ping, collection bursts, impact flashes, lamp cones
- *   overlay  — depth vignette, biome tint (above entities, below UI)
+ *   far       — abyss gradient, distant silhouettes
+ *   water     — god-ray shafts + procedural caustics (fluidic layer)
+ *   mid       — parallax marine snow, ridges
+ *   near      — entities (creatures, predators, pirates, player)
+ *   fx        — sonar ping, collection bursts, impact flashes, lamp cones
+ *   overlay   — depth vignette, biome tint (above entities, below UI)
  *
  * React mounts the pixi canvas; everything else happens imperatively
  * inside pixi. `destroy()` tears down deterministically so React
@@ -17,6 +18,7 @@ import { Application, Container } from "pixi.js";
 
 export interface StageLayers {
   far: Container;
+  water: Container;
   mid: Container;
   near: Container;
   fx: Container;
@@ -43,22 +45,24 @@ export async function createStage(canvas: HTMLCanvasElement): Promise<PixiStage>
   });
 
   const far = new Container();
+  const water = new Container();
   const mid = new Container();
   const near = new Container();
   const fx = new Container();
   const overlay = new Container();
 
   far.label = "layer:far";
+  water.label = "layer:water";
   mid.label = "layer:mid";
   near.label = "layer:near";
   fx.label = "layer:fx";
   overlay.label = "layer:overlay";
 
-  app.stage.addChild(far, mid, near, fx, overlay);
+  app.stage.addChild(far, water, mid, near, fx, overlay);
 
   return {
     app,
-    layers: { far, mid, near, fx, overlay },
+    layers: { far, water, mid, near, fx, overlay },
     resize(widthPx, heightPx) {
       app.renderer.resize(widthPx, heightPx);
     },

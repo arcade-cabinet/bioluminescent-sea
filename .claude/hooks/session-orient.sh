@@ -9,20 +9,24 @@ cd "$REPO"
 TMP=$(mktemp -t orient.XXXXXX)
 trap 'rm -f "$TMP"' EXIT
 
+QUEUE_FILE="$REPO/docs/PRODUCTION.md"
+
 {
   echo "# Bioluminescent Sea — Autopilot Session Orient"
   echo ""
   echo "Repo: $REPO"
   echo ""
-  if [ -f "$REPO/HANDOFF-PRD.md" ]; then
-    OPEN=$(grep -c '^\- \[ \]' "$REPO/HANDOFF-PRD.md" 2>/dev/null || echo 0)
-    DONE=$(grep -c '^\- \[x\]' "$REPO/HANDOFF-PRD.md" 2>/dev/null || echo 0)
-    echo "HANDOFF-PRD: $DONE done · $OPEN open"
+  if [ -f "$QUEUE_FILE" ]; then
+    OPEN=$(grep -c '^\- \[ \]' "$QUEUE_FILE" 2>/dev/null || echo 0)
+    DONE=$(grep -c '^\- \[x\]' "$QUEUE_FILE" 2>/dev/null || echo 0)
+    echo "PRODUCTION queue: $DONE done · $OPEN open"
     echo ""
-    echo "## Next open items (top 10)"
-    echo ""
-    grep '^\- \[ \]' "$REPO/HANDOFF-PRD.md" | head -10
-    echo ""
+    if [ "$OPEN" != "0" ]; then
+      echo "## Next open items (top 10)"
+      echo ""
+      grep '^\- \[ \]' "$QUEUE_FILE" | head -10
+      echo ""
+    fi
   fi
   if [ -d "$REPO/.git" ]; then
     BRANCH=$(git branch --show-current 2>/dev/null || echo "?")
@@ -34,10 +38,10 @@ trap 'rm -f "$TMP"' EXIT
   fi
   echo "## Autopilot directive"
   echo ""
-  echo "1. Read HANDOFF-PRD.md for the full queue."
+  echo "1. Read docs/PRODUCTION.md for the open queue."
   echo "2. Read CLAUDE.md, STANDARDS.md, docs/DESIGN.md for context."
   echo "3. Pick the top open item and execute. Do not ask what to do."
-  echo "4. The Stop hook blocks ending the session while any HANDOFF-PRD"
+  echo "4. The Stop hook blocks ending the session while any docs/PRODUCTION.md"
   echo "   checkbox is unchecked. Check boxes as you complete items."
 } > "$TMP"
 

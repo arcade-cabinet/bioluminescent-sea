@@ -17,34 +17,52 @@ interface HUDProps {
   biomeTintHex?: string;
 }
 
-const panelStyle: CSSProperties = {
+const clusterStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "stretch",
+  gap: 0,
   background: "rgba(10, 26, 46, 0.72)",
   border: "1px solid rgba(107, 230, 193, 0.2)",
-  borderRadius: 8,
-  padding: "0.65rem 0.85rem",
+  borderRadius: 12,
+  padding: "0.5rem 0.25rem",
   color: "var(--color-fg)",
   fontFamily: "var(--font-body)",
   boxShadow: "0 4px 18px rgba(5, 10, 20, 0.45)",
   backdropFilter: "blur(8px)",
   WebkitBackdropFilter: "blur(8px)",
   minWidth: 0,
+  overflow: "hidden",
+};
+
+const statCellStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  minWidth: 0,
+  padding: "0 0.6rem",
+};
+
+const dividerStyle: CSSProperties = {
+  width: 1,
+  background: "rgba(107, 230, 193, 0.18)",
+  margin: "0.1rem 0",
 };
 
 const labelStyle: CSSProperties = {
-  fontSize: "0.6rem",
+  fontSize: "0.58rem",
   fontWeight: 600,
   textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "var(--color-glow)",
+  letterSpacing: "0.14em",
+  color: "var(--color-fg-muted)",
   margin: 0,
-  marginBottom: "0.15rem",
+  marginBottom: "0.1rem",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
 };
 
 const valueStyle: CSSProperties = {
-  fontSize: "1.35rem",
+  fontSize: "1.2rem",
   fontWeight: 600,
   lineHeight: 1.1,
   color: "var(--color-fg)",
@@ -53,7 +71,7 @@ const valueStyle: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-function Stat({
+function StatCell({
   label,
   value,
   tone,
@@ -71,12 +89,11 @@ function Stat({
         ? "var(--color-fg-muted)"
         : "var(--color-glow)";
   return (
-    <div
-      data-testid={`hud-stat-${testId}`}
-      style={{ ...panelStyle, borderColor: `${toneColor}30` }}
-    >
+    <div data-testid={`hud-stat-${testId}`} style={statCellStyle}>
       <div style={{ ...labelStyle, color: toneColor }}>{label}</div>
-      <div style={valueStyle}>{value}</div>
+      <div style={{ ...valueStyle, color: tone === "warn" ? toneColor : "var(--color-fg)" }}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -119,7 +136,9 @@ export function HUD({
 
   return (
     <>
-      {/* Top stat row */}
+      {/* Top stat cluster — grouped as a single pill so the five cells
+          share one surround. Much easier to read than the old five
+          independent panels, and stays on one row down to 320px. */}
       <div
         style={{
           position: "absolute",
@@ -127,23 +146,35 @@ export function HUD({
           left: "1rem",
           right: "1rem",
           display: "flex",
-          gap: "0.5rem",
           justifyContent: "flex-start",
           pointerEvents: "none",
           zIndex: 10,
-          flexWrap: "wrap",
         }}
       >
-        <Stat label="Score" value={score} testId="score" />
-        <Stat
-          label={critical ? "Oxygen — Critical" : lowOxygen ? "Oxygen — Low" : "Oxygen"}
-          value={`${Math.max(0, timeLeft).toFixed(0)}s`}
-          tone={lowOxygen ? "warn" : undefined}
-          testId="oxygen"
-        />
-        <Stat label="Chain" value={`×${multiplier}`} testId="chain" />
-        <Stat label="Depth" value={`${depthMeters}m`} tone="muted" testId="depth" />
-        <Stat label="Charted" value={`${beacons}%`} tone="muted" testId="charted" />
+        <div
+          data-testid="hud-stat-cluster"
+          style={{
+            ...clusterStyle,
+            borderColor: lowOxygen
+              ? "rgba(255, 107, 107, 0.45)"
+              : "rgba(107, 230, 193, 0.2)",
+          }}
+        >
+          <StatCell label="Score" value={score} testId="score" />
+          <div style={dividerStyle} />
+          <StatCell
+            label={critical ? "O₂ critical" : lowOxygen ? "O₂ low" : "Oxygen"}
+            value={`${Math.max(0, timeLeft).toFixed(0)}s`}
+            tone={lowOxygen ? "warn" : "glow"}
+            testId="oxygen"
+          />
+          <div style={dividerStyle} />
+          <StatCell label="Chain" value={`×${multiplier}`} testId="chain" />
+          <div style={dividerStyle} />
+          <StatCell label="Depth" value={`${depthMeters}m`} tone="muted" testId="depth" />
+          <div style={dividerStyle} />
+          <StatCell label="Charted" value={`${beacons}%`} tone="muted" testId="charted" />
+        </div>
       </div>
 
       {/* Right-side chip stack — landmark + biome + run codename.

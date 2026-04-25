@@ -16,6 +16,8 @@ import { mountEntities, type EntityController } from "./layers/entities";
 import { mountFx, type FxController } from "./layers/fx";
 import { mountParallax, type ParallaxController } from "./layers/parallax";
 import { mountPlayer, type PlayerController } from "./layers/player";
+import { mountRefraction, type RefractionController } from "./layers/refraction";
+import { mountWater, type WaterController } from "./layers/water";
 import { createStage, type PixiStage } from "./stage";
 
 /**
@@ -56,10 +58,18 @@ export interface RenderFrameInput {
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
   const stage: PixiStage = await createStage(canvas);
   const backdrop: BackdropController = mountBackdrop(stage.layers.far);
+  const water: WaterController = mountWater(stage.layers.water);
   const parallax: ParallaxController = mountParallax(stage.layers.mid);
   const entities: EntityController = mountEntities(stage.layers.near);
   const player: PlayerController = mountPlayer(stage.layers.near);
   const fx: FxController = mountFx(stage.layers.fx);
+  // Refraction wobble: targets the mid + near containers so marine snow
+  // and entities feel observed through moving water. Backdrop, water,
+  // FX, and overlay stay sharp on purpose.
+  const refraction: RefractionController = mountRefraction(
+    [stage.layers.mid, stage.layers.near],
+    stage.app.stage,
+  );
 
   // Scratch buffers — reused each frame so the render bridge allocates
   // zero intermediate arrays during steady-state play. Holes from
@@ -127,6 +137,14 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         biomeTintHex,
         depthMeters: root?.depthTravelMeters ?? 0,
       });
+      water.draw({
+        widthPx: v.widthPx,
+        heightPx: v.heightPx,
+        totalTime,
+        depthMeters: root?.depthTravelMeters ?? 0,
+        biomeTintHex,
+      });
+      refraction.tick(totalTime);
       parallax.draw({
         particles,
         heightPx: v.heightPx,
@@ -155,12 +173,15 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
     },
     resize(widthPx, heightPx) {
       stage.resize(widthPx, heightPx);
+      water.resize(widthPx, heightPx);
     },
     destroy() {
+      refraction.destroy();
       fx.destroy();
       player.destroy();
       entities.destroy();
       parallax.destroy();
+      water.destroy();
       backdrop.destroy();
       stage.destroy();
     },

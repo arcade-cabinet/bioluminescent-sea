@@ -197,7 +197,7 @@ export async function dumpBeat(
   try {
     await fs.access(png);
     await testInfo.attach(`${beat} screenshot`, { path: png, contentType: "image/png" });
-  } catch (e) {
+  } catch {
     // Screenshot timed out and wasn't created.
   }
   

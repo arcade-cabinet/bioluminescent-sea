@@ -50,21 +50,36 @@ export function mountFx(parent: Container): FxController {
         const age = totalTime - b.startedAt;
         if (age < 0 || age > 0.85) continue;
         const progress = age / 0.85;
-        const alpha = 1 - progress;
         const color = parseHex(b.color);
 
-        bursts.circle(b.x, b.y, b.size * (0.9 + progress * 2.1)).stroke({
+        // Soft glow disc — dies fastest, establishes the "flash" read.
+        const discRadius = b.size * (0.7 + progress * 1.6);
+        const discAlpha = Math.max(0, (1 - progress * 2.2)) * 0.55;
+        if (discAlpha > 0) {
+          bursts.circle(b.x, b.y, discRadius).fill({ color, alpha: discAlpha });
+        }
+
+        // Leading ring — the actual shockwave front. Expands fast, fades
+        // with the cube of progress so the edge feels crisp rather than
+        // lingering like a ghost.
+        const leadRadius = b.size * (0.9 + progress * 2.6);
+        const leadAlpha = Math.pow(1 - progress, 2) * 0.9;
+        bursts.circle(b.x, b.y, leadRadius).stroke({
           color,
-          alpha: alpha * 0.82,
-          width: Math.max(1.4, b.size * 0.08),
+          alpha: leadAlpha,
+          width: Math.max(1.5, b.size * 0.11 * (1 - progress)),
         });
-        for (let i = 0; i < 8; i++) {
-          const angle = i * (Math.PI / 4) + progress * 0.8;
-          const inner = b.size * (0.55 + progress * 1.2);
-          const outer = b.size * (1.15 + progress * 2.8);
-          bursts.moveTo(b.x + Math.cos(angle) * inner, b.y + Math.sin(angle) * inner);
-          bursts.lineTo(b.x + Math.cos(angle) * outer, b.y + Math.sin(angle) * outer);
-          bursts.stroke({ color: 0xfef9c3, alpha: alpha * 0.74, width: 1.3 });
+
+        // Inner echo — trails behind the front at ~75% radius, creamy
+        // white so the ring reads as "light" rather than just "outline."
+        if (progress > 0.08) {
+          const echoRadius = leadRadius * 0.72;
+          const echoAlpha = Math.pow(1 - progress, 3) * 0.7;
+          bursts.circle(b.x, b.y, echoRadius).stroke({
+            color: 0xfef9c3,
+            alpha: echoAlpha,
+            width: Math.max(1, b.size * 0.05 * (1 - progress)),
+          });
         }
       }
 

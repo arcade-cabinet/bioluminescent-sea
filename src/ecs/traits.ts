@@ -16,16 +16,35 @@ import type {
  * traits, and the renderer in src/render/* reads from traits through
  * queries. Sim never imports Koota; UI never writes traits directly.
  *
- * Entity categories (each is a row in the ECS world):
- *   - 1 player entity (PlayerAvatar + BeaconGlow + Position)
- *   - N beacon entities (CreatureKind + Position + BeaconGlow +
- *     Collectible + OxygenBonus)
- *   - N threat entities (ThreatKind + Position + ThreatDetection)
- *   - N particle entities (ParticleDrift + Position)
+ * ## Trait ↔ Archetype mapping
  *
- * For PR D we lift the existing sim payload types directly into the
- * traits. PR F swaps positions to Vec3 world-meters when the camera
- * + chunking lands.
+ * Every archetype produced by `src/sim/entities/factory` materialises
+ * onto exactly one of these traits. Archetypes are the *content
+ * identity* (what spawns, with what stats, under what AI profile);
+ * traits are the *runtime shape* (what the renderer + AI manager see).
+ * Multiple archetypes can map to the same trait when their runtime
+ * shape is identical — what differs is their archetype-driven
+ * behaviour and rendering glyph.
+ *
+ *   creature archetypes  → CreatureEntity  (fish-shoal, jellyfish-bloom,
+ *                                           plankton-mote)
+ *   predator             → PredatorEntity  (abyssal-predator)
+ *   pirate               → PirateEntity    (pirate-lantern)
+ *   leviathan            → PredatorEntity  (stygian-leviathan, with
+ *                                           `isLeviathan: true` flag)
+ *   enemy-sub            → PredatorEntity  (marauder-sub) — shares the
+ *                                           Predator runtime shape but
+ *                                           the AI manager wires the
+ *                                           enemy-sub-hunt steering
+ *                                           profile based on the
+ *                                           originating archetype id.
+ *   anomaly              → AnomalyEntity   (repel-anomaly,
+ *                                           overdrive-anomaly)
+ *   player               → PlayerAvatar    (ranger-sub)
+ *
+ * The id naming convention `<archetype>-c<chunkIdx>-<n>` lets the AI
+ * manager route to the correct steering by parsing the archetype
+ * prefix off the entity id.
  */
 
 export const PlayerAvatar = trait(

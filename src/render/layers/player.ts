@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { AdvancedBloomFilter } from "pixi-filters";
 import type { Player } from "@/sim/entities/types";
 
 /**
@@ -6,6 +7,12 @@ import type { Player } from "@/sim/entities/types";
  *
  * Two Graphics: the lamp cone (under the hull) and the hull itself
  * (over the cone). Glow intensity drives the lamp alpha breathing.
+ *
+ * An `AdvancedBloomFilter` is applied to the player's sub-container so
+ * the lamp cone + mint strokes read as emissive — the player's position
+ * has to pop out of the fluidic backdrop or the eye loses the subject.
+ * Tuned conservatively so the bloom supports the silhouette rather than
+ * smearing it.
  */
 
 export interface PlayerController {
@@ -14,10 +21,26 @@ export interface PlayerController {
 }
 
 export function mountPlayer(parent: Container): PlayerController {
+  const subContainer = new Container();
+  subContainer.label = "player:sub";
+  subContainer.filters = [
+    new AdvancedBloomFilter({
+      threshold: 0.45,
+      bloomScale: 0.85,
+      brightness: 1,
+      blur: 4,
+      quality: 4,
+    }),
+  ];
+
   const trail = new Graphics();
+  const buff = new Graphics();
   const lamp = new Graphics();
   const hull = new Graphics();
-  parent.addChild(trail, lamp, hull);
+  // Buff halo sits between trail and hull so the aura reads *around*
+  // the sub silhouette without occluding the lamp cone.
+  subContainer.addChild(trail, buff, lamp, hull);
+  parent.addChild(subContainer);
 
   const trailPositions: { x: number; y: number; time: number }[] = [];
 
@@ -44,19 +67,54 @@ export function mountPlayer(parent: Container): PlayerController {
         }
       }
 
+      // Active buff tells. `activeBuffs.repelUntil` / `.overdriveUntil`
+      // are absolute timestamps; the sim compares against `totalTime`.
+      const repelActive = player.activeBuffs.repelUntil > totalTime;
+      const overdriveActive = player.activeBuffs.overdriveUntil > totalTime;
+      buff.clear();
+      buff.position.set(player.x, player.y);
+      if (repelActive) {
+        // Two concentric rings, one breathing — reads as a projected
+        // forcefield. Cyan-blue so it doesn't collide with the mint
+        // of a normal glow.
+        const pulse = 0.75 + Math.sin(totalTime * 4) * 0.25;
+        const rInner = 38 * s;
+        const rOuter = rInner + 8 * s * pulse;
+        buff.circle(0, 0, rInner).stroke({
+          color: 0x7dd3fc,
+          alpha: 0.55,
+          width: 2,
+        });
+        buff.circle(0, 0, rOuter).stroke({
+          color: 0x7dd3fc,
+          alpha: 0.3 * pulse,
+          width: 1.5,
+        });
+      }
+      if (overdriveActive) {
+        // Trailing warm aura — reads as "boosted." Kept warm (amber)
+        // so it reads as energy rather than another mint source.
+        const wobble = 1 + Math.sin(totalTime * 6) * 0.06;
+        buff.ellipse(0, 0, 36 * s * wobble, 18 * s * wobble).fill({
+          color: 0xffcc6a,
+          alpha: 0.18,
+        });
+      }
+
       lamp.clear();
       lamp.position.set(player.x, player.y);
       lamp.rotation = player.angle;
-      // Lamp cone fans forward (+x) of the sub.
-      const coneLen = 180 * s * player.lampScale;
-      const coneSpread = 80 * s * player.lampScale;
+      // Lamp cone fans forward (+x) of the sub. Overdrive widens + brightens.
+      const lampBoost = overdriveActive ? 1.35 : 1;
+      const coneLen = 180 * s * player.lampScale * lampBoost;
+      const coneSpread = 80 * s * player.lampScale * lampBoost;
       lamp.moveTo(16 * s, 0);
       lamp.lineTo(coneLen, -coneSpread);
       lamp.lineTo(coneLen, coneSpread);
       lamp.lineTo(16 * s, 0);
       lamp.fill({
         color: 0x6be6c1,
-        alpha: 0.09 + player.glowIntensity * 0.08,
+        alpha: (0.09 + player.glowIntensity * 0.08) * (overdriveActive ? 1.6 : 1),
       });
       lamp.moveTo(16 * s, 0);
       lamp.lineTo(coneLen * 0.7, -coneSpread * 0.5);
@@ -64,7 +122,7 @@ export function mountPlayer(parent: Container): PlayerController {
       lamp.lineTo(16 * s, 0);
       lamp.fill({
         color: 0xd9f2ec,
-        alpha: 0.06 + player.glowIntensity * 0.1,
+        alpha: (0.06 + player.glowIntensity * 0.1) * (overdriveActive ? 1.6 : 1),
       });
 
       hull.clear();
@@ -101,8 +159,7 @@ export function mountPlayer(parent: Container): PlayerController {
       hull.fill({ color: 0x0a3740, alpha: 1 });
     },
     destroy() {
-      lamp.destroy();
-      hull.destroy();
+      subContainer.destroy({ children: true });
     },
   };
 }

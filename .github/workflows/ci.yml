@@ -63,7 +63,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Browser tests
-        run: pnpm run test:browser
+        run: xvfb-run -a pnpm run test:browser
 
   # e2e: Golden-path Playwright tests (landing → dive → HUD mount) on
   # desktop + mobile Chromium. No user-controllable input reaches run:.
@@ -91,7 +91,7 @@ jobs:
         run: pnpm run build
 
       - name: E2E tests
-        run: pnpm run test:e2e
+        run: xvfb-run -a pnpm run test:e2e
 
       - name: Upload Playwright report on failure
         if: failure()

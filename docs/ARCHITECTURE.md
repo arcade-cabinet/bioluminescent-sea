@@ -1,6 +1,6 @@
 ---
 title: Architecture
-updated: 2026-04-23
+updated: 2026-04-24
 status: current
 domain: technical
 ---
@@ -11,6 +11,31 @@ This document owns the technical stack, directory layout, and runtime
 data flow. Gameplay mechanics are in [RULES.md](./RULES.md). Testing
 is in [TESTING.md](./TESTING.md). Deployment is in
 [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+## Four anchors the rest of the code hangs from
+
+1. **Mode slot system** (`src/sim/dive/modeSlots.ts`). The only file
+   that differentiates dive modes. Every gameplay rule that varies
+   by mode is a named slot on `ModeSlots`. Modes are compositions
+   of slot values, not branches. Adding a mode is one entry; adding
+   a dimension is one slot plus one branch where it's read.
+
+2. **Actor factory** (`src/sim/entities/factory/`). Every spawnable
+   actor is an `ActorArchetype`. `createActor(archetype, ctx)` is
+   the single dispatch. Higher-order composites (`spawnFlock`,
+   `spawnLeviathanEscort`) layer on top. PRNG-seeded throughout.
+
+3. **GOAP brain layer** (`src/sim/ai/goap/`). A TS port of Yuka's
+   `Goal/CompositeGoal/Think/GoalEvaluator`, generic over owner
+   type. `PlayerSubController` accepts a `PlayerInputProvider`:
+   production pipes human input, integration tests pipe a GOAP
+   profile. Same governance enemy subs use.
+
+4. **Fluidic rendering layer** (`src/render/layers/water.ts`). Sits
+   between backdrop and parallax. Carries the water cues —
+   `GodrayFilter` for volumetric light shafts, procedural caustics
+   tied to biome tint + depth, and `AdjustmentFilter` for
+   atmospheric desaturation as the dive descends.
 
 ## 3D world, 2D canvas
 
@@ -49,11 +74,15 @@ are not collidable with the player.
 │  queries, actions, React hooks                     │
 ├───────────────────────────────────────────────────┤
 │                   PixiJS renderer                  │
-│  Layered scene graph: far → mid → near → fx → UI   │
+│  Layered scene graph:                              │
+│  far → water → mid → near → fx → overlay           │
+│  (water = GodrayFilter + caustics + depth tint)    │
 ├───────────────────────────────────────────────────┤
 │                 Simulation engine                  │
 │  src/sim/rng, src/sim/world, src/sim/chunk,        │
-│  src/sim/dive, src/sim/meta, src/sim/ai (Yuka)     │
+│  src/sim/dive (+modeSlots), src/sim/meta,          │
+│  src/sim/entities (+factory),                      │
+│  src/sim/ai (Yuka steering + goap/ brain)          │
 ├───────────────────────────────────────────────────┤
 │                    Audio stack                     │
 │  Tone.js ambient, Howler SFX, depth-keyed mixer    │

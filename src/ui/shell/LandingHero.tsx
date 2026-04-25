@@ -124,6 +124,54 @@ export function LandingHero() {
       ctx.stroke();
       ctx.shadowBlur = 0;
 
+      // God-ray beams cast down from a few points on the horizon. Same
+      // language as the in-game water layer's GodrayFilter so the
+      // landing reads as a continuous space with the dive scene.
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const beamCount = 5;
+      for (let i = 0; i < beamCount; i++) {
+        const beamX = ((i + 0.5) / beamCount) * w + Math.sin(now * 0.0004 + i) * 30;
+        const beamGrad = ctx.createLinearGradient(beamX, horizonY, beamX + 80, h);
+        beamGrad.addColorStop(0, "rgba(107, 230, 193, 0.18)");
+        beamGrad.addColorStop(1, "rgba(107, 230, 193, 0)");
+        ctx.beginPath();
+        ctx.moveTo(beamX, horizonY);
+        ctx.lineTo(beamX + 90, h);
+        ctx.lineTo(beamX + 130, h);
+        ctx.lineTo(beamX + 30, horizonY);
+        ctx.closePath();
+        ctx.fillStyle = beamGrad;
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Caustic spots — bright thresholded noise peaks on the upper
+      // water band. Tinted mint, additive blend; same shape language
+      // as the in-game caustics pass.
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const spotCount = 22;
+      for (let i = 0; i < spotCount; i++) {
+        const sx = ((i * 113) % w);
+        const sy = horizonY + (((i * 71) % (h - horizonY)) * 0.6);
+        const wobble =
+          Math.sin(now * 0.0008 + i * 0.5) +
+          Math.cos(now * 0.0011 + i * 0.7);
+        if (wobble > 0.3) {
+          const intensity = (wobble - 0.3) / 1.7;
+          const r = 12 + intensity * 22;
+          const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+          grad.addColorStop(0, `rgba(107, 230, 193, ${0.18 * intensity})`);
+          grad.addColorStop(1, "rgba(107, 230, 193, 0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
       // Calculate Submersible Y offset based on waves at center
       const subX = w * 0.5;
       let waveYOffset = 0;

@@ -7,12 +7,25 @@ import type {
   SceneState,
   ViewportDimensions,
 } from "@/sim/dive/types";
-import { spawnCreaturesForChunk } from "@/sim/entities/chunked-spawn";
+import {
+  spawnAnomaliesForChunk,
+  spawnCreaturesForChunk,
+  spawnPiratesForChunk,
+  spawnPredatorsForChunk,
+} from "@/sim/entities/chunked-spawn";
+import { getModeSlots } from "@/sim/dive/modeSlots";
+import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
 import { DiveRoot } from "./traits";
 import {
+  appendAnomaliesToWorld,
   appendCreaturesToWorld,
+  appendPiratesToWorld,
+  appendPredatorsToWorld,
   readSceneFromWorld,
+  retireChunkAnomalies,
   retireChunkCreatures,
+  retireChunkPirates,
+  retireChunkPredators,
   writeSceneToWorld,
   type DiveWorld,
 } from "./world";
@@ -86,17 +99,43 @@ export function advanceDiveFrame(args: AdvanceDiveFrameInput): AdvanceDiveFrameO
   });
   const delta = chunkLifecycleDelta(args.world.liveChunkIndices, currentWindow);
 
+  // The mode's slots drive what spawns on each new chunk. In particular
+  // `threatPattern` chooses scattered vs swarm vs bullet-hell, and
+  // `respawnThreats` gates whether threats appear after the opening
+  // scene at all (exploration leaves the world static).
+  const slots = getModeSlots(normalizeSessionMode(args.mode));
+  const viewportOnly = {
+    width: args.dimensions.width,
+    height: args.dimensions.height,
+  };
+
   if (delta.spawned.length > 0) {
     const newCreatures = delta.spawned.flatMap((chunk) =>
-      spawnCreaturesForChunk(chunk, {
-        width: args.dimensions.width,
-        height: args.dimensions.height,
-      }),
+      spawnCreaturesForChunk(chunk, viewportOnly),
     );
     nextWorld = appendCreaturesToWorld(nextWorld, newCreatures);
+
+    if (slots.respawnThreats) {
+      const newPredators = delta.spawned.flatMap((chunk) =>
+        spawnPredatorsForChunk(chunk, viewportOnly, slots.threatPattern),
+      );
+      const newPirates = delta.spawned.flatMap((chunk) =>
+        spawnPiratesForChunk(chunk, viewportOnly),
+      );
+      const newAnomalies = delta.spawned.flatMap((chunk) =>
+        spawnAnomaliesForChunk(chunk, viewportOnly),
+      );
+      nextWorld = appendPredatorsToWorld(nextWorld, newPredators);
+      nextWorld = appendPiratesToWorld(nextWorld, newPirates);
+      nextWorld = appendAnomaliesToWorld(nextWorld, newAnomalies);
+    }
   }
+
   if (delta.retiredIndices.length > 0) {
     nextWorld = retireChunkCreatures(nextWorld, delta.retiredIndices);
+    nextWorld = retireChunkPredators(nextWorld, delta.retiredIndices);
+    nextWorld = retireChunkPirates(nextWorld, delta.retiredIndices);
+    nextWorld = retireChunkAnomalies(nextWorld, delta.retiredIndices);
   }
   nextWorld = {
     ...nextWorld,

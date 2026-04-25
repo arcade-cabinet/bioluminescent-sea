@@ -44,11 +44,11 @@ trap 'rm -f "$TMP"' EXIT
 {
   echo "[autopilot] Brief acknowledgement — do not stop."
   echo ""
-  if [ -f "$REPO/HANDOFF-PRD.md" ]; then
-    OPEN=$(grep -c '^\- \[ \]' "$REPO/HANDOFF-PRD.md" 2>/dev/null || echo 0)
-    echo "$OPEN HANDOFF-PRD items still open."
+  if [ -f "$REPO/docs/PRODUCTION.md" ]; then
+    OPEN=$(grep -c '^\- \[ \]' "$REPO/docs/PRODUCTION.md" 2>/dev/null || echo 0)
+    echo "$OPEN docs/PRODUCTION.md items still open."
     echo ""
-    grep '^\- \[ \]' "$REPO/HANDOFF-PRD.md" | head -5
+    grep '^\- \[ \]' "$REPO/docs/PRODUCTION.md" | head -5
   fi
 } > "$TMP"
 

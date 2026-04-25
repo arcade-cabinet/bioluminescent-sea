@@ -57,13 +57,27 @@ export function advanceParticle(
   deltaTime: number
 ): Particle {
   const frameScale = getFrameScale(deltaTime);
-  let y = particle.y - particle.speed * frameScale;
-  let x = particle.x + Math.sin(particle.drift + totalTime) * 0.3 * frameScale;
+  // Curl-noise-inspired drift: two decoupled low-frequency sinusoids
+  // along orthogonal axes produce a divergence-free-feeling vector
+  // field without the cost of an actual curl-of-perlin sample. Each
+  // particle's seed offsets into the field, so neighbours flow in
+  // related-but-not-identical directions — the "fluid" read we want.
+  const flowX =
+    Math.sin(particle.drift + totalTime * 0.6) * 0.35 +
+    Math.cos(particle.seed * 0.11 + totalTime * 0.18) * 0.22;
+  const flowY =
+    Math.cos(particle.drift * 0.7 + totalTime * 0.4) * 0.18;
+
+  let y = particle.y - particle.speed * frameScale + flowY * frameScale;
+  let x = particle.x + flowX * frameScale;
 
   if (y < -particle.size) {
     y = height + particle.size;
     x = getDeterministicWrapX(particle.seed, totalTime, width);
   }
+  // Horizontal wrap so curl drift can't push motes out of frame.
+  if (x < -particle.size) x = width + particle.size;
+  else if (x > width + particle.size) x = -particle.size;
 
   return {
     ...particle,

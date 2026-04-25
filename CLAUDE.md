@@ -1,6 +1,6 @@
 ---
 title: Claude Code Instructions
-updated: 2026-04-23
+updated: 2026-04-24
 status: current
 ---
 
@@ -20,9 +20,15 @@ one of:
 - read the bottom objective banner, which is dynamic and tells the
   player what the trench wants them to do right now.
 
-Oxygen is the timer. Reaching the Living Map at ~3200m completes the
-dive; running out of oxygen before then surfaces the sub with a
-partial chart.
+The three dive modes — **exploration**, **descent**, **arena** — are
+compositions of a single **slot system** (`src/sim/dive/modeSlots.ts`).
+Every gameplay knob (vertical movement lock, completion condition,
+respawn pressure, collision-ends-dive, difficulty curve) is a named
+slot a mode chooses values for. Add a mode by adding a `ModeSlots`
+entry, not by adding a branch.
+
+Oxygen is the timer. The trench loops infinitely past the Living Map;
+running out of oxygen surfaces the sub with a partial chart.
 
 ## Critical rules
 
@@ -50,6 +56,18 @@ partial chart.
    understand the goal within 15 seconds of landing. If that breaks,
    fix it before anything else. See
    [STANDARDS.md](./STANDARDS.md) § Player-journey gate.
+9. **One factory, one slot record.** Every spawnable actor (fish,
+   predators, pirates, enemy subs, leviathans, anomalies, player)
+   comes from `src/sim/entities/factory`. Every gameplay rule that
+   varies by mode lives in `src/sim/dive/modeSlots.ts`. If you're
+   about to write `if (mode === "arena")` outside that file, stop
+   and add a slot.
+10. **GOAP governs the player sub the same way it governs enemy subs.**
+    `src/sim/ai/goap` is a TS port of Yuka's `Goal/CompositeGoal/
+    Think/GoalEvaluator`. `PlayerSubController` accepts a
+    `PlayerInputProvider`; production passes `useTouchInput`, tests
+    pass a GOAP profile. The sim never imports Yuka — steering
+    belongs to `AIManager`.
 
 ## Stack
 
@@ -78,11 +96,35 @@ pnpm cap:run:android     # pnpm cap:sync && cap run android
 See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full tree.
 Short version:
 
-- `src/sim/` — pure engine (rng, world, entities, dive, ai). No DOM.
-- `src/ecs/` — Koota traits, actions, hooks.
-- `src/render/` — PixiJS scene graph.
+- `src/sim/` — pure engine. No DOM.
+  - `_shared/sessionMode.ts` — SessionMode enum + MODE_METADATA.
+  - `rng/` — seeded PRNG, codenames, blurbs.
+  - `world/` — biome table, depth→biome mapping.
+  - `chunk/` — infinite world chunking.
+  - `entities/` — entity types + advance functions.
+    - `entities/factory/` — JSON-style archetype catalogue +
+      `createActor(archetype, ctx)` dispatch + higher-order composites.
+  - `dive/` — scene advance, telemetry, collection, impact, mode
+    composition. `modeSlots.ts` is the single source of truth.
+  - `ai/` — AIManager (Yuka steering) + `goap/` (Goal/CompositeGoal/
+    Think/GoalEvaluator) + `PlayerSubController` (input provider).
+  - `meta/` — persistent Lux + upgrade costs.
+- `src/ecs/` — Koota traits, actions, world, hooks.
+- `src/render/` — PixiJS scene graph. Six layers back-to-front:
+  far → water → mid → near → fx → overlay. The `water` layer
+  carries the fluidic cues (god rays, caustics, depth tint) via
+  pixi-filters `GodrayFilter` + `AdjustmentFilter`.
 - `src/audio/` — Tone.js ambient + Howler SFX.
-- `src/ui/` — React (shell + HUD + dive app). No canvas or sim code.
+- `src/ui/` — React. No canvas or sim code.
+  - `primitives/` — Button, Card, Dialog, Input, StatTile (radix +
+    cva + tailwind-merge).
+  - `screens/` — Game (state machine), LandingScreen (mode triptych),
+    DiveScreen (runtime host), SeedPickerOverlay (Radix Dialog),
+    CompletionBackdrop.
+  - `shell/` — LandingHero, GameViewport, GameOverScreen, DrydockScreen.
+  - `hud/` — HUD component, biome + landmark chips, mute button.
+  - `hooks/` — useGameLoop, useSearchParamSeed, useTouchInput,
+    useMetaProgression.
 - `src/platform/` — Capacitor bridges.
 - `src/data/` — Zod schemas + compiled content importers.
 - `config/raw/` — authored JSON (biomes, creatures, landmarks).
@@ -110,10 +152,18 @@ Body font: Inter (HUD + body).
 ## Foundation status
 
 The foundation PR sequence (A → H) is tracked in
-[docs/PRODUCTION.md](./docs/PRODUCTION.md). PR A landed the docs tree,
-libraries, directory skeleton, and seeded RNG. PR B split the sim
-into responsibility-scoped modules under `src/sim/`. PRs C–H swap in
-the real implementation of the remaining layers in order.
+[docs/PRODUCTION.md](./docs/PRODUCTION.md) — all merged. The current
+architecture has:
+
+- **Slot-based modes** with the three-mode landing triptych driving
+  the seed picker overlay.
+- **Actor factory** with archetype-driven construction; higher-order
+  composites for schools and leviathan escorts.
+- **GOAP + PlayerSubController** shared governance for human input
+  and bot playtesting.
+- **Fluidic rendering layer** (god rays + caustics + depth tint).
+- **Per-mode sim integration tests** that prove slot contracts by
+  running a GOAP bot through `advanceScene`.
 
 **No compat shims.** When a module moves, every caller moves with it
 in the same PR. `@/engine/*` is gone; use `@/sim` or `@/sim/*`.

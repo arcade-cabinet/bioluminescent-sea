@@ -1,11 +1,31 @@
 /**
- * Yuka-composed AI behaviors for predators and pirates.
+ * AI surface — Yuka steering for actors plus the GOAP layer that governs
+ * any decision-making controller (player sub, enemy sub, future bots).
  *
- * `predatorBrain(entity)` — Seek player when close, Wander otherwise,
- * with ObstacleAvoidance against ridge geometry.
- * `pirateBrain(entity)` — patrol along a lantern route with a
- * detection cone; Pursue briefly on detection, else return to route.
- *
- * Filled in by PR D (ECS + AI integration).
+ * Steering remains owned by `AIManager` (it holds Yuka Vehicles and ticks
+ * them every frame). The GOAP layer is engine-agnostic — its `Think` brain
+ * picks among `GoalEvaluator`s and the resulting `Goal` writes a per-frame
+ * action onto the controller's output buffer.
  */
-export {};
+
+export { AIManager } from "./manager";
+export {
+  GoapInputProvider,
+  IdleInputProvider,
+  type GoapBrainOwner,
+  type PlayerInputProvider,
+  type PlayerSubObservation,
+  createGoapBrainOwner,
+} from "./PlayerSubController";
+export {
+  CompositeGoal,
+  Goal,
+  GoalEvaluator,
+  type GoalStatus,
+  Think,
+} from "./goap";
+export {
+  createCollectBeaconsProfile,
+  createIdleHoverProfile,
+  createRamPredatorProfile,
+} from "./goap/profiles";
