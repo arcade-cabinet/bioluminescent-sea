@@ -5,7 +5,7 @@
   "depthStartMeters": 0,
   "depthEndMeters": 800,
   "tintHex": "#2a8a68",
-  "creatureDensity": 0.55,
-  "predatorDensity": 0,
+  "creatureDensity": 0.85,
+  "predatorDensity": 0.25,
   "pirateDensity": 0
 }

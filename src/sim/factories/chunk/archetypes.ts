@@ -81,16 +81,22 @@ export const ARENA_ROOM: ChunkArchetype = {
 
 /**
  * Descent corridor — forced-vertical traversal inside a narrow lateral
- * band. Mirrors descent-mode's threatPattern default.
+ * band. The corridor's defining feel is *pressure*: predators and
+ * collectibles both spawn in dense schools so the descent reads as
+ * weaving through swarms, not picking past loose individuals. The
+ * threatPattern is "swarm" (2× scale on top of biome density) and the
+ * predatorDensity multiplier is 1.6, which together produce 4-12
+ * predators per chunk depending on biome — a true wall of motion that
+ * forces lateral evasion at every band.
  */
 export const DESCENT_CORRIDOR: ChunkArchetype = {
   id: "descent-corridor",
   label: "Descent Corridor",
   slots: {
     travel: "corridor",
-    threatPattern: "scattered",
-    creatureDensity: 1,
-    predatorDensity: 1.2,
+    threatPattern: "swarm",
+    creatureDensity: 1.5,
+    predatorDensity: 1.6,
     anomaliesAllowed: true,
     piratesAllowed: true,
     respawnOnReEnter: true,

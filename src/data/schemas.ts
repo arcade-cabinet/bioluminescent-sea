@@ -15,9 +15,9 @@ export const BiomeSchema = z.object({
   depthStartMeters: z.number().int().min(0),
   depthEndMeters: z.number().int().positive(),
   tintHex: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  creatureDensity: z.number().min(0).max(1),
-  predatorDensity: z.number().min(0).max(1),
-  pirateDensity: z.number().min(0).max(1),
+  creatureDensity: z.number().min(0).max(2),
+  predatorDensity: z.number().min(0).max(2),
+  pirateDensity: z.number().min(0).max(2),
 });
 
 export const CreatureSpeciesSchema = z.object({
