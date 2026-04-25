@@ -612,6 +612,7 @@ export function DiveScreen({
         bursts: collectionBurstsRef.current,
         viewportScale: getViewportScale(dimensions.width, dimensions.height),
         biomeTintHex: result.telemetry.biomeTintHex,
+        lampScatterPoints: result.lampScatterPoints,
       });
     },
     [

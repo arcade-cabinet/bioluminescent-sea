@@ -275,6 +275,15 @@ export class AIManager {
   }
 
   /**
+   * Last lamp-scatter event positions captured by applyLampPressure.
+   * Each entry is a {x, y} pair where a predator was inside the
+   * lamp cone this frame. The runtime surfaces these to the
+   * renderer's FX layer for spark-scatter particles. Cleared at the
+   * start of each lamp pressure pass.
+   */
+  public lastLampScatterPoints: { x: number; y: number }[] = [];
+
+  /**
    * Push the player's lamp cone against every predator brain. Any
    * brain whose centre falls inside the cone takes damage — its
    * StateMachine flips to FleeState (unless mid-strike) and its
@@ -299,15 +308,15 @@ export class AIManager {
     lampScale: number,
     lampBoost: number,
   ): void {
+    // Reset the scatter buffer at the start of every pressure pass —
+    // the renderer reads it after this returns.
+    this.lastLampScatterPoints.length = 0;
     const length = 180 * lampScale * lampBoost;
     const halfSpread = 80 * lampScale * lampBoost;
     const halfAngle = Math.atan2(halfSpread, length);
     const lengthSq = length * length;
     for (const brain of this.predatorBrainMap.values()) {
       if (brain.currentAiState === "ambient") continue; // leviathans ignore lamp
-      // Skip brains we recently damaged so the cone doesn't lock a
-      // predator into permanent flee.
-      if (this.currentTime - brain.lastDamageReceivedTime < 1.2) continue;
       const dx = brain.position.x - playerX;
       const dy = brain.position.y - playerY;
       const distSq = dx * dx + dy * dy;
@@ -321,6 +330,17 @@ export class AIManager {
       if (localX <= 0) continue; // behind the lamp
       const angleFromAxis = Math.atan2(Math.abs(localY), localX);
       if (angleFromAxis > halfAngle) continue;
+      // Predator IS in the cone — emit scatter regardless of damage
+      // cooldown so the visual "lamp is hitting them" plays continuously
+      // while the player holds the cone steady, even though damage
+      // ticks at most once per 1.2s.
+      this.lastLampScatterPoints.push({
+        x: brain.position.x,
+        y: brain.position.y,
+      });
+      // Damage cooldown: skip the actual hit if we recently damaged
+      // this brain so the cone doesn't lock it into permanent flee.
+      if (this.currentTime - brain.lastDamageReceivedTime < 1.2) continue;
       brain.receiveDamage(this.currentTime);
     }
   }
