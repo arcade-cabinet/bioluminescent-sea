@@ -46,6 +46,7 @@ export function createInitialScene(
     predators: [],
     depthTravelMeters: 0,
     objectiveQueue: createObjectiveQueue(normalizeSessionMode(mode)),
+    clearedChunks: [],
   };
 }
 
@@ -170,8 +171,20 @@ export function advanceScene(
   // a proxy for "this is arena" — only Arena combines both flags.
   const isPocketMode =
     tuning.collisionEndsDive && tuning.respawnThreats;
-  const chunkLocked = isPocketMode && livePredatorsInChunk > 0;
+  const previouslyCleared = scene.clearedChunks ?? [];
+  const chunkAlreadyCleared = previouslyCleared.includes(currentChunkIndex);
+  // The pocket gate drops only if the chunk's still-live and not yet
+  // marked cleared. Once cleared, respawning predators don't re-lock
+  // the chunk — the player has bought permanent passage.
+  const chunkLocked =
+    isPocketMode && !chunkAlreadyCleared && livePredatorsInChunk > 0;
   const chunkFloorMeters = (currentChunkIndex + 1) * CHUNK_HEIGHT_METERS;
+  // Promote the current chunk to "cleared" the first frame the player
+  // is standing in a pocket-mode chunk with zero live threats.
+  const nextClearedChunks =
+    isPocketMode && !chunkAlreadyCleared && livePredatorsInChunk === 0
+      ? [...previouslyCleared, currentChunkIndex]
+      : previouslyCleared;
 
   let nextDepthTravelMeters: number;
   if (chunkLocked) {
@@ -202,6 +215,7 @@ export function advanceScene(
     predators,
     depthTravelMeters: nextDepthTravelMeters,
     objectiveQueue: scene.objectiveQueue,
+    clearedChunks: nextClearedChunks,
   };
 
   // Objective progress advance. First apply per-frame increments
