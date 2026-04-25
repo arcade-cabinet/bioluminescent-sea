@@ -36,6 +36,7 @@ export function mountEntities(parent: Container): EntityController {
     color: 0xffffff,
     quality: 0.35,
   });
+  anomalyGlow.resolution = "inherit";
   anomalyHost.filters = [anomalyGlow];
   parent.addChild(anomalyHost);
 
