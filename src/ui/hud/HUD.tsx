@@ -312,49 +312,62 @@ export function HUD({
           shifts as the sub descends. Gives the player a clear
           beat of "you're now in X" without re-stating it every
           frame. Dismisses itself after 2.2s. */}
+      {/* Biome transition toast — slim pill above the HUD stat cluster.
+          The prior 3.25rem center-screen banner blocked the playfield
+          on every dive start (the first frame of each dive triggers a
+          biome change). The toast version surfaces the transition
+          without hiding the world; auto-dismisses after 2.2s. */}
       <AnimatePresence>
         {bannerLabel && (
           <motion.div
             key={bannerLabel}
-            initial={{ opacity: 0, y: -20, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.32, ease: "easeOut" }}
             style={{
               position: "fixed",
-              top: "22%",
+              top: "max(env(safe-area-inset-top), 5rem)",
               left: "50%",
               transform: "translateX(-50%)",
-              textAlign: "center",
               pointerEvents: "none",
               zIndex: 20,
+              display: "flex",
+              alignItems: "baseline",
+              gap: "0.5rem",
+              padding: "0.35rem 0.85rem",
+              background: "color-mix(in srgb, var(--color-abyss) 82%, transparent)",
+              border: `1px solid ${biomeTintHex ?? "#6be6c1"}55`,
+              borderRadius: 999,
+              boxShadow:
+                "0 4px 18px color-mix(in srgb, var(--color-bg) 45%, transparent)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           >
-            <div
+            <span
               style={{
                 fontFamily: "var(--font-body)",
-                fontSize: "0.7rem",
-                letterSpacing: "0.35em",
+                fontSize: "0.55rem",
+                letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color: biomeTintHex ?? "var(--color-glow)",
                 opacity: 0.78,
-                marginBottom: "0.35rem",
               }}
             >
               Entering
-            </div>
-            <div
+            </span>
+            <span
               style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "clamp(2rem, 6vw, 3.25rem)",
+                fontFamily: "var(--font-display)",
+                fontSize: "0.95rem",
                 fontWeight: 500,
                 color: "var(--color-fg)",
-                textShadow: `0 0 24px ${biomeTintHex ?? "#6be6c1"}80, 0 2px 6px rgba(0,0,0,0.7)`,
                 letterSpacing: "0.02em",
               }}
             >
               {bannerLabel}
-            </div>
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
