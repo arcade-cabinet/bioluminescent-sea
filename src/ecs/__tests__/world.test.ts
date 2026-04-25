@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { createInitialScene, resetAIManager } from "@/sim/dive/advance";
+import { createInitialScene, resetAIManager } from "@/sim/engine/advance";
 import { advanceDiveFrame } from "../actions";
 import { createDiveWorld, readSceneFromWorld, writeSceneToWorld } from "../world";
 

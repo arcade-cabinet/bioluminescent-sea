@@ -7,8 +7,8 @@ import type {
   Predator,
 } from "@/sim/entities/types";
 import { CREATURE_OXYGEN_BONUS_SECONDS, CREATURE_POINTS } from "@/sim/entities/types";
-import { MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "./constants";
-import type { CreatureCollectionResult } from "./types";
+import { MAX_CHAIN_MULTIPLIER, STREAK_WINDOW_SECONDS } from "@/sim/dive/constants";
+import type { CreatureCollectionResult } from "@/sim/dive/types";
 
 export interface AnomalyCollectionResult {
   collected: Anomaly[];

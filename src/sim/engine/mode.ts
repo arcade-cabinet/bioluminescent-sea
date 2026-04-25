@@ -1,6 +1,6 @@
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
 import { getModeSlots, type ModeSlots } from "@/sim/factories/dive/slots";
-import type { DiveModeTuning } from "./types";
+import type { DiveModeTuning } from "@/sim/dive/types";
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
 /**

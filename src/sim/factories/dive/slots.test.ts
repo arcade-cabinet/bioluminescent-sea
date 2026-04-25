@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { SESSION_MODES } from "@/sim/_shared/sessionMode";
 import { getModeSlots, MODE_SLOTS } from "./slots";
-import { getDiveModeTuning } from "@/sim/dive/mode";
+import { getDiveModeTuning } from "@/sim/engine/mode";
 import { GAME_DURATION } from "@/sim/dive/constants";
 
 describe("dive mode slot system", () => {

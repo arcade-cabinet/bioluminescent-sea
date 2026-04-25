@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createInitialScene } from "@/sim/dive/advance";
+import { createInitialScene } from "@/sim/engine/advance";
 import {
   createCollectBeaconsProfile,
   createIdleHoverProfile,

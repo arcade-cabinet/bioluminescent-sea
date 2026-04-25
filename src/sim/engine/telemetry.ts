@@ -2,15 +2,15 @@ import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
 import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
-import { GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
-import { describeDiveObjective, getPressureLabel } from "./objectives";
+import { GAME_DURATION, TRENCH_FLOOR_METERS } from "@/sim/dive/constants";
+import { describeDiveObjective, getPressureLabel } from "@/sim/dive/objectives";
 import { getDiveModeTuning } from "./mode";
 import type {
   DiveCompletionCelebration,
   DiveRunSummary,
   DiveTelemetry,
   SceneState,
-} from "./types";
+} from "@/sim/dive/types";
 
 export const ROUTE_LANDMARKS = [
   { label: "Kelp Gate", threshold: 0, distanceOffset: 120 },

@@ -5,8 +5,8 @@ import {
   spawnPiratesForChunk,
   spawnPredatorsForChunk,
 } from "@/sim/factories/chunk/spawn";
-import { advanceScene } from "@/sim/dive/advance";
-import { resolveDiveThreatImpact } from "@/sim/dive/impact";
+import { advanceScene } from "@/sim/engine/advance";
+import { resolveDiveThreatImpact } from "@/sim/engine/impact";
 import type {
   DiveInput,
   SceneAdvanceResult,

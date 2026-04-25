@@ -6,7 +6,11 @@ import {
 } from "@/sim/entities";
 import { CHUNK_HEIGHT_METERS } from "@/sim/factories/chunk";
 import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
-import { DESCENT_SPEED_METERS_PER_SECOND, GAME_DURATION, TRENCH_FLOOR_METERS } from "./constants";
+import {
+  DESCENT_SPEED_METERS_PER_SECOND,
+  GAME_DURATION,
+  TRENCH_FLOOR_METERS,
+} from "@/sim/dive/constants";
 import { getDiveModeTuning } from "./mode";
 import { getDiveTelemetry } from "./telemetry";
 import { AIManager } from "@/sim/ai/manager";
@@ -15,7 +19,7 @@ import type {
   SceneAdvanceResult,
   SceneState,
   ViewportDimensions,
-} from "./types";
+} from "@/sim/dive/types";
 
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 

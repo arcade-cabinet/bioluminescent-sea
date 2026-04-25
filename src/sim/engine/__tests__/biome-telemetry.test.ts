@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createInitialScene } from "../advance";
-import { getDiveTelemetry } from "../telemetry";
+import { createInitialScene } from "@/sim/engine/advance";
+import { getDiveTelemetry } from "@/sim/engine/telemetry";
 
 const viewport = { width: 1280, height: 720 };
 

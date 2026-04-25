@@ -1,5 +1,5 @@
 import { getDiveModeTuning } from "./mode";
-import type { DiveThreatImpactResult } from "./types";
+import type { DiveThreatImpactResult } from "@/sim/dive/types";
 
 export function resolveDiveThreatImpact({
   collided,
