@@ -91,9 +91,17 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   const pirateBuf: Pirate[] = [];
   const particleBuf: Particle[] = [];
 
+  // In Pixi v8 with autoDensity:true, `renderer.width/height` are
+  // already in CSS pixels. The previous code divided by resolution,
+  // which produced HALF-viewport bounds (640×400 instead of 1280×800
+  // on a DPR=2 display) — this is what caused the upper-left
+  // quadrant artifact: every layer drew its content rect to half the
+  // viewport, so the godrays / caustics / depth-tint applied to only
+  // the upper-left quadrant. The `clientWidth/Height` route gives the
+  // CSS-pixel viewport reliably regardless of resolution config.
   const viewport = () => ({
-    widthPx: stage.app.renderer.width / stage.app.renderer.resolution,
-    heightPx: stage.app.renderer.height / stage.app.renderer.resolution,
+    widthPx: stage.app.renderer.canvas.clientWidth || stage.app.renderer.width,
+    heightPx: stage.app.renderer.canvas.clientHeight || stage.app.renderer.height,
   });
   const camera: Camera = createCamera(viewport());
   // Pin refraction's filterArea to the viewport from frame 0. Without
@@ -103,6 +111,14 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
   {
     const v = viewport();
     refraction.resize(v.widthPx, v.heightPx);
+  }
+
+  // Debug-only: expose the pixi app + stage layers on window so a
+  // browser dev console can inspect filter state. The hook is harmless
+  // in prod (no listeners react to it) and pixi devtools auto-pick it
+  // up.
+  if (typeof window !== "undefined") {
+    (window as unknown as { __PIXI_APP__: unknown }).__PIXI_APP__ = stage.app;
   }
 
   return {
