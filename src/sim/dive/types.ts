@@ -198,6 +198,17 @@ export interface SceneAdvanceResult {
    * the safety net is armed without hunting through the HUD.
    */
   adrenalineReadiness: number;
+  /**
+   * One pickup event per anomaly collected this frame. The FX layer
+   * paints an expanding pickup ring at each location, color-keyed
+   * to the anomaly type so a player learns "cyan ring = lure,
+   * golden = lamp-flare, blue = repel" over time.
+   */
+  anomalyPickups: readonly {
+    x: number;
+    y: number;
+    type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
+  }[];
 }
 
 export interface DiveModeTuning {

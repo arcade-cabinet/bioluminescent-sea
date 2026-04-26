@@ -454,6 +454,11 @@ export function advanceScene(
         : activeAdrenalineCooldown <= totalTime
           ? 1
           : Math.max(0, 1 - (activeAdrenalineCooldown - totalTime) / 8),
+    anomalyPickups: anomalyCollection.collected.map((a) => ({
+      x: a.x,
+      y: a.y,
+      type: a.type,
+    })),
   };
 }
 

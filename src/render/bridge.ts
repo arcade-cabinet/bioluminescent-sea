@@ -113,6 +113,17 @@ export interface RenderFrameInput {
    * play doesn't drown in red.
    */
   oxygenRatio?: number;
+  /**
+   * Anomaly pickups *this frame*. Each entry seeds an expanding
+   * pickup ring at the location, color-keyed to the type. Edge-
+   * detected by the sim (only present on the frame the pickup
+   * happens) so the FX layer can push them onto its own age list.
+   */
+  anomalyPickups?: readonly {
+    x: number;
+    y: number;
+    type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
+  }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -182,7 +193,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -312,6 +323,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         adrenalineActive: adrenalineActive ?? false,
         adrenalineReadiness: adrenalineReadiness ?? 0,
         oxygenRatio: oxygenRatio ?? 1,
+        anomalyPickups: anomalyPickups ?? [],
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha
