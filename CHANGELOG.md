@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.43.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.42.0...v0.43.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** mobile haptics — Capacitor Haptics + web vibrate fallback ([#211](https://github.com/arcade-cabinet/bioluminescent-sea/issues/211)) ([29a24f8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/29a24f869b590038d035820b671184f7cf914469))
+* **bs:** predator hunger — long lulls produce harder predators ([#213](https://github.com/arcade-cabinet/bioluminescent-sea/issues/213)) ([7700f51](https://github.com/arcade-cabinet/bioluminescent-sea/commit/7700f51500a680236f552788396ddde418344595))
+
 ## [0.42.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.41.0...v0.42.0) (2026-04-26)
 
 
