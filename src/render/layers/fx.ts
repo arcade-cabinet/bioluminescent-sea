@@ -83,6 +83,9 @@ export interface FxController {
      *  paints a faint mint chevron orbiting the player so the
      *  direction-to-target is glanceable. */
     beaconBearingRadians: number | null;
+    /** Distance in world-units to the nearest beacon. Drives the
+     *  chevron's pulse rate + tint as the player closes in. */
+    beaconDistance: number;
   }): void;
   destroy(): void;
 }
@@ -189,7 +192,7 @@ export function mountFx(parent: Container): FxController {
   };
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups, beaconBearingRadians }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups, beaconBearingRadians, beaconDistance }) {
       // Ingest new score popups, acquire pooled Text nodes. Color
       // ramps with multiplier: ×1 = mint, ×3+ = creamy yellow,
       // ×5+ = amber. The numeric amount already encodes multiplier
@@ -266,16 +269,22 @@ export function mountFx(parent: Container): FxController {
         width: 1.6,
       });
 
-      // Beacon chevron — a small mint chevron orbiting the player
-      // ring at the bearing of the nearest scoring beacon. Hidden
-      // when no beacon is in scope. Pulses subtly so the eye picks
-      // it up without it competing with predator threat arcs.
+      // Beacon chevron — a small chevron orbiting the player ring
+      // at the bearing of the nearest beacon. Pulse rate + tint
+      // ramp as the player closes in: distant beacon = slow mint
+      // pulse, close beacon = fast creamy-yellow pulse. Hidden when
+      // no beacon is in scope.
       if (beaconBearingRadians !== null) {
         const orbitR = 56;
         const cx = player.x + Math.cos(beaconBearingRadians) * orbitR;
         const cy = player.y + Math.sin(beaconBearingRadians) * orbitR;
-        const chevronPulse = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 2.4));
-        const chevronSize = 8;
+        // Proximity 0..1 inside 300 world-units, 1 = very close.
+        const proximity = Math.max(0, Math.min(1, 1 - beaconDistance / 300));
+        const pulseHz = 2.4 + proximity * 5;
+        const chevronPulse = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * pulseHz));
+        const chevronSize = 8 + proximity * 3;
+        // Tint ramp: mint → creamy yellow as proximity grows.
+        const tint = proximity > 0.5 ? 0xfef9c3 : 0x6be6c1;
         // Chevron points outward — perpendicular vectors define the
         // two trailing tails so the arrow reads as "this way."
         const cosA = Math.cos(beaconBearingRadians);
@@ -290,7 +299,11 @@ export function mountFx(parent: Container): FxController {
         sonar.moveTo(leftX, leftY);
         sonar.lineTo(tipX, tipY);
         sonar.lineTo(rightX, rightY);
-        sonar.stroke({ color: 0x6be6c1, alpha: 0.55 * chevronPulse, width: 2 });
+        sonar.stroke({
+          color: tint,
+          alpha: (0.55 + proximity * 0.25) * chevronPulse,
+          width: 2 + proximity * 0.8,
+        });
       }
 
       // Adrenaline readiness ring — a thin mint pulse around the
