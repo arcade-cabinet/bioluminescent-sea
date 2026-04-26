@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.30.0...v0.31.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** collect chime climbs with chain multiplier ([#176](https://github.com/arcade-cabinet/bioluminescent-sea/issues/176)) ([0a2dba5](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0a2dba5ebabfb7e69cd45fbbeed54f0d92c41fe1))
+* **bs:** damage direction arc on the hull ring ([#177](https://github.com/arcade-cabinet/bioluminescent-sea/issues/177)) ([fe6b3a9](https://github.com/arcade-cabinet/bioluminescent-sea/commit/fe6b3a99f404cf0cfef1142a178487aac657a49c))
+* **bs:** hectometer depth-mark chime ([#174](https://github.com/arcade-cabinet/bioluminescent-sea/issues/174)) ([571cdac](https://github.com/arcade-cabinet/bioluminescent-sea/commit/571cdac287b56d0e29c6b06e916ed97588e53130))
+
 ## [0.30.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.29.0...v0.30.0) (2026-04-26)
 
 
