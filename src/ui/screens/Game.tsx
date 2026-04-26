@@ -215,8 +215,8 @@ export default function Game(props: GameProps = {}) {
                   : "Surface for a breath, then chart a new route."
               }
               stats={[
-                { label: "Score", value: finalScore },
-                { label: "Best", value: bestScore },
+                { label: "Score", value: finalScore, countUp: true },
+                { label: "Best", value: bestScore, countUp: true },
                 { label: "Depth", value: `${displaySummary.depthMeters}m` },
                 { label: "Lux earned", value: `+${finalScore}`, accent: true },
               ]}
@@ -243,8 +243,8 @@ export default function Game(props: GameProps = {}) {
               title={completionCelebration.title}
               subtitle={`${completionCelebration.message} ${completionCelebration.replayPrompt}`}
               stats={[
-                { label: "Score", value: finalScore },
-                { label: "Best", value: bestScore },
+                { label: "Score", value: finalScore, countUp: true },
+                { label: "Best", value: bestScore, countUp: true },
                 { label: "Oxygen banked", value: `${displaySummary.timeLeft}s` },
                 { label: "Lux earned", value: `+${finalScore}`, accent: true },
               ]}
