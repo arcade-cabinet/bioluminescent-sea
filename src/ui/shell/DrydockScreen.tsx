@@ -89,22 +89,7 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
               Drydock
             </h2>
           </div>
-          <div
-            className="bs-numeral text-glow"
-            style={{
-              fontSize: "1.25rem",
-              filter: "url(#bs-soft-glow)",
-              textShadow: "0 0 14px rgba(107,230,193,0.45)",
-            }}
-          >
-            {currency}{" "}
-            <span
-              className="bs-label text-[0.62rem] text-fg-muted"
-              style={{ marginLeft: "0.25rem" }}
-            >
-              Lux
-            </span>
-          </div>
+          <CurrencyTally currency={currency} />
         </header>
 
         <div className="flex flex-col gap-5">
@@ -134,6 +119,81 @@ interface UpgradeRowProps {
   level: number;
   currency: number;
   onBuy: () => void;
+}
+
+/**
+ * Header currency readout. When `currency` changes:
+ * - Increase → a floating "+N" mint chip rises and fades
+ * - Decrease → a floating "−N" warn chip falls and fades
+ * The base value pulses scale 1.18× → 1× regardless of direction
+ * so the change is always legible.
+ */
+function CurrencyTally({ currency }: { currency: number }) {
+  const lastValueRef = useRef(currency);
+  const [delta, setDelta] = useState<{ amount: number; key: number } | null>(null);
+  useEffect(() => {
+    const diff = currency - lastValueRef.current;
+    if (diff !== 0) {
+      setDelta({ amount: diff, key: Date.now() });
+      const timeout = window.setTimeout(() => setDelta(null), 900);
+      lastValueRef.current = currency;
+      return () => window.clearTimeout(timeout);
+    }
+    lastValueRef.current = currency;
+  }, [currency]);
+
+  return (
+    <div
+      className="bs-numeral text-glow relative"
+      style={{
+        fontSize: "1.25rem",
+        filter: "url(#bs-soft-glow)",
+        textShadow: "0 0 14px rgba(107,230,193,0.45)",
+      }}
+    >
+      <motion.span
+        key={currency}
+        initial={{ scale: 1.18 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        style={{ display: "inline-block" }}
+      >
+        {currency}
+      </motion.span>{" "}
+      <span
+        className="bs-label text-[0.62rem] text-fg-muted"
+        style={{ marginLeft: "0.25rem" }}
+      >
+        Lux
+      </span>
+      <AnimatePresence>
+        {delta && (
+          <motion.span
+            key={delta.key}
+            aria-hidden="true"
+            initial={{ opacity: 0, y: 0, scale: 0.92 }}
+            animate={{ opacity: 1, y: delta.amount > 0 ? -22 : 22, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.85, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              fontSize: "0.85rem",
+              color: delta.amount > 0 ? "var(--color-glow)" : "var(--color-warn)",
+              textShadow:
+                delta.amount > 0
+                  ? "0 0 10px rgba(107,230,193,0.55)"
+                  : "0 0 10px rgba(255,107,107,0.55)",
+              pointerEvents: "none",
+            }}
+          >
+            {delta.amount > 0 ? `+${delta.amount}` : delta.amount}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
