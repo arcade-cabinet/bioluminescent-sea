@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
 
 interface CompactPrimaryProps {
@@ -79,7 +80,15 @@ export function CompactPrimary({
       </div>
       <div style={cellStyle} data-testid="hud-compact-score">
         <span style={labelStyle}>Score</span>
-        <span style={valueStyle}>{score}</span>
+        <motion.span
+          key={String(score)}
+          initial={{ scale: 1.18, color: "var(--color-glow)" }}
+          animate={{ scale: 1, color: valueStyle.color as string }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          style={{ ...valueStyle, display: "inline-block", transformOrigin: "left center" }}
+        >
+          {score}
+        </motion.span>
       </div>
       <div style={cellStyle} data-testid="hud-compact-chain">
         <span style={labelStyle}>Chain</span>

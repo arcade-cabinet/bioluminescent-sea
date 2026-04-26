@@ -56,11 +56,16 @@ function StatCell({
   value,
   tone,
   testId,
+  flashOnChange,
 }: {
   label: string;
   value: ReactNode;
   tone?: "glow" | "warn" | "muted";
   testId: string;
+  /** When true, the value div briefly scale-pulses + brightens
+   *  whenever `value` changes. Used by the Score and Beacons cells
+   *  so a player's eye catches positive deltas. */
+  flashOnChange?: boolean;
 }) {
   const valueColor =
     tone === "warn"
@@ -74,6 +79,16 @@ function StatCell({
       : tone === "glow"
         ? "url(#bs-soft-glow)"
         : undefined;
+  const flashKey = flashOnChange ? String(value) : "static";
+  const ValueWrapper = flashOnChange ? motion.div : "div";
+  const motionProps = flashOnChange
+    ? {
+        key: flashKey,
+        initial: { scale: 1.18, color: "var(--color-glow)" },
+        animate: { scale: 1, color: valueColor },
+        transition: { duration: 0.35, ease: "easeOut" as const },
+      }
+    : {};
   return (
     <div
       data-testid={`hud-stat-${testId}`}
@@ -82,7 +97,12 @@ function StatCell({
       <div style={{ ...labelStyle, color: tone === "warn" ? "var(--color-warn)" : "var(--color-fg-muted)" }}>
         {label}
       </div>
-      <div style={{ ...valueStyle, color: valueColor, filter: valueGlow }}>{value}</div>
+      <ValueWrapper
+        {...motionProps}
+        style={{ ...valueStyle, color: valueColor, filter: valueGlow, transformOrigin: "left center" }}
+      >
+        {value}
+      </ValueWrapper>
     </div>
   );
 }
@@ -135,7 +155,7 @@ export function HUD({
           zIndex: 10,
         }}
       >
-        <StatCell label="Score" value={score} testId="score" />
+        <StatCell label="Score" value={score} testId="score" flashOnChange />
         <StatCell
           label={critical ? "O₂ critical" : lowOxygen ? "O₂ low" : "Oxygen"}
           value={`${Math.max(0, timeLeft).toFixed(0)}s`}
