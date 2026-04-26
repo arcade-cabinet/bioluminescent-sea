@@ -31,6 +31,7 @@ import {
   type AchievementDef,
   evaluateAchievements,
 } from "@/lib/achievements";
+import { recordDiveHistory } from "@/lib/diveHistory";
 import { CompletionBackdrop } from "./CompletionBackdrop";
 import { DiveScreen } from "./DiveScreen";
 import { LandingScreen } from "./LandingScreen";
@@ -263,13 +264,24 @@ export default function Game(props: GameProps = {}) {
         summary: finalSummary,
       });
       setNewAchievements(ach.newlyUnlocked);
+      // Append the dive to the rolling history log. Persists for
+      // the Drydock history panel; failure is silent (the recorder
+      // returns the would-be list either way).
+      recordDiveHistory({
+        summary: finalSummary,
+        mode: sessionMode,
+        seed: activeSeed,
+        completed: gameState === "complete",
+        achievementsUnlocked: ach.newlyUnlocked.map((a) => a.id),
+        improvements: result.improvements,
+      });
     } else if (gameState === "landing" || gameState === "drydock") {
       // Reset transient celebration state when leaving the post-dive
       // screen so a re-entry doesn't show stale badges/toasts.
       setImprovements(NO_IMPROVEMENTS);
       setNewAchievements([]);
     }
-  }, [gameState, finalSummary]);
+  }, [gameState, finalSummary, sessionMode, activeSeed]);
   const bestScore = bests.score;
 
   const startDive = (seed: number) => {

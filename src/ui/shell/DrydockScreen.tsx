@@ -7,6 +7,11 @@ import {
   getAchievementProgress,
   listAchievementsWithUnlockState,
 } from "@/lib/achievements";
+import {
+  formatElapsed,
+  formatRelativeTime,
+  getDiveHistory,
+} from "@/lib/diveHistory";
 import { Button, EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
 
@@ -112,6 +117,8 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
         </div>
 
         <AchievementsPanel />
+
+        <DiveHistoryPanel />
 
         <div className="mt-4 flex justify-center">
           <Button variant="ghost" onClick={onBack} data-testid="drydock-back-button">
@@ -342,6 +349,118 @@ function AchievementsPanel() {
             </div>
           </li>
         ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * Recent-dive log on the Drydock. Shows the latest 10 dives with
+ * mode, score, depth, and any achievement/best badges. Hidden on a
+ * fresh install (no entries yet).
+ *
+ * The list is intentionally compact — players use it to spot
+ * patterns ("I keep dying in the midnight column") not to study
+ * each row in detail. Tap-to-replay-seed is reserved for a future
+ * iteration.
+ */
+function DiveHistoryPanel() {
+  const entries = getDiveHistory().slice(0, 10);
+  if (entries.length === 0) return null;
+  const now = Date.now();
+
+  return (
+    <section data-testid="drydock-history" className="flex flex-col gap-3">
+      <header className="flex items-baseline justify-between">
+        <h3
+          className="bs-display m-0 text-xl font-medium text-fg"
+          style={{
+            letterSpacing: "0.08em",
+            filter: "url(#bs-soft-glow)",
+            textShadow: "0 0 14px rgba(107,230,193,0.32)",
+          }}
+        >
+          Recent Dives
+        </h3>
+        <span
+          className="bs-numeral text-sm text-fg-muted"
+          style={{ filter: "url(#bs-soft-glow)" }}
+        >
+          last {entries.length}
+        </span>
+      </header>
+      <ul className="flex flex-col gap-1">
+        {entries.map((entry, idx) => {
+          const tone = entry.completed ? "#6be6c1" : "var(--color-fg-muted)";
+          return (
+            <li
+              key={`${entry.recordedAt}-${idx}`}
+              data-testid={`history-row-${idx}`}
+              data-completed={entry.completed}
+              className="flex items-baseline gap-3 py-1"
+            >
+              <span
+                aria-hidden="true"
+                className="select-none text-base"
+                style={{ color: tone, width: "1.2rem" }}
+              >
+                {entry.completed ? "◆" : "◇"}
+              </span>
+              <div className="flex flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                <span
+                  className="text-sm font-medium"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    color: tone,
+                  }}
+                >
+                  {entry.score}
+                </span>
+                <span
+                  className="text-xs text-fg-muted"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {entry.depthMeters}m · {formatElapsed(entry.elapsedSeconds)}
+                </span>
+                <span
+                  className="bs-label text-[0.55rem] tracking-[0.16em] text-fg-muted"
+                >
+                  {entry.mode.toUpperCase()}
+                </span>
+                {entry.bestsSet.length > 0 && (
+                  <span
+                    aria-label="new best"
+                    className="bs-label text-[0.55rem] font-semibold tracking-[0.16em]"
+                    style={{
+                      color: "#fef9c3",
+                      filter: "url(#bs-warm-glow)",
+                    }}
+                  >
+                    NEW BEST
+                  </span>
+                )}
+                {entry.achievementsUnlocked.length > 0 && (
+                  <span
+                    aria-label="achievements unlocked"
+                    className="text-[0.7rem]"
+                    style={{ color: "#fef9c3", filter: "url(#bs-warm-glow)" }}
+                  >
+                    {"★".repeat(Math.min(entry.achievementsUnlocked.length, 3))}
+                    {entry.achievementsUnlocked.length > 3
+                      ? `+${entry.achievementsUnlocked.length - 3}`
+                      : ""}
+                  </span>
+                )}
+              </div>
+              <span
+                className="text-[0.65rem] text-fg-muted"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {formatRelativeTime(entry.recordedAt, now)}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
