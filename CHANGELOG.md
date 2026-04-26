@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.27.0...v0.28.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** visual signatures for lure / lamp-flare / adrenaline buffs ([#163](https://github.com/arcade-cabinet/bioluminescent-sea/issues/163)) ([b06653b](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b06653bdaa3c252cdb7c234f33b570bf1dad368d))
+
 ## [0.27.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.26.0...v0.27.0) (2026-04-26)
 
 
