@@ -134,9 +134,10 @@ export interface RenderFrameInput {
   /**
    * Score popups *this frame*. Each entry seeds a "+N" text that
    * floats up and fades. The FX layer pools Text instances since
-   * Text is heavyweight to instantiate per-frame.
+   * Text is heavyweight to instantiate per-frame. `multiplier` is
+   * passed-through so the fill color can ramp with chain depth.
    */
-  scorePopups?: readonly { x: number; y: number; amount: number }[];
+  scorePopups?: readonly { x: number; y: number; amount: number; multiplier: number }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
