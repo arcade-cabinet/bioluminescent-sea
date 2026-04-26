@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.45.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.44.0...v0.45.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** achievements system — 15-entry catalog + toasts + Drydock browser ([#218](https://github.com/arcade-cabinet/bioluminescent-sea/issues/218)) ([a8e77ca](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a8e77ca1259f6589811ace31d84aa1c699294e1e))
+* **bs:** personal-bests tracking — NEW BEST badges + Drydock lifetime band ([#216](https://github.com/arcade-cabinet/bioluminescent-sea/issues/216)) ([a823e45](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a823e4537e54aa1d41bb7ed358cce69433743e40))
+
 ## [0.44.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.43.0...v0.44.0) (2026-04-26)
 
 
