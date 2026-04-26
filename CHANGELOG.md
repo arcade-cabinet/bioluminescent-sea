@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.34.0...v0.35.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** dive entrance transition — slide down + fade ([#189](https://github.com/arcade-cabinet/bioluminescent-sea/issues/189)) ([091b15d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/091b15d8ecc637787483579f54f5497a2ea8b320))
+* **bs:** post-dive stats count up from 0 ([#187](https://github.com/arcade-cabinet/bioluminescent-sea/issues/187)) ([88a752f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/88a752f628774f3f856716c9e5869a3c91e91437))
+
 ## [0.34.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.33.0...v0.34.0) (2026-04-26)
 
 
