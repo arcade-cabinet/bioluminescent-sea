@@ -195,6 +195,42 @@ export class PredatorBrain extends Vehicle {
    *  Used by Memory + Fuzzy "recent damage" math. */
   public currentTime = 0;
 
+  /**
+   * Hunger model — the predator gets hungrier the longer it goes
+   * without committing a strike. `lastStrikeAttemptTime` is stamped
+   * by StrikeState.exit; `hungerFactor()` returns the multiplier
+   * applied to detection + commit radii. Spawned predators start
+   * neutral (factor 1) so a fresh chunk doesn't feel artificially
+   * aggressive.
+   */
+  public lastStrikeAttemptTime = 0;
+
+  /** Time-since-strike at which hunger plateaus at HUNGER_MAX. */
+  private static readonly HUNGER_RAMP_SECONDS = 30;
+  /** Cap on the hunger multiplier — limits how much harder a long-
+   *  starved predator can hit. Tuned so a 30s lull produces a
+   *  noticeable but not unfair difficulty bump. */
+  private static readonly HUNGER_MAX = 1.5;
+
+  /**
+   * 1.0 (well-fed) → HUNGER_MAX (starved). Linear ramp from
+   * lastStrikeAttemptTime over HUNGER_RAMP_SECONDS. The renderer
+   * reads this via `getHungerFactor()` to draw a faint gaunt/cold
+   * tint on starved predators.
+   */
+  hungerFactor(): number {
+    const elapsed = this.currentTime - this.lastStrikeAttemptTime;
+    if (elapsed <= 0) return 1;
+    const t = Math.min(1, elapsed / PredatorBrain.HUNGER_RAMP_SECONDS);
+    return 1 + (PredatorBrain.HUNGER_MAX - 1) * t;
+  }
+
+  /** 0..1 normalized hunger — convenient for the renderer's tint
+   *  blend. 0 = fed, 1 = max starved. */
+  hungerLevel(): number {
+    return (this.hungerFactor() - 1) / (PredatorBrain.HUNGER_MAX - 1);
+  }
+
   /** Most recent delta-time tick — read by states' tickElapsed(). */
   public lastDelta = 0;
 
@@ -299,15 +335,17 @@ export class PredatorBrain extends Vehicle {
   // multiple profiles per archetype × biome.
 
   /** Detection radius scales LINEARLY with aggression — deeper biomes
-   *  see the player from farther away. */
+   *  see the player from farther away. Multiplied by hungerFactor so
+   *  starved predators sense the player from even farther. */
   effectiveDetectionRadius(): number {
-    return this.profile.detectionRadiusPx * this.biomeAggression;
+    return this.profile.detectionRadiusPx * this.biomeAggression * this.hungerFactor();
   }
 
   /** Commit radius scales similarly so the predator commits earlier
-   *  when stalking from the deep. */
+   *  when stalking from the deep. Hunger pushes commit even earlier
+   *  — a starved predator can't afford patience. */
   effectiveCommitRadius(): number {
-    return this.profile.commitRadiusPx * this.biomeAggression;
+    return this.profile.commitRadiusPx * this.biomeAggression * this.hungerFactor();
   }
 
   /** Charge windup INVERSELY scales: deeper biomes shorten the

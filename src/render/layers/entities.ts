@@ -1039,9 +1039,19 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
   // accent; predators in abyssal-trench retain the warm-red. The
   // blend keeps the silhouette readable at a glance — too far
   // toward biome and the predator melts into the depth tint.
-  const accentColor = p.biomeTintHex
+  const biomeBlended = p.biomeTintHex
     ? blendHexColors(0xff6b6b, parseHex(p.biomeTintHex), 0.4)
     : 0xff6b6b;
+
+  // Hunger blend: starved predators (hungerLevel → 1) shift up to
+  // 30% toward a stark off-white so the silhouette reads as gaunt
+  // / coldly hungry. Players learn "the pale ones are the ones
+  // pressing harder."
+  const hungerLevel = p.hungerLevel ?? 0;
+  const accentColor =
+    hungerLevel > 0
+      ? blendHexColors(biomeBlended, 0xfdf6e3, hungerLevel * 0.3)
+      : biomeBlended;
 
   // Visual modulation per state.
   // bodyTilt — sinusoidal undulation amplitude in radians.
