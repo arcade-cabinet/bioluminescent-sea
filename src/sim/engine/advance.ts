@@ -413,6 +413,16 @@ export function advanceScene(
     // pack convergence vectors at the moment the engage call fires.
     flankBroadcasts: ai.recentFlankPairs(1.2),
     adrenalineActive: activeAdrenaline > totalTime,
+    // Readiness 0..1 — 1 means adrenaline is off cooldown and the
+    // brain pack pressure could trigger it. While the burst itself
+    // is active, readiness is 0; while cooling down, it linearly
+    // ramps from 0 → 1 over the 8s cooldown window.
+    adrenalineReadiness:
+      activeAdrenaline > totalTime
+        ? 0
+        : activeAdrenalineCooldown <= totalTime
+          ? 1
+          : Math.max(0, 1 - (activeAdrenalineCooldown - totalTime) / 8),
   };
 }
 

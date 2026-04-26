@@ -49,6 +49,11 @@ export interface FxController {
      *  cyan-edged chromatic vignette so the slow-mo state is
      *  visually unmistakable. */
     adrenalineActive: boolean;
+    /** 0..1 adrenaline readiness. The FX layer renders a thin
+     *  mint pulse ring around the player that brightens with
+     *  readiness so the player can see when the safety net is
+     *  armed. */
+    adrenalineReadiness: number;
   }): void;
   destroy(): void;
 }
@@ -86,7 +91,7 @@ export function mountFx(parent: Container): FxController {
   let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness }) {
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -119,6 +124,21 @@ export function mountFx(parent: Container): FxController {
         alpha: 0.4 * (1 - phase),
         width: 1.6,
       });
+
+      // Adrenaline readiness ring — a thin mint pulse around the
+      // player that brightens with readiness so the player can see
+      // when the safety net is armed without hunting through the
+      // HUD. At full readiness (1.0), the ring breathes between
+      // 70%–100% alpha at 1.2 Hz; below 0.05 it goes invisible.
+      if (adrenalineReadiness >= 0.05) {
+        const breath = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 1.2));
+        const ringAlpha = adrenalineReadiness * 0.45 * breath;
+        sonar.circle(player.x, player.y, 80).stroke({
+          color: 0x6be6c1,
+          alpha: ringAlpha,
+          width: 1 + adrenalineReadiness * 1.4,
+        });
+      }
 
       // Threat-bearing arcs on a fixed-radius warning ring around
       // the player. Each active stalker/charger/striker paints a

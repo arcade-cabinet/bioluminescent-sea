@@ -99,6 +99,13 @@ export interface RenderFrameInput {
    * (in addition to the deltaTime scaling).
    */
   adrenalineActive?: boolean;
+  /**
+   * 0..1 adrenaline readiness — 1 means the burst is armed and
+   * could trigger on the next saturation. The FX layer renders a
+   * thin mint pulse ring around the player that brightens with
+   * readiness so the player can see when the safety net is armed.
+   */
+  adrenalineReadiness?: number;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -168,7 +175,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -295,6 +302,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         leviathanProximity: leviathanProximity ?? 0,
         flankBroadcasts: flankBroadcasts ?? [],
         adrenalineActive: adrenalineActive ?? false,
+        adrenalineReadiness: adrenalineReadiness ?? 0,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

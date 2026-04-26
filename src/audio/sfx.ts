@@ -15,8 +15,10 @@ export type SfxEvent =
   | "biome-transition"
   | "oxygen-warn"
   | "dive-complete"
-  | "pack-call"      // a predator broadcasts engage to its packmates
-  | "predator-kill"; // the lamp breaks a predator
+  | "pack-call"           // a predator broadcasts engage to its packmates
+  | "predator-kill"       // the lamp breaks a predator
+  | "adrenaline-engage"   // adrenaline burst triggers — rising bend, cinematic
+  | "adrenaline-disengage"; // adrenaline burst ends — falling bend, settles
 
 let synth: Tone.PolySynth<Tone.Synth> | null = null;
 let pling: Tone.MembraneSynth | null = null;
@@ -82,6 +84,22 @@ export async function playSfx(event: SfxEvent): Promise<void> {
       // "I broke that thing" beat.
       pling.triggerAttackRelease("A1", "8n", now);
       synth.triggerAttackRelease(["A5", "E6"], "16n", now + 0.05);
+      break;
+    case "adrenaline-engage":
+      // Rising bend — A4 → E5 → B5 — cinematic time-snap-in. The
+      // last note holds longer to anchor the slow-mo beat. Hot,
+      // bright, attention-grabbing.
+      synth.triggerAttackRelease("A4", "32n", now);
+      synth.triggerAttackRelease("E5", "32n", now + 0.04);
+      synth.triggerAttackRelease("B5", "8n", now + 0.08);
+      break;
+    case "adrenaline-disengage":
+      // Falling bend — settles back. Inverse of engage so the
+      // bookend is sonically obvious. Softer volume so the player
+      // feels relief rather than another impact.
+      synth.triggerAttackRelease("B5", "32n", now);
+      synth.triggerAttackRelease("E5", "32n", now + 0.06);
+      synth.triggerAttackRelease("A4", "8n", now + 0.12);
       break;
   }
 }
