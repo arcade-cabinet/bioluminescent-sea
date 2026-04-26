@@ -65,6 +65,10 @@ export class PirateBrain extends Vehicle {
   private playerRef: Vehicle | null = null;
   /** 0..1 awareness — drives renderer state + pursuit toggle. */
   public awareness = 0;
+  /** True for exactly one tick when awareness crosses
+   *  PURSUE_THRESHOLD on the rising edge. The AIManager surfaces
+   *  this so the runtime can fire a one-shot pirate-alert SFX. */
+  public justAlerted = false;
   /** Patrol baseline speed; pursue uses PURSUIT_SPEED_BOOST × this. */
   private baseSpeed: number;
   private slots: PirateSteeringSlots;
@@ -115,6 +119,10 @@ export class PirateBrain extends Vehicle {
     const ramp = inCone ? AWARENESS_RAMP_PER_SECOND : -AWARENESS_DECAY_PER_SECOND;
     this.awareness = Math.max(0, Math.min(1, this.awareness + ramp * delta));
 
+    // Reset justAlerted by default; only the rising-edge branch
+    // below sets it true for one tick.
+    this.justAlerted = false;
+
     // Hysteresis state machine in two scalar branches: above the
     // pursue threshold → pursue; below the patrol threshold → patrol;
     // in between → keep current behaviour. Avoids ping-pong on cone
@@ -123,6 +131,7 @@ export class PirateBrain extends Vehicle {
       this.slots.pursue.active = true;
       this.slots.wander.active = false;
       this.maxSpeed = this.baseSpeed * PURSUIT_SPEED_BOOST;
+      this.justAlerted = true;
     } else if (this.awareness < PATROL_THRESHOLD && this.slots.pursue.active) {
       this.slots.pursue.active = false;
       this.slots.wander.active = true;

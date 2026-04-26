@@ -413,6 +413,7 @@ export function advanceScene(
   const predatorPackCallThisFrame = ai.anyEngageBroadcastSince(totalTime - deltaTime - 0.001);
   // Kill count for SFX — justKilled is already computed above.
   const predatorKillsThisFrame = justKilled.size;
+  const pirateAlertThisFrame = ai.anyPirateAlertedThisFrame();
 
   return {
     collection,
@@ -424,6 +425,7 @@ export function advanceScene(
     threatIntensity,
     predatorPackCallThisFrame,
     predatorKillsThisFrame,
+    pirateAlertThisFrame,
     // Snapshot the scatter buffer — AIManager mutates the same array
     // on the next frame so we have to copy here. Most frames the
     // array is empty so the spread is cheap.

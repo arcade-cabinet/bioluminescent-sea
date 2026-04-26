@@ -132,6 +132,12 @@ export interface SceneAdvanceResult {
    */
   predatorPackCallThisFrame: boolean;
   /**
+   * True for exactly one frame when any pirate's awareness crosses
+   * the pursuit threshold. Drives a one-shot pirate-alert SFX so
+   * the player has an audible tell that a pirate just locked on.
+   */
+  pirateAlertThisFrame: boolean;
+  /**
    * Count of predator brains that transitioned from alive→dying
    * THIS frame. Runtime plays `predator-kill` SFX once per kill.
    */
