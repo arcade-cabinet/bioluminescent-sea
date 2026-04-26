@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.37.0...v0.38.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** drydock upgrade flash on purchase ([#198](https://github.com/arcade-cabinet/bioluminescent-sea/issues/198)) ([9ccccc1](https://github.com/arcade-cabinet/bioluminescent-sea/commit/9ccccc1195071c9e7e4dd11569f569d9004d70c9))
+* **bs:** mode cards warm up on hover + press feedback ([#196](https://github.com/arcade-cabinet/bioluminescent-sea/issues/196)) ([77fce26](https://github.com/arcade-cabinet/bioluminescent-sea/commit/77fce26a1bf69f838e11898d89d366029aaec05a))
+
 ## [0.37.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.36.0...v0.37.0) (2026-04-26)
 
 
