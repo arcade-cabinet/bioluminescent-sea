@@ -12,6 +12,11 @@ import {
   formatRelativeTime,
   getDiveHistory,
 } from "@/lib/diveHistory";
+import {
+  computeAggregateStats,
+  computeScoreTrendSeries,
+  projectTrendPoint,
+} from "@/lib/diveAnalytics";
 import { Button, EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
 
@@ -117,6 +122,8 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
         </div>
 
         <AchievementsPanel />
+
+        <DiveAnalyticsPanel />
 
         <DiveHistoryPanel />
 
@@ -364,6 +371,133 @@ function AchievementsPanel() {
  * each row in detail. Tap-to-replay-seed is reserved for a future
  * iteration.
  */
+/**
+ * Aggregate stats + sparkline trend for the player's recent dives.
+ * Pulls from getDiveHistory() so it always reflects the latest run.
+ *
+ * The sparkline is a small inline SVG — no chart library, so the
+ * bundle stays slim. Points are projected via projectTrendPoint
+ * which handles the all-equal-scores edge case.
+ *
+ * Hidden when fewer than 2 dives exist (a single-point trend isn't
+ * meaningful, and the LifetimeBand already covers the "first dive"
+ * read).
+ */
+function DiveAnalyticsPanel() {
+  const entries = getDiveHistory();
+  if (entries.length < 2) return null;
+
+  const stats = computeAggregateStats(entries);
+  const trend = computeScoreTrendSeries(entries);
+
+  const chartW = 180;
+  const chartH = 36;
+  const projected = trend.points.map((p) =>
+    projectTrendPoint(p, trend, chartW, chartH),
+  );
+  const pathD = projected
+    .map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
+    .join(" ");
+
+  return (
+    <section data-testid="drydock-analytics" className="flex flex-col gap-3">
+      <header className="flex items-baseline justify-between">
+        <h3
+          className="bs-display m-0 text-xl font-medium text-fg"
+          style={{
+            letterSpacing: "0.08em",
+            filter: "url(#bs-soft-glow)",
+            textShadow: "0 0 14px rgba(107,230,193,0.32)",
+          }}
+        >
+          Trend
+        </h3>
+        <span
+          className="bs-numeral text-sm text-fg-muted"
+          style={{ filter: "url(#bs-soft-glow)" }}
+        >
+          {stats.divesCounted} dives
+        </span>
+      </header>
+
+      <div
+        className="flex flex-wrap items-center gap-x-6 gap-y-3"
+        data-testid="drydock-analytics-cells"
+      >
+        <AnalyticsCell label="Mean score" value={String(stats.meanScore)} />
+        <AnalyticsCell
+          label="Best · worst"
+          value={`${stats.bestScore} · ${stats.worstScore}`}
+        />
+        <AnalyticsCell
+          label="Completion"
+          value={`${Math.round(stats.completionRate * 100)}%`}
+        />
+        <AnalyticsCell
+          label="Avg duration"
+          value={formatElapsed(stats.meanElapsedSeconds)}
+        />
+        <svg
+          role="img"
+          aria-label="Score trend over recent dives"
+          viewBox={`0 0 ${chartW} ${chartH}`}
+          width={chartW}
+          height={chartH}
+          data-testid="drydock-analytics-sparkline"
+          style={{ display: "block" }}
+        >
+          {pathD && (
+            <path
+              d={pathD}
+              fill="none"
+              stroke="var(--color-glow)"
+              strokeWidth={1.4}
+              opacity={0.85}
+              style={{ filter: "url(#bs-soft-glow)" }}
+            />
+          )}
+          {projected.map((pt, i) => (
+            <circle
+              key={i}
+              cx={pt.x}
+              cy={pt.y}
+              r={trend.points[i].completed ? 1.8 : 1.2}
+              fill={
+                trend.points[i].completed
+                  ? "var(--color-glow)"
+                  : "var(--color-fg-muted)"
+              }
+              opacity={0.9}
+            />
+          ))}
+        </svg>
+      </div>
+    </section>
+  );
+}
+
+function AnalyticsCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span
+        className="bs-label text-[0.55rem] text-fg-muted"
+        style={{ filter: "url(#bs-soft-glow)" }}
+      >
+        {label}
+      </span>
+      <span
+        className="bs-numeral text-sm text-fg"
+        style={{
+          fontFamily: "var(--font-body)",
+          textShadow: "0 0 10px rgba(2,6,17,0.85)",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function DiveHistoryPanel() {
   const entries = getDiveHistory().slice(0, 10);
   if (entries.length === 0) return null;
