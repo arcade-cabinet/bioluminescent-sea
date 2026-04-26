@@ -217,6 +217,37 @@ export function mountPlayer(parent: Container): PlayerController {
         });
       }
 
+      // Buff cooldown arcs — one short arc per active buff at a
+      // fixed bearing, sweep proportional to remaining/total time.
+      // Sits on a slightly larger radius than the hull so the arcs
+      // don't compete with the hull stroke or the damage arc.
+      // Bearings spaced at 8 / 4 / 2 / 6 o'clock so a player with
+      // multiple buffs sees four discrete chips, not a soup.
+      const buffSpecs: {
+        active: boolean;
+        until: number;
+        duration: number;
+        bearing: number;
+        color: number;
+      }[] = [
+        { active: repelActive,     until: player.activeBuffs.repelUntil,     duration: 15, bearing: -Math.PI / 2 + Math.PI * 1.25, color: 0x7dd3fc },
+        { active: overdriveActive, until: player.activeBuffs.overdriveUntil, duration: 10, bearing: -Math.PI / 2 + Math.PI * 0.25, color: 0xfde68a },
+        { active: lureActive,      until: player.activeBuffs.lureUntil,      duration: 12, bearing: -Math.PI / 2 + Math.PI * 1.75, color: 0xa5f3fc },
+        { active: lampFlareActive, until: player.activeBuffs.lampFlareUntil, duration: 14, bearing: -Math.PI / 2 + Math.PI * 0.75, color: 0xfde68a },
+      ];
+      const buffArcR = 44 * s;
+      const buffArcSpan = (24 * Math.PI) / 180;
+      for (const spec of buffSpecs) {
+        if (!spec.active) continue;
+        const remaining = Math.max(0, spec.until - totalTime);
+        const t = Math.max(0, Math.min(1, remaining / spec.duration));
+        if (t <= 0) continue;
+        const sweep = buffArcSpan * t;
+        buff.moveTo(Math.cos(spec.bearing - sweep / 2) * buffArcR, Math.sin(spec.bearing - sweep / 2) * buffArcR);
+        buff.arc(0, 0, buffArcR, spec.bearing - sweep / 2, spec.bearing + sweep / 2);
+        buff.stroke({ color: spec.color, alpha: 0.85, width: 2.4 });
+      }
+
       // Damage direction arc: short red arc on the hull-radius ring
       // pointing toward the most recent threat. Visible only during
       // the impact flicker window (0.6s) and only if a bearing was
