@@ -81,6 +81,9 @@ export function mountPlayer(parent: Container): PlayerController {
       // are absolute timestamps; the sim compares against `totalTime`.
       const repelActive = player.activeBuffs.repelUntil > totalTime;
       const overdriveActive = player.activeBuffs.overdriveUntil > totalTime;
+      const lureActive = player.activeBuffs.lureUntil > totalTime;
+      const lampFlareActive = player.activeBuffs.lampFlareUntil > totalTime;
+      const adrenalineActive = player.activeBuffs.adrenalineUntil > totalTime;
       buff.clear();
       buff.position.set(player.x, player.y);
       if (repelActive) {
@@ -108,6 +111,75 @@ export function mountPlayer(parent: Container): PlayerController {
         buff.ellipse(0, 0, 36 * s * wobble, 18 * s * wobble).fill({
           color: 0xffcc6a,
           alpha: 0.18,
+        });
+      }
+      if (lureActive) {
+        // Tractor-beam pulse — eight thin cyan rays emanating from
+        // the sub at slowly rotating angles. Reads as "the sub is
+        // pulling things in" without needing to draw lines TO every
+        // collectible (which would clutter at high creature density).
+        const rays = 8;
+        const baseAngle = totalTime * 1.2;
+        const innerR = 42 * s;
+        const outerR = 110 * s + Math.sin(totalTime * 3) * 12 * s;
+        for (let i = 0; i < rays; i++) {
+          const a = baseAngle + (i / rays) * Math.PI * 2;
+          const x1 = Math.cos(a) * innerR;
+          const y1 = Math.sin(a) * innerR;
+          const x2 = Math.cos(a) * outerR;
+          const y2 = Math.sin(a) * outerR;
+          // Inward-pointing arrow heads at the inner end so the
+          // direction-of-pull reads at a glance.
+          const arrowSize = 4 * s;
+          const perpA = a + Math.PI / 2;
+          const arrowX1 = x1 + Math.cos(a) * arrowSize + Math.cos(perpA) * arrowSize;
+          const arrowY1 = y1 + Math.sin(a) * arrowSize + Math.sin(perpA) * arrowSize;
+          const arrowX2 = x1 + Math.cos(a) * arrowSize - Math.cos(perpA) * arrowSize;
+          const arrowY2 = y1 + Math.sin(a) * arrowSize - Math.sin(perpA) * arrowSize;
+          buff.moveTo(x2, y2);
+          buff.lineTo(x1, y1);
+          buff.lineTo(arrowX1, arrowY1);
+          buff.moveTo(x1, y1);
+          buff.lineTo(arrowX2, arrowY2);
+          buff.stroke({ color: 0xa5f3fc, alpha: 0.45, width: 1.2 });
+        }
+      }
+      if (lampFlareActive) {
+        // Sun-burst halo at the lamp housing — twelve short rays
+        // radiating from the sub's forward bulb, golden so it
+        // reads distinct from the cyan/amber/mint palette of other
+        // buffs. Pulse slowly to avoid eye strain.
+        const flarePulse = 0.7 + 0.3 * Math.sin(totalTime * 2.5);
+        const rays = 12;
+        for (let i = 0; i < rays; i++) {
+          const a = (i / rays) * Math.PI * 2 + totalTime * 0.3;
+          const innerR = 8 * s;
+          const outerR = (16 + flarePulse * 8) * s;
+          // Anchor rays at the lamp housing position (slightly
+          // forward + above of the sub's pivot — see lamp draw).
+          const anchorX = 17 * s * Math.cos(player.angle) - 0;
+          const anchorY = 17 * s * Math.sin(player.angle) - 0;
+          buff.moveTo(anchorX + Math.cos(a) * innerR, anchorY + Math.sin(a) * innerR);
+          buff.lineTo(anchorX + Math.cos(a) * outerR, anchorY + Math.sin(a) * outerR);
+          buff.stroke({ color: 0xfde68a, alpha: 0.7 * flarePulse, width: 1.4 });
+        }
+      }
+      if (adrenalineActive) {
+        // Cyan ring overlay — distinct from repel's blue and
+        // overdrive's amber. Tighter to the hull, breathes faster
+        // (8 Hz to match the FX vignette) so the player's eye
+        // catches the burst state on the sub itself, not just the
+        // screen edges.
+        const adrenPulse = 0.7 + 0.3 * Math.sin(totalTime * 8);
+        buff.circle(0, 0, 30 * s).stroke({
+          color: 0x6be6c1,
+          alpha: 0.65 * adrenPulse,
+          width: 2.2,
+        });
+        buff.circle(0, 0, 22 * s).stroke({
+          color: 0xfff3a0,
+          alpha: 0.4 * adrenPulse,
+          width: 1.2,
         });
       }
 
