@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.28.0...v0.29.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** creature wake scatter ([#168](https://github.com/arcade-cabinet/bioluminescent-sea/issues/168)) ([333e12a](https://github.com/arcade-cabinet/bioluminescent-sea/commit/333e12a201f7fa2154fc69b4fe83ddd2fed257dd))
+* **bs:** lure perimeter ring teaches the actionable boundary ([#169](https://github.com/arcade-cabinet/bioluminescent-sea/issues/169)) ([516e5ed](https://github.com/arcade-cabinet/bioluminescent-sea/commit/516e5eda10bb0b5bbbbd05d38fb5b1a5c2daa755))
+* **bs:** oxygen-critical pulse vignette ([#165](https://github.com/arcade-cabinet/bioluminescent-sea/issues/165)) ([26c4404](https://github.com/arcade-cabinet/bioluminescent-sea/commit/26c44048770378c7d8f8177689cc69d49aa5c6d6))
+* **bs:** pirate lantern cone swells with awareness ([#167](https://github.com/arcade-cabinet/bioluminescent-sea/issues/167)) ([657c657](https://github.com/arcade-cabinet/bioluminescent-sea/commit/657c657ba4c22da79bde425176214470db7d3792))
+
 ## [0.28.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.27.0...v0.28.0) (2026-04-26)
 
 
