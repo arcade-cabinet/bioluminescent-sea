@@ -182,6 +182,10 @@ export function DiveScreen({
   const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
   const previousBiomeRef = useRef<string | null>(null);
   const previousLowOxRef = useRef(false);
+  /** Wall-clock time of the last oxygen heartbeat tick. Used to
+   *  pace the critical-low oxygen-tick SFX so it speeds up as the
+   *  player approaches zero. */
+  const lastOxygenTickRef = useRef(0);
   /** Edge-detector for `predatorStrikeNearPlayer`. Without it, the
    *  threat flash retriggers every frame the strike is in range,
    *  pinning camera shake at 100% across a multi-frame strike. */
@@ -635,6 +639,20 @@ export function DiveScreen({
         void playSfx("oxygen-warn");
       }
       previousLowOxRef.current = lowOx;
+
+      // Heartbeat ticks: under 0.18 oxygen ratio, fire a soft sub-
+      // bass tick at a pace that ramps with severity. At 0.18 the
+      // tick interval is 1.2 s; at 0 it's 0.4 s. Lined up with the
+      // existing oxygen-critical visual vignette (also gated at
+      // < 0.18) so the audio + visual cues co-fire.
+      if (result.telemetry.oxygenRatio < 0.18) {
+        const severity = 1 - result.telemetry.oxygenRatio / 0.18;
+        const interval = 1.2 - severity * 0.8;
+        if (effectiveTotalTime - lastOxygenTickRef.current >= interval) {
+          void playSfx("oxygen-tick");
+          lastOxygenTickRef.current = effectiveTotalTime;
+        }
+      }
 
       // Strike-near edge: fire the threat flash once on the rising
       // edge so a near-miss lunge feels dangerous without locking
