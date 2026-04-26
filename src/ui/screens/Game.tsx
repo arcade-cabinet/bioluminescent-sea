@@ -169,8 +169,12 @@ export default function Game(props: GameProps = {}) {
             key="playing"
             data-testid="playing-screen"
             className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            // Dive entrance: a short downward slide + fade so the
+            // transition reads as "descending into the trench"
+            // rather than a hard cut from menu → gameplay.
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
           >
             <DiveScreen
               initialSnapshot={initialSnapshot}
