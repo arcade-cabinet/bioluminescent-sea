@@ -105,6 +105,31 @@ export function hasPredatorCollision(
   });
 }
 
+/**
+ * Returns the bearing (radians, world-space) from the player to the
+ * nearest colliding threat, or null if no collision. Used by the
+ * renderer to paint a damage-direction arc on the hull ring.
+ */
+export function findCollidingThreatBearing(
+  player: Player,
+  predators: Predator[],
+  radiusScale = 1
+): number | null {
+  let best: { bearing: number; distance: number } | null = null;
+  for (const predator of predators) {
+    if ((predator.deathProgress ?? 0) > 0) continue;
+    const dx = predator.x - player.x;
+    const dy = predator.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < (predator.size * 0.4 + 25) * radiusScale) {
+      if (best === null || distance < best.distance) {
+        best = { bearing: Math.atan2(dy, dx), distance };
+      }
+    }
+  }
+  return best?.bearing ?? null;
+}
+
 export function findNearestThreatDistance(
   player: Player,
   predators: Predator[],

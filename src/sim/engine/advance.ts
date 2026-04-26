@@ -9,7 +9,12 @@ import { createObjectiveQueue } from "@/sim/factories/dive";
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
 import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { advanceObjectiveQueue, tallyBeaconCharted } from "./objective";
-import { collectAnomalies, collectCreatures, hasPredatorCollision } from "./collection";
+import {
+  collectAnomalies,
+  collectCreatures,
+  findCollidingThreatBearing,
+  hasPredatorCollision,
+} from "./collection";
 import {
   DESCENT_SPEED_METERS_PER_SECOND,
   TRENCH_FLOOR_METERS,
@@ -345,6 +350,11 @@ export function advanceScene(
     // values just stay around (no harm — the flicker math has a
     // hard cutoff).
     lastImpactSeconds: isCollision ? totalTime : (player.lastImpactSeconds ?? -Infinity),
+    lastImpactBearing: isCollision
+      ? (findCollidingThreatBearing(player, predators, tuning.threatRadiusScale) ??
+         findCollidingThreatBearing(player, pirates as unknown as import("@/sim/entities/types").Predator[], tuning.threatRadiusScale) ??
+         player.lastImpactBearing)
+      : player.lastImpactBearing,
   };
 
   const nextSceneBase: SceneState = {

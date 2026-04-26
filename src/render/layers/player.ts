@@ -199,6 +199,26 @@ export function mountPlayer(parent: Container): PlayerController {
         });
       }
 
+      // Damage direction arc: short red arc on the hull-radius ring
+      // pointing toward the most recent threat. Visible only during
+      // the impact flicker window (0.6s) and only if a bearing was
+      // captured. Half-arc width 50° so the player can read "from
+      // that side" without it overpowering the buff overlays.
+      const sinceImpactDir = totalTime - (player.lastImpactSeconds ?? -Infinity);
+      const bearing = player.lastImpactBearing;
+      if (sinceImpactDir < 0.6 && sinceImpactDir >= 0 && bearing !== undefined) {
+        const fadeT = 1 - sinceImpactDir / 0.6;
+        const arcR = 36 * s;
+        const halfArc = (50 * Math.PI) / 180;
+        buff.moveTo(Math.cos(bearing - halfArc) * arcR, Math.sin(bearing - halfArc) * arcR);
+        buff.arc(0, 0, arcR, bearing - halfArc, bearing + halfArc);
+        buff.stroke({
+          color: 0xff3a2a,
+          alpha: 0.85 * fadeT,
+          width: 2.4 * fadeT + 1.2,
+        });
+      }
+
       lamp.clear();
       lamp.position.set(player.x, player.y);
       lamp.rotation = player.angle;

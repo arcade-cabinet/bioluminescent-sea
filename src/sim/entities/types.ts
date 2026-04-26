@@ -166,6 +166,14 @@ export interface Player {
    * lost oxygen?". -Infinity = no recent impact.
    */
   lastImpactSeconds?: number;
+  /**
+   * Bearing (radians, world-space) from the player to the nearest
+   * colliding threat at the moment of `lastImpactSeconds`. Used by
+   * the renderer to paint a directional damage arc on the hull ring
+   * so the player can read *where* the hit came from. Sticky — only
+   * updates when a fresh impact lands.
+   */
+  lastImpactBearing?: number;
 }
 
 export const CREATURE_TYPES: CreatureType[] = ["jellyfish", "plankton", "fish"];
