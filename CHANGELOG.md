@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.40.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.39.0...v0.40.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** floating +N score popups at collection sites ([#202](https://github.com/arcade-cabinet/bioluminescent-sea/issues/202)) ([5918355](https://github.com/arcade-cabinet/bioluminescent-sea/commit/5918355aadf3e998ab3e7ff2545d9739e9d6d178))
+* **bs:** score popup color ramps with chain multiplier ([#204](https://github.com/arcade-cabinet/bioluminescent-sea/issues/204)) ([191dc4c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/191dc4cbc8d57e126336ea612d180880beb31b0b))
+
 ## [0.39.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.38.0...v0.39.0) (2026-04-26)
 
 
