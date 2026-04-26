@@ -268,8 +268,17 @@ export function mountPlayer(parent: Container): PlayerController {
         });
       }
 
+      // Idle bob — when the sub is barely moving, add a subtle
+      // sinusoidal Y offset to the hull + lamp so the silhouette
+      // doesn't sit dead-still. Bob amplitude fades out as speed
+      // increases (full bob below 40 px/s, vanishes by 200 px/s).
+      // Trail and buff overlays anchor at the intended position so
+      // they stay world-locked.
+      const idleFactor = Math.max(0, 1 - speedPxPerSec / 200);
+      const bobY = idleFactor > 0 ? Math.sin(totalTime * 1.6) * 1.4 * idleFactor : 0;
+
       lamp.clear();
-      lamp.position.set(player.x, player.y);
+      lamp.position.set(player.x, player.y + bobY);
       lamp.rotation = player.angle;
       // Lamp cone fans forward (+x) of the sub. Overdrive widens + brightens.
       // Volumetric look: paint concentric cones from outer→inner with
@@ -323,7 +332,7 @@ export function mountPlayer(parent: Container): PlayerController {
       });
 
       hull.clear();
-      hull.position.set(player.x, player.y);
+      hull.position.set(player.x, player.y + bobY);
       hull.rotation = player.angle;
 
       // Main pressure hull — slightly tapered tail end so the
