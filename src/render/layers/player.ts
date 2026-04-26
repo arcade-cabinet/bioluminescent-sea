@@ -114,6 +114,22 @@ export function mountPlayer(parent: Container): PlayerController {
         });
       }
       if (lureActive) {
+        // Lure radius perimeter — faint dashed cyan ring at the
+        // actual sim lure radius (300 world-units). Teaches the
+        // affordance: collectibles inside the ring will bend to you.
+        const lureRadius = 300;
+        const dashCount = 48;
+        const dashArc = (Math.PI * 2) / dashCount;
+        const ringPulse = 0.55 + 0.2 * Math.sin(totalTime * 1.6);
+        for (let i = 0; i < dashCount; i++) {
+          if (i % 2 === 1) continue;
+          const a0 = i * dashArc + totalTime * 0.18;
+          const a1 = a0 + dashArc * 0.85;
+          buff.moveTo(Math.cos(a0) * lureRadius, Math.sin(a0) * lureRadius);
+          buff.arc(0, 0, lureRadius, a0, a1);
+          buff.stroke({ color: 0xa5f3fc, alpha: 0.18 * ringPulse, width: 1.1 });
+        }
+
         // Tractor-beam pulse — eight thin cyan rays emanating from
         // the sub at slowly rotating angles. Reads as "the sub is
         // pulling things in" without needing to draw lines TO every
