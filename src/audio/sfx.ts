@@ -20,7 +20,8 @@ export type SfxEvent =
   | "adrenaline-engage"   // adrenaline burst triggers — rising bend, cinematic
   | "adrenaline-disengage" // adrenaline burst ends — falling bend, settles
   | "depth-mark"          // sub crosses a hectometer (every 100 m descent)
-  | "pirate-alert";       // pirate awareness crossed pursuit threshold
+  | "pirate-alert"        // pirate awareness crossed pursuit threshold
+  | "oxygen-tick";        // critical-low oxygen heartbeat tick
 
 let synth: Tone.PolySynth<Tone.Synth> | null = null;
 let pling: Tone.MembraneSynth | null = null;
@@ -134,6 +135,13 @@ export async function playSfx(event: SfxEvent, options: PlaySfxOptions = {}): Pr
       // by ear.
       synth.triggerAttackRelease("A#3", "16n", now);
       synth.triggerAttackRelease("F3", "8n", now + 0.1);
+      break;
+    case "oxygen-tick":
+      // Heartbeat tick — soft sub-bass thump on the membrane synth
+      // at G1, very short duration. Cadence is driven by the
+      // caller (DiveScreen) so the tick rate scales with how
+      // critical the oxygen has become.
+      pling.triggerAttackRelease("G1", "32n", now);
       break;
   }
 }
