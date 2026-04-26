@@ -191,6 +191,13 @@ export interface SceneAdvanceResult {
    * acceleration — visually clear that time has changed.
    */
   adrenalineActive: boolean;
+  /**
+   * 0..1 readiness — 1 means adrenaline is OFF cooldown and ready
+   * to trigger. Drives the renderer's cyan ready-ring (a thin
+   * mint pulse around the player) so the player can see when
+   * the safety net is armed without hunting through the HUD.
+   */
+  adrenalineReadiness: number;
 }
 
 export interface DiveModeTuning {

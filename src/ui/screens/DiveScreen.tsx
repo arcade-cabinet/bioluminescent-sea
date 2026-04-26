@@ -444,6 +444,13 @@ export function DiveScreen({
         multiplier: multiplierRef.current,
       });
       worldRef.current = nextWorld;
+      // Edge-detect adrenaline transitions to fire engage/disengage
+      // SFX once per state change, not every frame.
+      if (result.adrenalineActive && !adrenalineActiveRef.current) {
+        void playSfx("adrenaline-engage");
+      } else if (!result.adrenalineActive && adrenalineActiveRef.current) {
+        void playSfx("adrenaline-disengage");
+      }
       adrenalineActiveRef.current = result.adrenalineActive;
 
       playerRef.current = result.scene.player;
@@ -631,6 +638,7 @@ export function DiveScreen({
         leviathanProximity: result.leviathanProximity,
         flankBroadcasts: result.flankBroadcasts,
         adrenalineActive: result.adrenalineActive,
+        adrenalineReadiness: result.adrenalineReadiness,
       });
     },
     [
