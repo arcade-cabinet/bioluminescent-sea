@@ -124,6 +124,13 @@ export interface RenderFrameInput {
     y: number;
     type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
   }[];
+  /**
+   * True for exactly one frame at the moment the biome changes.
+   * The FX layer reads this to start a 1.4 s sweep cinematic in
+   * the new biome's tint. Edge-detection is performed by the
+   * caller (DiveScreen) — the FX layer just consumes the trigger.
+   */
+  biomeTransitionTriggered?: boolean;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -193,7 +200,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -324,6 +331,8 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         adrenalineReadiness: adrenalineReadiness ?? 0,
         oxygenRatio: oxygenRatio ?? 1,
         anomalyPickups: anomalyPickups ?? [],
+        biomeTransitionTriggered: biomeTransitionTriggered ?? false,
+        biomeTintHex,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

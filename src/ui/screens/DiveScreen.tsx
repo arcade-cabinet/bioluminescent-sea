@@ -599,9 +599,11 @@ export function DiveScreen({
       ambientRef.current?.setDepthMeters(result.telemetry.depthMeters);
       ambientRef.current?.setThreatIntensity(result.threatIntensity);
       ambientRef.current?.setLeviathanProximity(result.leviathanProximity);
+      let biomeTransitionTriggered = false;
       if (previousBiomeRef.current !== result.telemetry.biomeId) {
         if (previousBiomeRef.current !== null) {
           void playSfx("biome-transition");
+          biomeTransitionTriggered = true;
         }
         previousBiomeRef.current = result.telemetry.biomeId;
       }
@@ -679,6 +681,7 @@ export function DiveScreen({
         adrenalineReadiness: result.adrenalineReadiness,
         oxygenRatio: result.telemetry.oxygenRatio,
         anomalyPickups: result.anomalyPickups,
+        biomeTransitionTriggered,
       });
     },
     [
