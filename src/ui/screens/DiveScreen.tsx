@@ -639,6 +639,7 @@ export function DiveScreen({
         flankBroadcasts: result.flankBroadcasts,
         adrenalineActive: result.adrenalineActive,
         adrenalineReadiness: result.adrenalineReadiness,
+        oxygenRatio: result.telemetry.oxygenRatio,
       });
     },
     [
