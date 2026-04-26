@@ -193,27 +193,32 @@ export function HUD({
           zIndex: 10,
         }}
       >
-        {nearestLandmarkLabel && (
-          <motion.div
-            data-testid="hud-landmark-chip"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              ...labelStyle,
-              color: "var(--color-glow)",
-              fontSize: "0.7rem",
-              filter: "url(#bs-soft-glow)",
-            }}
-          >
-            {nearestLandmarkLabel}
-            {typeof nearestLandmarkDistance === "number" &&
-              Number.isFinite(nearestLandmarkDistance) && (
-                <span style={{ marginLeft: "0.5rem", color: "var(--color-fg-muted)" }}>
-                  {Math.round(nearestLandmarkDistance)}m
-                </span>
-              )}
-          </motion.div>
-        )}
+        <AnimatePresence mode="wait">
+          {nearestLandmarkLabel && (
+            <motion.div
+              key={nearestLandmarkLabel}
+              data-testid="hud-landmark-chip"
+              initial={{ opacity: 0, y: -8, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.92 }}
+              transition={{ duration: 0.42, ease: "easeOut" }}
+              style={{
+                ...labelStyle,
+                color: "var(--color-glow)",
+                fontSize: "0.7rem",
+                filter: "url(#bs-soft-glow)",
+              }}
+            >
+              {nearestLandmarkLabel}
+              {typeof nearestLandmarkDistance === "number" &&
+                Number.isFinite(nearestLandmarkDistance) && (
+                  <span style={{ marginLeft: "0.5rem", color: "var(--color-fg-muted)" }}>
+                    {Math.round(nearestLandmarkDistance)}m
+                  </span>
+                )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {biomeLabel && (
           <motion.div
             key={biomeLabel}
