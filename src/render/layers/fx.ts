@@ -67,6 +67,13 @@ export interface FxController {
       y: number;
       type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
     }[];
+    /** True for exactly one frame at the moment the biome changes.
+     *  The FX layer starts a 1.4 s sweep cinematic in the new
+     *  biome's tint. */
+    biomeTransitionTriggered: boolean;
+    /** Hex tint of the *current* biome. Used as the cinematic
+     *  sweep color when biomeTransitionTriggered is true. */
+    biomeTintHex: string | undefined;
   }): void;
   destroy(): void;
 }
@@ -87,6 +94,7 @@ export function mountFx(parent: Container): FxController {
   const adrenalineVignette = new Graphics();
   const oxygenCriticalVignette = new Graphics();
   const pickupRings = new Graphics();
+  const biomeSweep = new Graphics();
   const threatFlash = new Graphics();
   parent.addChild(
     sonar,
@@ -98,6 +106,7 @@ export function mountFx(parent: Container): FxController {
     adrenalineVignette,
     oxygenCriticalVignette,
     pickupRings,
+    biomeSweep,
     threatFlash,
   );
 
@@ -125,8 +134,13 @@ export function mountFx(parent: Container): FxController {
     breath: 0x6be6c1,
   };
 
+  /** Active biome-transition sweep cinematic. `null` = no
+   *  cinematic playing. Lifetime 1.4 s; the sweep band moves from
+   *  off-screen-top to off-screen-bottom over that window. */
+  let activeBiomeSweep: { startedAt: number; color: number } | null = null;
+
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex }) {
       // Ingest fresh pickups onto the active list.
       for (const p of anomalyPickups) {
         activePickups.push({
@@ -135,6 +149,19 @@ export function mountFx(parent: Container): FxController {
           color: PICKUP_COLORS[p.type] ?? 0xa5f3fc,
           startedAt: totalTime,
         });
+      }
+
+      // Ingest a fresh biome-sweep on the trigger frame. The
+      // cinematic uses the *new* biome's tint so the player sees
+      // the destination color, not the origin.
+      if (biomeTransitionTriggered) {
+        let tint = 0x6be6c1;
+        if (biomeTintHex) {
+          const hex = biomeTintHex.startsWith("#") ? biomeTintHex.slice(1) : biomeTintHex;
+          const parsed = Number.parseInt(hex, 16);
+          if (Number.isFinite(parsed)) tint = parsed;
+        }
+        activeBiomeSweep = { startedAt: totalTime, color: tint };
       }
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
@@ -498,6 +525,46 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Biome transition cinematic — a soft horizontal band sweeps
+      // top-to-bottom in the new biome's tint, paired with a
+      // depth-tint pulse on the rest of the screen so the eye reads
+      // "the world just changed color." 1.4 s lifetime; band width
+      // ~30% of viewport height; eased so the trailing edge lingers.
+      biomeSweep.clear();
+      if (activeBiomeSweep) {
+        const age = totalTime - activeBiomeSweep.startedAt;
+        const lifetime = 1.4;
+        if (age >= lifetime) {
+          activeBiomeSweep = null;
+        } else {
+          const t = age / lifetime;
+          const w = viewport.widthPx;
+          const h = viewport.heightPx;
+          // Whole-screen tint pulse — peaks at 25% of lifetime.
+          const tintT = t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75;
+          biomeSweep.rect(0, 0, w, h).fill({
+            color: activeBiomeSweep.color,
+            alpha: 0.18 * tintT,
+          });
+          // Sweeping band. Eased descent so the leading edge moves
+          // fast, the trailing edge lingers — feels like a body of
+          // water passing through.
+          const eased = t * t * (3 - 2 * t);
+          const bandH = h * 0.32;
+          const bandY = -bandH + eased * (h + bandH);
+          const bandAlpha = 0.55 * (1 - t * 0.4);
+          biomeSweep.rect(0, bandY, w, bandH).fill({
+            color: activeBiomeSweep.color,
+            alpha: bandAlpha,
+          });
+          // Trailing edge highlight — creamy yellow, narrow.
+          biomeSweep.rect(0, bandY + bandH - 3, w, 3).fill({
+            color: 0xfef9c3,
+            alpha: 0.7 * (1 - t),
+          });
+        }
+      }
+
       threatFlash.clear();
       if (threatFlashAlpha > 0) {
         threatFlash.rect(0, 0, viewport.widthPx, viewport.heightPx).fill({
@@ -516,9 +583,11 @@ export function mountFx(parent: Container): FxController {
       adrenalineVignette.destroy();
       oxygenCriticalVignette.destroy();
       pickupRings.destroy();
+      biomeSweep.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;
       activePickups.length = 0;
+      activeBiomeSweep = null;
     },
   };
 }
