@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Anchor, BatteryCharging, Lightbulb, Wrench } from "lucide-react";
-import type { ComponentType } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { getUpgradeCost, MAX_UPGRADE_LEVEL, type SubUpgrades } from "@/sim/meta/upgrades";
 import { Button, EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
@@ -142,6 +142,21 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
   const canAfford = !isMax && currency >= cost;
   const Icon = def.icon;
 
+  // Local flash state — set true on level change, cleared after a
+  // short timeout. Drives a brief mint wash + level chip pulse so
+  // the purchase feels like a moment.
+  const [flashing, setFlashing] = useState(false);
+  const lastLevelRef = useRef(level);
+  useEffect(() => {
+    if (level > lastLevelRef.current) {
+      setFlashing(true);
+      const timeout = window.setTimeout(() => setFlashing(false), 700);
+      lastLevelRef.current = level;
+      return () => window.clearTimeout(timeout);
+    }
+    lastLevelRef.current = level;
+  }, [level]);
+
   return (
     <div
       className="relative flex flex-col items-start gap-4 py-3 sm:flex-row sm:items-center sm:justify-between"
@@ -151,6 +166,22 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
         borderBottom: "1px solid color-mix(in srgb, var(--color-glow) 12%, transparent)",
       }}
     >
+      <AnimatePresence>
+        {flashing && (
+          <motion.div
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="pointer-events-none absolute inset-x-0 inset-y-0 -mx-2"
+            style={{
+              background:
+                "radial-gradient(80% 100% at 30% 50%, rgba(107,230,193,0.18) 0%, transparent 75%)",
+            }}
+          />
+        )}
+      </AnimatePresence>
       <div className="flex items-start gap-3">
         <div
           className="flex size-10 shrink-0 items-center justify-center text-glow"
@@ -168,13 +199,17 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
             }}
           >
             {def.label}
-            <span
+            <motion.span
               data-testid={`upgrade-level-${def.id}`}
-              className="bs-label ml-3 text-[0.6rem] text-fg-muted"
+              className="bs-label ml-3 text-[0.6rem]"
               style={{ filter: "url(#bs-soft-glow)" }}
+              key={level}
+              initial={{ scale: 1.4, color: "var(--color-glow)" }}
+              animate={{ scale: 1, color: "var(--color-fg-muted)" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
               Lvl {level} / {MAX_UPGRADE_LEVEL}
-            </span>
+            </motion.span>
           </h3>
           <p
             className="m-0 mt-1 text-sm italic leading-relaxed text-fg-muted"
