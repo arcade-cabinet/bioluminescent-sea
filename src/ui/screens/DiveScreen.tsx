@@ -22,6 +22,15 @@ import { useGameLoop } from "@/hooks/useGameLoop";
 import { useResolvedInput } from "@/hooks/useResolvedInput";
 import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
 import { createAmbient, disposeSfx, playSfx } from "@/audio";
+import {
+  hapticAdrenaline,
+  hapticCollect,
+  hapticGameOver,
+  hapticImpact,
+  hapticOxygenTick,
+  hapticPickup,
+  hapticPredatorKill,
+} from "@/platform";
 import { codenameFromSeed } from "@/sim/rng";
 import {
   advanceDiveFrame,
@@ -444,6 +453,7 @@ export function DiveScreen({
         setTimeLeft(newTimeLeft);
         if (newTimeLeft === 0) {
           setIsGameOver(true);
+          hapticGameOver();
           onGameOver(scoreRef.current, getCurrentSummary(0));
           return;
         }
@@ -468,6 +478,7 @@ export function DiveScreen({
       // SFX once per state change, not every frame.
       if (result.adrenalineActive && !adrenalineActiveRef.current) {
         void playSfx("adrenaline-engage");
+        hapticAdrenaline();
       } else if (!result.adrenalineActive && adrenalineActiveRef.current) {
         void playSfx("adrenaline-disengage");
       }
@@ -536,6 +547,7 @@ export function DiveScreen({
 
       if (result.collection.collected.length > 0) {
         void playSfx("collect", { multiplier: result.collection.multiplier });
+        hapticCollect();
         collectionBurstsRef.current.push(
           ...result.collection.collected.map((creature) => ({
             color: creature.glowColor,
@@ -650,6 +662,7 @@ export function DiveScreen({
         const interval = 1.2 - severity * 0.8;
         if (effectiveTotalTime - lastOxygenTickRef.current >= interval) {
           void playSfx("oxygen-tick");
+          hapticOxygenTick();
           lastOxygenTickRef.current = effectiveTotalTime;
         }
       }
@@ -661,6 +674,7 @@ export function DiveScreen({
       if (result.predatorStrikeNearPlayer && !previousStrikeNearRef.current) {
         recordThreatFlash(currentWorld);
         void playSfx("impact");
+        hapticImpact();
       }
       previousStrikeNearRef.current = result.predatorStrikeNearPlayer;
 
@@ -676,6 +690,7 @@ export function DiveScreen({
       // satisfying double-thunk.
       for (let i = 0; i < result.predatorKillsThisFrame; i++) {
         void playSfx("predator-kill");
+        hapticPredatorKill();
       }
       // Pirate-alert SFX: one-shot descending horn when any pirate
       // crosses the pursuit threshold. The brain's hysteresis
@@ -683,6 +698,15 @@ export function DiveScreen({
       // on cone edges.
       if (result.pirateAlertThisFrame) {
         void playSfx("pirate-alert");
+      }
+
+      // Anomaly pickup haptic — medium tap on each buff collected.
+      // Fires once per frame regardless of pickup count (the
+      // platform haptics serializer will coalesce); a player who
+      // sweeps through three buffs at once feels one decisive
+      // pickup rather than three jittery ticks.
+      if (result.anomalyPickups.length > 0) {
+        hapticPickup();
       }
 
       if (result.collidedWithPredator) {
@@ -699,6 +723,7 @@ export function DiveScreen({
           lastImpactTimeRef.current = effectiveTotalTime;
           recordThreatFlash(currentWorld);
           void playSfx("impact");
+          hapticImpact();
         }
 
         if (impact.type === "oxygen-penalty") {
@@ -708,6 +733,7 @@ export function DiveScreen({
           showImpactPulse(impact.oxygenPenaltySeconds, effectiveTotalTime);
         } else if (impact.type === "dive-failed") {
           setIsGameOver(true);
+          hapticGameOver();
           onGameOver(scoreRef.current, getCurrentSummary(0));
           return;
         }
