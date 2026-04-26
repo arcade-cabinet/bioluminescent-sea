@@ -178,6 +178,12 @@ export function DiveScreen({
    *  pinning camera shake at 100% across a multi-frame strike. */
   const previousStrikeNearRef = useRef(false);
   const depthTravelMetersRef = useRef(initialSnapshot?.scene.depthTravelMeters ?? 0);
+  /** Hectometer threshold last crossed. Edge-detect on
+   *  `Math.floor(depth / 100)` so the depth-mark chime fires once per
+   *  100 m of descent rather than every frame after the threshold. */
+  const lastHectometerRef = useRef(
+    Math.floor((initialSnapshot?.scene.depthTravelMeters ?? 0) / 100),
+  );
   const objectiveQueueRef = useRef(
     initialSnapshot?.scene.objectiveQueue ?? initialScene.objectiveQueue,
   );
@@ -452,6 +458,14 @@ export function DiveScreen({
         void playSfx("adrenaline-disengage");
       }
       adrenalineActiveRef.current = result.adrenalineActive;
+
+      // Hectometer chime — once per 100 m descended. Only fires on
+      // *increasing* hectometer index so re-ascents don't replay.
+      const newHecto = Math.floor(result.scene.depthTravelMeters / 100);
+      if (newHecto > lastHectometerRef.current) {
+        void playSfx("depth-mark");
+        lastHectometerRef.current = newHecto;
+      }
 
       playerRef.current = result.scene.player;
       anomaliesRef.current = result.scene.anomalies;
