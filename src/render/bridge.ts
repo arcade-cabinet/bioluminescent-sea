@@ -292,6 +292,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
       parallax.draw({
         particles,
         heightPx: v.heightPx,
+        widthPx: v.widthPx,
         depthMeters: root?.depthTravelMeters ?? 0,
         pxPerMeter: camera.pxPerMeter,
       });
