@@ -54,6 +54,10 @@ export interface FxController {
      *  readiness so the player can see when the safety net is
      *  armed. */
     adrenalineReadiness: number;
+    /** 0..1 oxygen ratio. Drives a deep-red critical vignette
+     *  that scales in intensity as oxygen approaches 0. Hidden
+     *  above 0.18 so calm play stays uncluttered. */
+    oxygenRatio: number;
   }): void;
   destroy(): void;
 }
@@ -72,6 +76,7 @@ export function mountFx(parent: Container): FxController {
   const flankArcs = new Graphics();
   const leviathanVignette = new Graphics();
   const adrenalineVignette = new Graphics();
+  const oxygenCriticalVignette = new Graphics();
   const threatFlash = new Graphics();
   parent.addChild(
     sonar,
@@ -81,6 +86,7 @@ export function mountFx(parent: Container): FxController {
     flankArcs,
     leviathanVignette,
     adrenalineVignette,
+    oxygenCriticalVignette,
     threatFlash,
   );
 
@@ -91,7 +97,7 @@ export function mountFx(parent: Container): FxController {
   let lastSeenImpact: { x: number; y: number } | null = null;
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio }) {
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -376,6 +382,38 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Oxygen-critical vignette — deep-red screen edges that
+      // intensify as oxygen approaches 0. Hidden above 0.18 so
+      // calm play stays uncluttered. Pulse rate accelerates with
+      // urgency: 1.5 Hz at the boundary, 4 Hz at zero. Combined
+      // with the existing low-oxygen HUD label and oxygen-warn
+      // SFX, the player gets a complete "you are running out" cue
+      // at three independent layers (HUD text, audio chirp, full-
+      // screen vignette).
+      oxygenCriticalVignette.clear();
+      if (oxygenRatio < 0.18) {
+        // Severity ramps from 0 at ratio=0.18 to 1 at ratio=0.
+        const severity = 1 - oxygenRatio / 0.18;
+        const pulseHz = 1.5 + severity * 2.5;
+        const pulse = 0.6 + 0.4 * (0.5 + 0.5 * Math.sin(totalTime * pulseHz * Math.PI * 2));
+        const baseAlpha = severity * 0.55 * pulse;
+        const w = viewport.widthPx;
+        const h = viewport.heightPx;
+        const bandW = w * 0.22;
+        const bandH = h * 0.26;
+        const bandSteps = 4;
+        for (let i = 0; i < bandSteps; i++) {
+          const t = (i + 1) / bandSteps;
+          const a = baseAlpha * (1 - t * t);
+          const inset = t * bandW;
+          const insetH = t * bandH;
+          oxygenCriticalVignette.rect(0, 0, w, insetH).fill({ color: 0xff3a2a, alpha: a });
+          oxygenCriticalVignette.rect(0, h - insetH, w, insetH).fill({ color: 0xff3a2a, alpha: a });
+          oxygenCriticalVignette.rect(0, 0, inset, h).fill({ color: 0xff3a2a, alpha: a });
+          oxygenCriticalVignette.rect(w - inset, 0, inset, h).fill({ color: 0xff3a2a, alpha: a });
+        }
+      }
+
       threatFlash.clear();
       if (threatFlashAlpha > 0) {
         threatFlash.rect(0, 0, viewport.widthPx, viewport.heightPx).fill({
@@ -392,6 +430,7 @@ export function mountFx(parent: Container): FxController {
       flankArcs.destroy();
       leviathanVignette.destroy();
       adrenalineVignette.destroy();
+      oxygenCriticalVignette.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;
     },

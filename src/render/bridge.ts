@@ -106,6 +106,13 @@ export interface RenderFrameInput {
    * readiness so the player can see when the safety net is armed.
    */
   adrenalineReadiness?: number;
+  /**
+   * 0..1 oxygen ratio. The FX layer reads this to intensify a
+   * critical-low vignette: deep-red screen edges pulse harder as
+   * the player approaches 0. Visible only below 0.18 so calm
+   * play doesn't drown in red.
+   */
+  oxygenRatio?: number;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -175,7 +182,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -303,6 +310,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         flankBroadcasts: flankBroadcasts ?? [],
         adrenalineActive: adrenalineActive ?? false,
         adrenalineReadiness: adrenalineReadiness ?? 0,
+        oxygenRatio: oxygenRatio ?? 1,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha
