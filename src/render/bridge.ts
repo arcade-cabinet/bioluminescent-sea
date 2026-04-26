@@ -131,6 +131,12 @@ export interface RenderFrameInput {
    * caller (DiveScreen) — the FX layer just consumes the trigger.
    */
   biomeTransitionTriggered?: boolean;
+  /**
+   * Score popups *this frame*. Each entry seeds a "+N" text that
+   * floats up and fades. The FX layer pools Text instances since
+   * Text is heavyweight to instantiate per-frame.
+   */
+  scorePopups?: readonly { x: number; y: number; amount: number }[];
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -200,7 +206,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, scorePopups }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -333,6 +339,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         anomalyPickups: anomalyPickups ?? [],
         biomeTransitionTriggered: biomeTransitionTriggered ?? false,
         biomeTintHex,
+        scorePopups: scorePopups ?? [],
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

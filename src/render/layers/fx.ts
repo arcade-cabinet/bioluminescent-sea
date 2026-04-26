@@ -1,4 +1,4 @@
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
 import type { Player } from "@/sim/entities/types";
 
 /**
@@ -74,6 +74,10 @@ export interface FxController {
     /** Hex tint of the *current* biome. Used as the cinematic
      *  sweep color when biomeTransitionTriggered is true. */
     biomeTintHex: string | undefined;
+    /** Score popups *this frame* — one per creature collected. The
+     *  FX layer pools Text objects and animates each "+N" upward
+     *  ~32 px while fading. */
+    scorePopups: readonly { x: number; y: number; amount: number }[];
   }): void;
   destroy(): void;
 }
@@ -95,6 +99,7 @@ export function mountFx(parent: Container): FxController {
   const oxygenCriticalVignette = new Graphics();
   const pickupRings = new Graphics();
   const biomeSweep = new Graphics();
+  const scorePopupHost = new Container();
   const threatFlash = new Graphics();
   parent.addChild(
     sonar,
@@ -107,6 +112,7 @@ export function mountFx(parent: Container): FxController {
     oxygenCriticalVignette,
     pickupRings,
     biomeSweep,
+    scorePopupHost,
     threatFlash,
   );
 
@@ -146,8 +152,47 @@ export function mountFx(parent: Container): FxController {
   let lastAdrenalineActive = false;
   let adrenalineTriggerAt: number | null = null;
 
+  /** Score popups — pooled Text nodes float "+N" up from collection
+   *  sites and fade out over 0.8 s. Pool reuses Text instances since
+   *  Text is heavyweight to instantiate per-frame. */
+  interface ActiveScorePopup {
+    text: Text;
+    startedAt: number;
+    x: number;
+    y: number;
+  }
+  const popupPool: Text[] = [];
+  const activePopups: ActiveScorePopup[] = [];
+  const acquirePopupText = (): Text => {
+    const recycled = popupPool.pop();
+    if (recycled) return recycled;
+    return new Text({
+      text: "",
+      style: {
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: 18,
+        fontWeight: "600",
+        fill: 0x6be6c1,
+        stroke: { color: 0x05060f, width: 2 },
+        align: "center",
+      },
+    });
+  };
+  const releasePopupText = (t: Text) => {
+    if (t.parent) t.parent.removeChild(t);
+    popupPool.push(t);
+  };
+
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups }) {
+      // Ingest new score popups, acquire pooled Text nodes.
+      for (const sp of scorePopups) {
+        const t = acquirePopupText();
+        t.text = sp.amount >= 1000 ? `+${(sp.amount / 1000).toFixed(1)}k` : `+${sp.amount}`;
+        t.anchor.set(0.5, 0.5);
+        scorePopupHost.addChild(t);
+        activePopups.push({ text: t, startedAt: totalTime, x: sp.x, y: sp.y });
+      }
       // Ingest fresh pickups onto the active list.
       for (const p of anomalyPickups) {
         activePickups.push({
@@ -411,6 +456,23 @@ export function mountFx(parent: Container): FxController {
         });
       }
 
+      // Score popups — float "+N" up from collection sites, fade
+      // over 0.8s. Iterates back-to-front so splice is safe.
+      for (let i = activePopups.length - 1; i >= 0; i--) {
+        const p = activePopups[i];
+        const age = totalTime - p.startedAt;
+        const t = age / 0.8;
+        if (t >= 1) {
+          releasePopupText(p.text);
+          activePopups.splice(i, 1);
+          continue;
+        }
+        const eased = 1 - Math.pow(1 - t, 2);
+        p.text.position.set(p.x, p.y - eased * 32);
+        p.text.alpha = Math.pow(1 - t, 1.5);
+        p.text.scale.set(0.9 + eased * 0.2);
+      }
+
       // Pack-flank convergence arcs — when a predator broadcasts an
       // engage, draw a brief warm-orange line from the engager to
       // each packmate it called. The arc fades over `lifetime` so
@@ -619,6 +681,11 @@ export function mountFx(parent: Container): FxController {
       activeBiomeSweep = null;
       adrenalineTriggerAt = null;
       lastAdrenalineActive = false;
+      for (const p of activePopups) p.text.destroy();
+      for (const t of popupPool) t.destroy();
+      activePopups.length = 0;
+      popupPool.length = 0;
+      scorePopupHost.destroy();
     },
   };
 }
