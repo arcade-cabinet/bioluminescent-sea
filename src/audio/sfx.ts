@@ -36,7 +36,12 @@ function ensureSynths(): void {
   }).toDestination();
 }
 
-export async function playSfx(event: SfxEvent): Promise<void> {
+export interface PlaySfxOptions {
+  /** Chain multiplier for chain-aware events (collect). Defaults to 1. */
+  multiplier?: number;
+}
+
+export async function playSfx(event: SfxEvent, options: PlaySfxOptions = {}): Promise<void> {
   if (isMuted()) return;
   if (Tone.getContext().state !== "running") {
     await Tone.start();
@@ -46,12 +51,23 @@ export async function playSfx(event: SfxEvent): Promise<void> {
 
   const now = Tone.now();
   switch (event) {
-    case "collect":
-      // Three-note mint chime ascending a perfect fourth.
+    case "collect": {
+      // Three-note mint chime ascending a perfect fourth, plus an
+      // optional fourth note climbing with the chain multiplier so
+      // long combos audibly stack. The base 3 notes always play
+      // identically; only the tail varies, so first-time players
+      // hear the canonical chime while veterans get a richer one.
       synth.triggerAttackRelease("E5", "16n", now);
       synth.triggerAttackRelease("A5", "16n", now + 0.08);
       synth.triggerAttackRelease("B5", "16n", now + 0.16);
+      const m = Math.max(1, options.multiplier ?? 1);
+      const tailNote =
+        m >= 5 ? "E6" : m >= 4 ? "D6" : m >= 3 ? "C#6" : m >= 2 ? "C6" : null;
+      if (tailNote) {
+        synth.triggerAttackRelease(tailNote, "16n", now + 0.24);
+      }
       break;
+    }
     case "impact":
       // Low thud + dissonant partial.
       pling.triggerAttackRelease("C2", "8n", now);

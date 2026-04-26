@@ -521,7 +521,7 @@ export function DiveScreen({
       }
 
       if (result.collection.collected.length > 0) {
-        void playSfx("collect");
+        void playSfx("collect", { multiplier: result.collection.multiplier });
         collectionBurstsRef.current.push(
           ...result.collection.collected.map((creature) => ({
             color: creature.glowColor,
