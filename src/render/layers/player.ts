@@ -62,6 +62,24 @@ export function mountPlayer(parent: Container): PlayerController {
       trailPositions.unshift({ x: player.x, y: player.y, time: totalTime });
       if (trailPositions.length > 25) trailPositions.pop();
 
+      // Estimate current speed (px/s) from the last two samples so the
+      // trail thickens when the sub is moving fast (overdrive, hard
+      // descent) and thins when hovering. Read at index 0 vs 1 — these
+      // are sequential frames.
+      let speedPxPerSec = 0;
+      if (trailPositions.length > 1) {
+        const cur = trailPositions[0];
+        const prev = trailPositions[1];
+        const dist = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+        const dt = Math.max(0.001, cur.time - prev.time);
+        speedPxPerSec = dist / dt;
+      }
+      // Map 0..600 px/s → 0..1 boost. Hover ≈ 0, normal sub ≈ 0.4-0.5,
+      // overdrive ≈ 0.9+. Width ramps from 4 → 7, alpha 0.35 → 0.55.
+      const speedBoost = Math.min(1, speedPxPerSec / 600);
+      const trailWidth = (4 + speedBoost * 3) * s;
+      const trailAlphaScale = 0.35 + speedBoost * 0.2;
+
       trail.clear();
       if (trailPositions.length > 1) {
         trail.moveTo(trailPositions[0].x, trailPositions[0].y);
@@ -71,7 +89,7 @@ export function mountPlayer(parent: Container): PlayerController {
           const alpha = Math.max(0, 1 - age * 1.5);
           if (alpha > 0) {
              trail.lineTo(pt.x, pt.y);
-             trail.stroke({ color: 0x6be6c1, alpha: alpha * 0.4, width: 4 * s });
+             trail.stroke({ color: 0x6be6c1, alpha: alpha * trailAlphaScale, width: trailWidth });
              trail.moveTo(pt.x, pt.y);
           }
         }
