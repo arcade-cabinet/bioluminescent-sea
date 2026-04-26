@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.31.0...v0.32.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** anomaly pickup rings — color-keyed confirmation pulse ([#178](https://github.com/arcade-cabinet/bioluminescent-sea/issues/178)) ([6dafe96](https://github.com/arcade-cabinet/bioluminescent-sea/commit/6dafe96e1432862684e73bc23b3a794913050894))
+* **bs:** chain milestone celebration burst ([#180](https://github.com/arcade-cabinet/bioluminescent-sea/issues/180)) ([0e3ad0e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0e3ad0eb386230c883ec40b2f3db67a33d54da71))
+
 ## [0.31.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.30.0...v0.31.0) (2026-04-26)
 
 
