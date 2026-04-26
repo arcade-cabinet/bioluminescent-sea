@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.42.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.41.0...v0.42.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** beacon chevron heats up as player closes in ([#210](https://github.com/arcade-cabinet/bioluminescent-sea/issues/210)) ([a9d931f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a9d931f0ea5d5144eb8a1c7f4ac74f59d0fe9399))
+* **bs:** beacon-direction chevron orbiting the player ([#208](https://github.com/arcade-cabinet/bioluminescent-sea/issues/208)) ([080cd11](https://github.com/arcade-cabinet/bioluminescent-sea/commit/080cd11195414704a3a942ff5f88a49d7878cc83))
+
 ## [0.41.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.40.0...v0.41.0) (2026-04-26)
 
 
