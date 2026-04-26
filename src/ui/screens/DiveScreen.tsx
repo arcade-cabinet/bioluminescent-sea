@@ -161,6 +161,10 @@ export function DiveScreen({
   const collectionBurstsRef = useRef<CollectionBurst[]>([]);
   const lastCollectTimeRef = useRef(initialSnapshot?.lastCollectTime ?? 0);
   const multiplierRef = useRef(initialSnapshot?.multiplier ?? 1);
+  /** Highest chain-milestone tier celebrated in the current streak.
+   *  Resets to 0 whenever the chain breaks back to 1 so the same
+   *  streak doesn't double-celebrate the same tier. */
+  const celebratedMilestoneTierRef = useRef(0);
   const scoreRef = useRef(initialSnapshot?.score ?? 0);
   const elapsedOffsetRef = useRef(durationSeconds - (initialSnapshot?.timeLeft ?? durationSeconds));
   // Initialize to 0 (dive start) rather than -Infinity so the first
@@ -537,6 +541,26 @@ export function DiveScreen({
         scoreRef.current += result.collection.scoreDelta;
         setMultiplier(result.collection.multiplier);
         setScore(scoreRef.current);
+
+        // Chain-milestone celebration: when the chain crosses a tier
+        // (×3, ×5, ×7+), inject a single extra-large mint burst at
+        // the player position. Tier resets when the chain falls back
+        // to ×1 so the next streak can re-celebrate.
+        const m = result.collection.multiplier;
+        const tier = m >= 7 ? 3 : m >= 5 ? 2 : m >= 3 ? 1 : 0;
+        if (m <= 1) {
+          celebratedMilestoneTierRef.current = 0;
+        } else if (tier > celebratedMilestoneTierRef.current) {
+          collectionBurstsRef.current.push({
+            color: "#6be6c1",
+            id: `chain-${tier}-${Math.round(effectiveTotalTime * 1000)}`,
+            size: 80 + tier * 20,
+            startedAt: effectiveTotalTime,
+            x: playerRef.current.x,
+            y: playerRef.current.y,
+          });
+          celebratedMilestoneTierRef.current = tier;
+        }
 
         // Combined bonus = creature collection (multiplier-aware,
         // tuning-scaled) + breath anomaly pickups (raw +30s each).
