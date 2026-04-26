@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.35.0...v0.36.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** buff cooldown arcs around the player ([#192](https://github.com/arcade-cabinet/bioluminescent-sea/issues/192)) ([a8d8264](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a8d82648ecdf25f0ee509f21727b943330e31593))
+* **bs:** speed-reactive trail thickness + alpha ([#190](https://github.com/arcade-cabinet/bioluminescent-sea/issues/190)) ([f9d4511](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f9d4511e50fc3da41483058dfe5af839532b73f8))
+
 ## [0.35.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.34.0...v0.35.0) (2026-04-26)
 
 
