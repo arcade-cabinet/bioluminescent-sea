@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.36.0...v0.37.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** idle bob on stationary player ([#193](https://github.com/arcade-cabinet/bioluminescent-sea/issues/193)) ([705d526](https://github.com/arcade-cabinet/bioluminescent-sea/commit/705d526690126600463e27e126acc8582d84ec5d))
+* **bs:** predator loot drops pulse extra-bright for 3 s ([#195](https://github.com/arcade-cabinet/bioluminescent-sea/issues/195)) ([f418199](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f41819966a316402c844a771c2b4b854565be1a4))
+
 ## [0.36.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.35.0...v0.36.0) (2026-04-26)
 
 
