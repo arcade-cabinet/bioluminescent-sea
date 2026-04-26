@@ -11,6 +11,11 @@ export interface StatTileProps {
    *  GameOverScreen so post-dive stats arrive with a satisfying tick
    *  rather than slamming on screen. */
   countUp?: boolean;
+  /** When true, renders a small "NEW BEST" badge above the value
+   *  with a creamy-yellow glow. Used by the post-dive screen to
+   *  celebrate categories where the player's lifetime peak just
+   *  improved. */
+  newBest?: boolean;
   className?: string;
 }
 
@@ -51,7 +56,7 @@ function useCountUp(target: number, enabled: boolean): number {
  * the brand identity says HUD/summary readouts read as "ink on a
  * chart," not "values in cells."
  */
-export function StatTile({ label, value, accent, countUp, className }: StatTileProps) {
+export function StatTile({ label, value, accent, countUp, newBest, className }: StatTileProps) {
   const numericTarget = typeof value === "number" && Number.isFinite(value) ? value : Number.NaN;
   const isNumeric = !Number.isNaN(numericTarget);
   const counted = useCountUp(isNumeric ? numericTarget : 0, !!countUp && isNumeric);
@@ -63,6 +68,20 @@ export function StatTile({ label, value, accent, countUp, className }: StatTileP
         className,
       )}
     >
+      {newBest && (
+        <span
+          data-testid="stat-tile-new-best"
+          className="bs-label text-[0.55rem] font-semibold tracking-[0.18em]"
+          style={{
+            color: "#fef9c3",
+            filter: "url(#bs-warm-glow)",
+            textShadow:
+              "0 0 10px rgba(254,249,195,0.7), 0 0 22px rgba(253,230,138,0.35)",
+          }}
+        >
+          NEW BEST
+        </span>
+      )}
       <span
         className="bs-label text-[0.6rem] text-fg-muted"
         style={{ filter: "url(#bs-soft-glow)" }}
@@ -75,10 +94,17 @@ export function StatTile({ label, value, accent, countUp, className }: StatTileP
           accent ? "text-glow" : "text-fg",
         )}
         style={{
-          filter: accent ? "url(#bs-soft-glow)" : undefined,
-          textShadow: accent
-            ? "0 0 14px rgba(107,230,193,0.45), 0 0 28px rgba(107,230,193,0.18)"
-            : "0 0 10px rgba(2,6,17,0.85), 0 1px 0 rgba(2,6,17,0.5)",
+          filter: newBest
+            ? "url(#bs-warm-glow)"
+            : accent
+              ? "url(#bs-soft-glow)"
+              : undefined,
+          textShadow: newBest
+            ? "0 0 16px rgba(254,249,195,0.55), 0 0 32px rgba(253,230,138,0.28)"
+            : accent
+              ? "0 0 14px rgba(107,230,193,0.45), 0 0 28px rgba(107,230,193,0.18)"
+              : "0 0 10px rgba(2,6,17,0.85), 0 1px 0 rgba(2,6,17,0.5)",
+          color: newBest ? "#fef9c3" : undefined,
         }}
       >
         {renderedValue}
