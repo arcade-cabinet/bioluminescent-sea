@@ -9,6 +9,7 @@ import { createObjectiveQueue } from "@/sim/factories/dive";
 import { normalizeSessionMode } from "@/sim/_shared/sessionMode";
 import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { advanceObjectiveQueue, tallyBeaconCharted } from "./objective";
+import { advanceRunStats, ensureRunStats } from "./runStats";
 import {
   collectAnomalies,
   collectCreatures,
@@ -394,9 +395,26 @@ export function advanceScene(
     }
   }
 
+  // Cumulative run stats — fold the frame's edge events into the
+  // previous tally. Adrenaline rising-edge is detected via comparing
+  // the previous and current `activeAdrenaline` window state.
+  const adrenalineWasActive = (player.activeBuffs.adrenalineUntil ?? 0) > totalTime - deltaTime;
+  const adrenalineNowActive = activeAdrenaline > totalTime;
+  const adrenalineRisingEdge = adrenalineNowActive && !adrenalineWasActive;
+  const previousStats = ensureRunStats(scene.runStats);
+  const nextRunStats = advanceRunStats(previousStats, {
+    predatorKillsThisFrame: justKilled.size,
+    anomalyPickupsThisFrame: anomalyCollection.collected.length,
+    currentBiomeId: biomeAtDepth(Math.round(nextSceneBase.depthTravelMeters)).id,
+    currentMultiplier: collection.multiplier,
+    collidedThisFrame: isCollision,
+    adrenalineRisingEdge,
+  });
+
   const nextScene: SceneState = {
     ...nextSceneBase,
     objectiveQueue: nextObjectiveQueue,
+    runStats: nextRunStats,
   };
 
   // Strike-burst feedback: if any predator is mid-strike inside a
