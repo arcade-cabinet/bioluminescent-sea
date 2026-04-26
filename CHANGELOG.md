@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.41.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.40.0...v0.41.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** oxygen heartbeat tick under 18% oxygen ([#207](https://github.com/arcade-cabinet/bioluminescent-sea/issues/207)) ([0f144cb](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0f144cb4fd0d2f8afd1b5917c6fde15347da8f8a))
+* **bs:** pirate alert SFX on pursuit lock-on ([#205](https://github.com/arcade-cabinet/bioluminescent-sea/issues/205)) ([831f6e7](https://github.com/arcade-cabinet/bioluminescent-sea/commit/831f6e7ca92eed14af5391b2cfa2fc7273e57248))
+
 ## [0.40.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.39.0...v0.40.0) (2026-04-26)
 
 
