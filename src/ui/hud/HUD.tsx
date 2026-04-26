@@ -1,6 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { isMuted, onMuteChange, toggleMuted } from "@/audio";
+import {
+  isHapticsMuted,
+  onHapticsMuteChange,
+  toggleHapticsMuted,
+} from "@/platform";
 import { EmbossFilters } from "@/ui/primitives";
 
 interface HUDProps {
@@ -347,6 +352,7 @@ export function HUD({
       </AnimatePresence>
 
       <MuteButton />
+      <HapticsButton />
     </>
   );
 }
@@ -416,6 +422,38 @@ function MuteButton() {
       }}
     >
       {muted ? "🔇" : "🔊"}
+    </button>
+  );
+}
+
+function HapticsButton() {
+  const [hMuted, setHMuted] = useState<boolean>(() => isHapticsMuted());
+  useEffect(() => onHapticsMuteChange(setHMuted), []);
+  return (
+    <button
+      type="button"
+      aria-label={hMuted ? "Enable haptics" : "Disable haptics"}
+      onClick={() => setHMuted(toggleHapticsMuted())}
+      style={{
+        position: "absolute",
+        bottom: "max(env(safe-area-inset-bottom), 1rem)",
+        left: "3.25rem",
+        width: 36,
+        height: 36,
+        background: "transparent",
+        border: "none",
+        color: hMuted ? "var(--color-fg-muted)" : "var(--color-glow)",
+        fontSize: "1rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "auto",
+        zIndex: 10,
+        cursor: "pointer",
+        filter: "url(#bs-soft-glow)",
+      }}
+    >
+      {hMuted ? "📳" : "📲"}
     </button>
   );
 }
