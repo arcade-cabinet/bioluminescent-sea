@@ -732,6 +732,7 @@ export function DiveScreen({
         biomeTransitionTriggered,
         scorePopups: framePopups,
         beaconBearingRadians: result.telemetry.beaconBearingRadians,
+        beaconDistance: result.telemetry.nearestBeaconDistance,
       });
     },
     [
