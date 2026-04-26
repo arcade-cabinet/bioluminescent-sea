@@ -7,6 +7,10 @@ interface HUDProps {
   score: number;
   timeLeft: number;
   multiplier: number;
+  /** True when the chain has > 1 multiplier AND less than 1.2 s
+   *  remains in its decay window. The Chain readout flashes warn-
+   *  tone so the player can chase the next collection. */
+  chainExpiringSoon?: boolean;
   depthMeters: number;
   beacons: number;
   oxygenRatio: number;
@@ -111,6 +115,7 @@ export function HUD({
   score,
   timeLeft,
   multiplier,
+  chainExpiringSoon,
   depthMeters,
   beacons,
   oxygenRatio,
@@ -162,7 +167,13 @@ export function HUD({
           tone={lowOxygen ? "warn" : "glow"}
           testId="oxygen"
         />
-        <StatCell label="Chain" value={`×${multiplier}`} testId="chain" />
+        <StatCell
+          label="Chain"
+          value={`×${multiplier}`}
+          testId="chain"
+          flashOnChange
+          tone={chainExpiringSoon ? "warn" : undefined}
+        />
         <StatCell label="Depth" value={`${depthMeters}m`} tone="muted" testId="depth" />
         <StatCell label="Charted" value={`${beacons}%`} tone="muted" testId="charted" />
       </div>
