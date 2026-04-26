@@ -32,6 +32,7 @@ import {
   type DiveWorld,
 } from "@/ecs";
 import { createRenderBridge, type RenderBridge } from "@/render";
+import { CREATURE_POINTS } from "@/sim/entities/types";
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 import { CompactPrimary } from "@/ui/hud/CompactPrimary";
 import { HUD } from "@/ui/hud/HUD";
@@ -404,6 +405,7 @@ export function DiveScreen({
       // totalTime stays untouched so the oxygen budget isn't gamed.
       const deltaTime = adrenalineActiveRef.current ? rawDeltaTime * 0.7 : rawDeltaTime;
       const effectiveTotalTime = elapsedOffsetRef.current + totalTime;
+      const framePopups: { x: number; y: number; amount: number }[] = [];
       // ?devFastDive=N scales how fast the oxygen budget burns. Production
       // is always 1; the Playwright oxygen-depletion spec passes ?devFastDive=80
       // so a 600s budget collapses in seconds. Entity sim continues at real
@@ -540,6 +542,13 @@ export function DiveScreen({
             y: creature.y,
           })),
         );
+        for (const creature of result.collection.collected) {
+          framePopups.push({
+            x: creature.x,
+            y: creature.y - creature.size,
+            amount: CREATURE_POINTS[creature.type] * result.collection.multiplier,
+          });
+        }
         multiplierRef.current = result.collection.multiplier;
         lastCollectTimeRef.current = result.collection.lastCollectTime;
         scoreRef.current += result.collection.scoreDelta;
@@ -695,6 +704,7 @@ export function DiveScreen({
         oxygenRatio: result.telemetry.oxygenRatio,
         anomalyPickups: result.anomalyPickups,
         biomeTransitionTriggered,
+        scorePopups: framePopups,
       });
     },
     [
