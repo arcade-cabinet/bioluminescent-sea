@@ -26,8 +26,91 @@ import { CompletionBackdrop } from "./CompletionBackdrop";
 import { DiveScreen } from "./DiveScreen";
 import { LandingScreen } from "./LandingScreen";
 import { SeedPickerOverlay } from "./SeedPickerOverlay";
+import type { StatTileProps } from "@/ui/primitives";
 
 type GameState = "landing" | "drydock" | "playing" | "gameover" | "complete";
+
+const BIOME_LABELS: Record<string, string> = {
+  "photic-gate": "Photic Gate",
+  "twilight-shelf": "Twilight Shelf",
+  "midnight-column": "Midnight Column",
+  "abyssal-trench": "Abyssal Trench",
+  "stygian-abyss": "Stygian Abyss",
+};
+
+/**
+ * Compose the post-dive stat tiles. The `kind` selects mode-specific
+ * tiles (gameover shows depth; complete shows oxygen banked) and
+ * appends optional run-stats when present (predators-killed,
+ * max-chain, biomes-traversed, hits-taken, adrenaline-saves).
+ *
+ * Stats are appended only when non-trivial — a dive with zero
+ * predators killed and chain × 1 doesn't clutter the screen with
+ * bragging rights it didn't earn.
+ */
+function buildGameOverStats(
+  finalScore: number,
+  bestScore: number,
+  summary: DiveRunSummary,
+  kind: "gameover" | "complete",
+): StatTileProps[] {
+  const tiles: StatTileProps[] = [
+    { label: "Score", value: finalScore, countUp: true },
+    { label: "Best", value: bestScore, countUp: true },
+  ];
+
+  if (kind === "gameover") {
+    tiles.push({ label: "Depth", value: `${summary.depthMeters}m` });
+  } else {
+    tiles.push({ label: "Oxygen banked", value: `${summary.timeLeft}s` });
+  }
+
+  const stats = summary.stats;
+  if (stats) {
+    if (stats.predatorsKilled > 0) {
+      tiles.push({
+        label: "Predators broken",
+        value: stats.predatorsKilled,
+        countUp: true,
+      });
+    }
+    if (stats.maxChain >= 3) {
+      tiles.push({ label: "Peak chain", value: `×${stats.maxChain}` });
+    }
+    if (stats.biomesTraversed.length >= 2) {
+      tiles.push({
+        label: "Biomes",
+        value: stats.biomesTraversed
+          .map((id) => BIOME_LABELS[id] ?? id)
+          .join(" → "),
+      });
+    }
+    if (stats.adrenalineTriggers > 0) {
+      tiles.push({
+        label: "Adrenaline saves",
+        value: stats.adrenalineTriggers,
+        countUp: true,
+      });
+    }
+    if (stats.impactsTaken > 0) {
+      tiles.push({
+        label: "Hits taken",
+        value: stats.impactsTaken,
+        countUp: true,
+      });
+    }
+    if (stats.buffsCollected > 0) {
+      tiles.push({
+        label: "Buffs",
+        value: stats.buffsCollected,
+        countUp: true,
+      });
+    }
+  }
+
+  tiles.push({ label: "Lux earned", value: `+${finalScore}`, accent: true });
+  return tiles;
+}
 
 export interface GameProps {
   /**
@@ -218,12 +301,7 @@ export default function Game(props: GameProps = {}) {
                   ? "The trench remains. Follow beacon chains before oxygen or predators close in."
                   : "Surface for a breath, then chart a new route."
               }
-              stats={[
-                { label: "Score", value: finalScore, countUp: true },
-                { label: "Best", value: bestScore, countUp: true },
-                { label: "Depth", value: `${displaySummary.depthMeters}m` },
-                { label: "Lux earned", value: `+${finalScore}`, accent: true },
-              ]}
+              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "gameover")}
             >
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock
@@ -246,12 +324,7 @@ export default function Game(props: GameProps = {}) {
             <GameOverScreen
               title={completionCelebration.title}
               subtitle={`${completionCelebration.message} ${completionCelebration.replayPrompt}`}
-              stats={[
-                { label: "Score", value: finalScore, countUp: true },
-                { label: "Best", value: bestScore, countUp: true },
-                { label: "Oxygen banked", value: `${displaySummary.timeLeft}s` },
-                { label: "Lux earned", value: `+${finalScore}`, accent: true },
-              ]}
+              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "complete")}
             >
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock

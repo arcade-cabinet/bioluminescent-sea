@@ -88,6 +88,7 @@ export function getDiveRunSummary(
     score,
     timeLeft,
     totalBeacons: TOTAL_BEACONS,
+    stats: scene.runStats,
   };
 }
 

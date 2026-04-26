@@ -19,6 +19,33 @@ export interface DiveInput {
   isActive: boolean;
 }
 
+/**
+ * Cumulative run statistics tracked across the dive. Accumulated by
+ * `advanceDiveStats` once per frame from edge events on
+ * SceneAdvanceResult. Surfaced on the run summary so the post-dive
+ * screen can celebrate the *full* run, not just score + depth.
+ *
+ * All fields are simple scalars / sets of strings so the value is
+ * snapshot-friendly and trivially serializable.
+ */
+export interface DiveRunStats {
+  /** Predators killed by lamp pressure across the dive. */
+  predatorsKilled: number;
+  /** Anomaly buffs collected (any type). */
+  buffsCollected: number;
+  /** Biome IDs the player has descended through (deduped). Reads as
+   *  "you traversed N biomes" in the summary. */
+  biomesTraversed: string[];
+  /** Peak chain multiplier reached during the dive. Starts at 1. */
+  maxChain: number;
+  /** Impacts taken (predator/pirate collision, NOT counting strike-near
+   *  graces). Drives a "you took N hits" stat. */
+  impactsTaken: number;
+  /** Adrenaline auto-engage events — how many times the player was
+   *  saved from saturation. */
+  adrenalineTriggers: number;
+}
+
 export interface SceneState {
   anomalies: Anomaly[];
   creatures: Creature[];
@@ -26,6 +53,12 @@ export interface SceneState {
   pirates: Pirate[];
   player: Player;
   predators: Predator[];
+  /**
+   * Cumulative dive statistics. Optional so test fixtures and
+   * legacy snapshots can omit it; advance() defaults to zeros if
+   * absent and accumulates from there.
+   */
+  runStats?: DiveRunStats;
   /**
    * Cumulative descent in world-meters. Starts at 0 (surface) and grows
    * monotonically as the dive advances. This is the real depth — the
@@ -87,6 +120,11 @@ export interface DiveRunSummary {
   score: number;
   timeLeft: number;
   totalBeacons: number;
+  /**
+   * Cumulative dive statistics tallied during the run. Optional so
+   * legacy snapshots (saved before stats tracking) load cleanly.
+   */
+  stats?: DiveRunStats;
 }
 
 export interface DiveCompletionCelebration {
