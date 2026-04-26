@@ -139,6 +139,13 @@ export function mountFx(parent: Container): FxController {
    *  off-screen-top to off-screen-bottom over that window. */
   let activeBiomeSweep: { startedAt: number; color: number } | null = null;
 
+  /** Adrenaline rising-edge flash. When `adrenalineActive` flips
+   *  from false → true, seed a 0.5 s screen-wide cyan flash so the
+   *  trigger has a punch (the steady vignette alone doesn't sell
+   *  the moment). */
+  let lastAdrenalineActive = false;
+  let adrenalineTriggerAt: number | null = null;
+
   return {
     sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex }) {
       // Ingest fresh pickups onto the active list.
@@ -150,6 +157,13 @@ export function mountFx(parent: Container): FxController {
           startedAt: totalTime,
         });
       }
+
+      // Adrenaline rising edge — seed a screen-wide flash on the
+      // first frame the burst engages.
+      if (adrenalineActive && !lastAdrenalineActive) {
+        adrenalineTriggerAt = totalTime;
+      }
+      lastAdrenalineActive = adrenalineActive;
 
       // Ingest a fresh biome-sweep on the trigger frame. The
       // cinematic uses the *new* biome's tint so the player sees
@@ -492,6 +506,21 @@ export function mountFx(parent: Container): FxController {
           adrenalineVignette.rect(w - inset, 0, inset, h).fill({ color: 0x6be6c1, alpha: a });
         }
       }
+      // Trigger punch — full-screen cyan wash on the engage frame
+      // that decays over 0.5 s with a t² curve so the impact is
+      // sharp but doesn't linger past the moment.
+      if (adrenalineTriggerAt !== null) {
+        const age = totalTime - adrenalineTriggerAt;
+        if (age >= 0 && age < 0.5) {
+          const t = age / 0.5;
+          const punchAlpha = Math.pow(1 - t, 2) * 0.32;
+          adrenalineVignette
+            .rect(0, 0, viewport.widthPx, viewport.heightPx)
+            .fill({ color: 0x6be6c1, alpha: punchAlpha });
+        } else if (age >= 0.5) {
+          adrenalineTriggerAt = null;
+        }
+      }
 
       // Oxygen-critical vignette — deep-red screen edges that
       // intensify as oxygen approaches 0. Hidden above 0.18 so
@@ -588,6 +617,8 @@ export function mountFx(parent: Container): FxController {
       activeRipples.length = 0;
       activePickups.length = 0;
       activeBiomeSweep = null;
+      adrenalineTriggerAt = null;
+      lastAdrenalineActive = false;
     },
   };
 }
