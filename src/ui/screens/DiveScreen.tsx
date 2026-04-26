@@ -131,6 +131,10 @@ export function DiveScreen({
   const [score, setScore] = useState(initialSnapshot?.score ?? 0);
   const [timeLeft, setTimeLeft] = useState(initialSnapshot?.timeLeft ?? durationSeconds);
   const [multiplier, setMultiplier] = useState(initialSnapshot?.multiplier ?? 1);
+  /** True when chain >1 AND less than 1.2 s remains in the streak
+   *  window. Drives a warn-tinted pulse on the HUD chain readout
+   *  so the player knows to chase the next collection. */
+  const [chainExpiringSoon, setChainExpiringSoon] = useState(false);
   const [dimensions, setDimensions] = useState(initialDimensionsRef.current);
   const [isGameOver, setIsGameOver] = useState(false);
   const [oxygenPulse, setOxygenPulse] = useState<OxygenPulse | null>(null);
@@ -595,6 +599,15 @@ export function DiveScreen({
         return result.telemetry;
       });
 
+      // Chain-decay warning: STREAK_WINDOW_SECONDS is 3.5 s; once
+      // 2.3 s has passed without a fresh collection, flip on the
+      // expiring flag so the HUD chain readout pulses warn-tone.
+      // Only fires when chain > 1 — otherwise there's nothing to
+      // protect.
+      const chainGap = effectiveTotalTime - lastCollectTimeRef.current;
+      const expiringNow = multiplierRef.current > 1 && chainGap > 2.3 && chainGap < 3.5;
+      setChainExpiringSoon((prev) => (prev === expiringNow ? prev : expiringNow));
+
       ambientRef.current?.setBiome(result.telemetry.biomeId);
       ambientRef.current?.setDepthMeters(result.telemetry.depthMeters);
       ambientRef.current?.setThreatIntensity(result.threatIntensity);
@@ -810,6 +823,7 @@ export function DiveScreen({
             score={score}
             timeLeft={timeLeft}
             multiplier={multiplier}
+            chainExpiringSoon={chainExpiringSoon}
             oxygenRatio={telemetry.oxygenRatio}
           />
         }
@@ -818,6 +832,7 @@ export function DiveScreen({
             score={score}
             timeLeft={timeLeft}
             multiplier={multiplier}
+            chainExpiringSoon={chainExpiringSoon}
             depthMeters={telemetry.depthMeters}
             beacons={Math.round(telemetry.collectionRatio * 100)}
             oxygenRatio={telemetry.oxygenRatio}

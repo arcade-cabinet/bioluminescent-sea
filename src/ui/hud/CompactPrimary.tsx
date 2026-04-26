@@ -8,6 +8,9 @@ interface CompactPrimaryProps {
   timeLeft: number;
   /** Current chain multiplier. */
   multiplier: number;
+  /** True when chain > 1 AND ≤ 1.2 s remains in the streak window.
+   *  Drives a warn-tone pulse on the chain readout. */
+  chainExpiringSoon?: boolean;
   /** Oxygen 0..1 — drives the warn tint when low. */
   oxygenRatio: number;
 }
@@ -54,6 +57,7 @@ export function CompactPrimary({
   score,
   timeLeft,
   multiplier,
+  chainExpiringSoon,
   oxygenRatio,
 }: CompactPrimaryProps) {
   const oxygenLow = oxygenRatio < 0.25;
@@ -92,7 +96,28 @@ export function CompactPrimary({
       </div>
       <div style={cellStyle} data-testid="hud-compact-chain">
         <span style={labelStyle}>Chain</span>
-        <span style={valueStyle}>×{multiplier}</span>
+        <motion.span
+          key={`${multiplier}-${chainExpiringSoon ? "warn" : "ok"}`}
+          initial={{ scale: 1.18 }}
+          animate={
+            chainExpiringSoon
+              ? { scale: [1, 1.06, 1], color: "var(--color-warn)" }
+              : { scale: 1, color: valueStyle.color as string }
+          }
+          transition={
+            chainExpiringSoon
+              ? { duration: 0.55, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
+              : { duration: 0.35, ease: "easeOut" }
+          }
+          style={{
+            ...valueStyle,
+            display: "inline-block",
+            transformOrigin: "left center",
+            filter: chainExpiringSoon ? "url(#bs-warm-glow)" : undefined,
+          }}
+        >
+          ×{multiplier}
+        </motion.span>
       </div>
     </div>
   );
