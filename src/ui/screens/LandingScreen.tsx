@@ -165,13 +165,21 @@ function ModeCard({ meta, icon: Icon, onSelect, animationDelay }: ModeCardProps)
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay, duration: 0.55 }}
-      whileHover={{ y: -2 }}
+      whileHover={{
+        y: -3,
+        scale: 1.015,
+        backgroundImage: `radial-gradient(120% 90% at 50% 0%, ${meta.accentHex}38 0%, ${meta.accentHex}14 40%, transparent 75%)`,
+        boxShadow: `0 0 32px ${meta.accentHex}28 inset, 0 8px 24px ${meta.accentHex}10`,
+      }}
+      whileTap={{ scale: 0.985, transition: { duration: 0.08 } }}
       // Compact padding on shortest viewports so the card fits inside
       // a 390px-tall mobile-landscape window without pushing the
       // carousel chrome off-screen.
-      className="group relative h-full w-full bg-transparent p-3 text-left text-fg transition-all sm:p-5 lg:p-6"
+      className="group relative h-full w-full bg-transparent p-3 text-left text-fg transition-shadow sm:p-5 lg:p-6"
       style={{
         // Soft radial wash carries the mode's accent without a frame.
+        // whileHover intensifies the wash + adds an inset glow so
+        // the card reads as "warming up" under the cursor.
         backgroundImage: `radial-gradient(120% 90% at 50% 0%, ${meta.accentHex}1c 0%, ${meta.accentHex}0a 40%, transparent 75%)`,
       }}
     >
