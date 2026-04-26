@@ -27,6 +27,10 @@ import {
   recordDive,
   ZERO_BESTS,
 } from "@/lib/personalBests";
+import {
+  type AchievementDef,
+  evaluateAchievements,
+} from "@/lib/achievements";
 import { CompletionBackdrop } from "./CompletionBackdrop";
 import { DiveScreen } from "./DiveScreen";
 import { LandingScreen } from "./LandingScreen";
@@ -127,6 +131,57 @@ function buildGameOverStats(
   return tiles;
 }
 
+/**
+ * Row of "Achievement Unlocked" toasts shown above the GameOver
+ * action buttons. Each toast staggers in 0.12 s after the previous
+ * so a multi-unlock dive (e.g. crossing several depth tiers in one
+ * descent) reads as a satisfying cascade rather than a wall of
+ * popups. Empty input renders nothing.
+ */
+function AchievementToasts({ achievements }: { achievements: AchievementDef[] }) {
+  if (achievements.length === 0) return null;
+  return (
+    <div
+      data-testid="gameover-achievement-row"
+      className="flex w-full max-w-2xl flex-col items-center gap-2"
+    >
+      {achievements.map((def, idx) => (
+        <motion.div
+          key={def.id}
+          initial={{ opacity: 0, y: 12, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.4 + idx * 0.12, duration: 0.5, ease: "easeOut" }}
+          className="flex flex-col items-center px-4 py-2"
+          style={{
+            color: "#fef9c3",
+            filter: "url(#bs-warm-glow)",
+            textShadow:
+              "0 0 12px rgba(254,249,195,0.55), 0 0 28px rgba(253,230,138,0.32)",
+          }}
+        >
+          <span
+            className="bs-label text-[0.6rem] font-semibold tracking-[0.22em]"
+          >
+            ACHIEVEMENT UNLOCKED
+          </span>
+          <span
+            className="bs-display text-lg font-medium leading-snug"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {def.title}
+          </span>
+          <span
+            className="text-xs italic text-fg/85"
+            style={{ fontFamily: "var(--font-body)", textShadow: "0 0 8px rgba(2,6,17,0.85)" }}
+          >
+            {def.description}
+          </span>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 export interface GameProps {
   /**
    * Test seam: a `PlayerInputProvider` (typically a `GoapInputProvider`)
@@ -197,15 +252,22 @@ export default function Game(props: GameProps = {}) {
   // post-dive screen.
   const [bests, setBests] = useState(() => ZERO_BESTS);
   const [improvements, setImprovements] = useState<BestImprovements>(NO_IMPROVEMENTS);
+  const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
   useEffect(() => {
     if ((gameState === "gameover" || gameState === "complete") && finalSummary) {
       const result = recordDive(finalSummary);
       setBests(result.bests);
       setImprovements(result.improvements);
+      const ach = evaluateAchievements({
+        postBests: result.bests,
+        summary: finalSummary,
+      });
+      setNewAchievements(ach.newlyUnlocked);
     } else if (gameState === "landing" || gameState === "drydock") {
-      // Reset improvements when leaving the post-dive screen so a
-      // re-entry to dive doesn't show stale "NEW BEST" badges.
+      // Reset transient celebration state when leaving the post-dive
+      // screen so a re-entry doesn't show stale badges/toasts.
       setImprovements(NO_IMPROVEMENTS);
+      setNewAchievements([]);
     }
   }, [gameState, finalSummary]);
   const bestScore = bests.score;
@@ -327,6 +389,7 @@ export default function Game(props: GameProps = {}) {
               }
               stats={buildGameOverStats(finalScore, bestScore, displaySummary, "gameover", improvements)}
             >
+              <AchievementToasts achievements={newAchievements} />
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock
               </Button>
@@ -350,6 +413,7 @@ export default function Game(props: GameProps = {}) {
               subtitle={`${completionCelebration.message} ${completionCelebration.replayPrompt}`}
               stats={buildGameOverStats(finalScore, bestScore, displaySummary, "complete", improvements)}
             >
+              <AchievementToasts achievements={newAchievements} />
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock
               </Button>

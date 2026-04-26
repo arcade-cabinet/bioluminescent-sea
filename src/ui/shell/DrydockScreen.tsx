@@ -3,6 +3,10 @@ import { Anchor, BatteryCharging, Lightbulb, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { getUpgradeCost, MAX_UPGRADE_LEVEL, type SubUpgrades } from "@/sim/meta/upgrades";
 import { getPersonalBests } from "@/lib/personalBests";
+import {
+  getAchievementProgress,
+  listAchievementsWithUnlockState,
+} from "@/lib/achievements";
 import { Button, EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
 
@@ -106,6 +110,8 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
             />
           ))}
         </div>
+
+        <AchievementsPanel />
 
         <div className="mt-4 flex justify-center">
           <Button variant="ghost" onClick={onBack} data-testid="drydock-back-button">
@@ -258,6 +264,86 @@ function LifetimeBand() {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Achievements browser. Reads the catalog + the player's persisted
+ * unlock set on mount; lists each achievement with locked/unlocked
+ * styling. Locked entries are dimmed but still readable so players
+ * can use the panel as a goal list, not just a trophy case.
+ *
+ * The header summarizes "Unlocked X / Y" so progression is glanceable
+ * without scanning the list. Hidden when zero achievements exist
+ * (defensive — currently the catalog is non-empty).
+ */
+function AchievementsPanel() {
+  const progress = getAchievementProgress();
+  if (progress.total === 0) return null;
+  const list = listAchievementsWithUnlockState();
+  return (
+    <section data-testid="drydock-achievements" className="flex flex-col gap-3">
+      <header className="flex items-baseline justify-between">
+        <h3
+          className="bs-display m-0 text-xl font-medium text-fg"
+          style={{
+            letterSpacing: "0.08em",
+            filter: "url(#bs-soft-glow)",
+            textShadow: "0 0 14px rgba(107,230,193,0.32)",
+          }}
+        >
+          Achievements
+        </h3>
+        <span
+          className="bs-numeral text-sm text-fg-muted"
+          style={{ filter: "url(#bs-soft-glow)" }}
+        >
+          {progress.unlocked} / {progress.total}
+        </span>
+      </header>
+      <ul className="flex flex-col gap-1">
+        {list.map(({ def, unlocked }) => (
+          <li
+            key={def.id}
+            data-testid={`achievement-row-${def.id}`}
+            data-unlocked={unlocked}
+            className="flex items-baseline gap-3 py-1"
+            style={{
+              opacity: unlocked ? 1 : 0.45,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="select-none text-base"
+              style={{
+                color: unlocked ? "#fef9c3" : "var(--color-fg-muted)",
+                filter: unlocked ? "url(#bs-warm-glow)" : undefined,
+                width: "1.2rem",
+              }}
+            >
+              {unlocked ? "★" : "☆"}
+            </span>
+            <div className="flex flex-col">
+              <span
+                className="text-sm font-medium"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  color: unlocked ? "var(--color-fg)" : "var(--color-fg-muted)",
+                }}
+              >
+                {def.title}
+              </span>
+              <span
+                className="text-xs italic text-fg-muted"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {def.description}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
