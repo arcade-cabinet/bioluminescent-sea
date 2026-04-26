@@ -58,6 +58,15 @@ export interface FxController {
      *  that scales in intensity as oxygen approaches 0. Hidden
      *  above 0.18 so calm play stays uncluttered. */
     oxygenRatio: number;
+    /** Anomaly pickups *this frame*. Each one seeds an expanding
+     *  pickup ring that lives for ~0.6s, color-keyed to the
+     *  anomaly type. The FX layer maintains its own age list so
+     *  the rings persist after the sim's edge event has cleared. */
+    anomalyPickups: readonly {
+      x: number;
+      y: number;
+      type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
+    }[];
   }): void;
   destroy(): void;
 }
@@ -77,6 +86,7 @@ export function mountFx(parent: Container): FxController {
   const leviathanVignette = new Graphics();
   const adrenalineVignette = new Graphics();
   const oxygenCriticalVignette = new Graphics();
+  const pickupRings = new Graphics();
   const threatFlash = new Graphics();
   parent.addChild(
     sonar,
@@ -87,6 +97,7 @@ export function mountFx(parent: Container): FxController {
     leviathanVignette,
     adrenalineVignette,
     oxygenCriticalVignette,
+    pickupRings,
     threatFlash,
   );
 
@@ -96,8 +107,35 @@ export function mountFx(parent: Container): FxController {
   const activeRipples: ActiveRipple[] = [];
   let lastSeenImpact: { x: number; y: number } | null = null;
 
+  /** Active pickup rings — one entry per anomaly collected. The
+   *  sim emits an edge event in `anomalyPickups`; the FX layer
+   *  copies it onto its own age list so the visual persists after
+   *  the sim event has cleared. */
+  const activePickups: {
+    x: number;
+    y: number;
+    color: number;
+    startedAt: number;
+  }[] = [];
+  const PICKUP_COLORS: Record<string, number> = {
+    repel: 0x7dd3fc,
+    overdrive: 0xfde68a,
+    lure: 0xa5f3fc,
+    "lamp-flare": 0xfde68a,
+    breath: 0x6be6c1,
+  };
+
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups }) {
+      // Ingest fresh pickups onto the active list.
+      for (const p of anomalyPickups) {
+        activePickups.push({
+          x: p.x,
+          y: p.y,
+          color: PICKUP_COLORS[p.type] ?? 0xa5f3fc,
+          startedAt: totalTime,
+        });
+      }
       // Ingest a new ripple on rising-edge of impactRippleAt. The
       // sim re-emits the same {x, y} for several frames during the
       // grace window, so we de-dupe on identity.
@@ -304,6 +342,34 @@ export function mountFx(parent: Container): FxController {
         }
       }
 
+      // Pickup-confirmation rings — one expanding ring per anomaly
+      // collected, color-keyed to type. Lifetime 0.6s with t² fade
+      // so the pop is decisive but doesn't linger across the
+      // following seconds. Two rings at offset radii so the pulse
+      // reads richer than a single stroke.
+      pickupRings.clear();
+      for (let i = activePickups.length - 1; i >= 0; i--) {
+        const p = activePickups[i];
+        const age = totalTime - p.startedAt;
+        const t = age / 0.6;
+        if (t < 0 || t >= 1) {
+          if (t >= 1) activePickups.splice(i, 1);
+          continue;
+        }
+        const baseR = 10 + t * 70;
+        const outerAlpha = Math.pow(1 - t, 2) * 0.85;
+        pickupRings.circle(p.x, p.y, baseR).stroke({
+          color: p.color,
+          alpha: outerAlpha,
+          width: 2.2 * (1 - t * 0.6),
+        });
+        pickupRings.circle(p.x, p.y, baseR * 0.65).stroke({
+          color: 0xfef9c3,
+          alpha: outerAlpha * 0.55,
+          width: 1.2 * (1 - t * 0.5),
+        });
+      }
+
       // Pack-flank convergence arcs — when a predator broadcasts an
       // engage, draw a brief warm-orange line from the engager to
       // each packmate it called. The arc fades over `lifetime` so
@@ -449,8 +515,10 @@ export function mountFx(parent: Container): FxController {
       leviathanVignette.destroy();
       adrenalineVignette.destroy();
       oxygenCriticalVignette.destroy();
+      pickupRings.destroy();
       threatFlash.destroy();
       activeRipples.length = 0;
+      activePickups.length = 0;
     },
   };
 }
