@@ -322,6 +322,26 @@ function syncPredators(
     g.rotation = p.angle + deathTilt;
     g.alpha = deathProg > 0 ? 1 - deathProg * deathProg : 1;
 
+    // State-telegraph ring: live predators (not dying) in stalk or
+    // charge get a radial ring around the body. Stalk = faint amber
+    // breath. Charge = red ring whose alpha + flicker scale with
+    // stateProgress so the windup is legible at a glance.
+    const aiState = p.aiState;
+    const stateProg = p.stateProgress ?? 0;
+    if (deathProg === 0 && (aiState === "charge" || aiState === "stalk")) {
+      const ringR = p.size * 1.4;
+      if (aiState === "charge") {
+        const flicker = 0.6 + 0.4 * Math.sin(totalTime * (10 + stateProg * 18));
+        const alpha = (0.25 + stateProg * 0.55) * flicker;
+        g.circle(0, 0, ringR + stateProg * p.size * 0.25);
+        g.stroke({ color: 0xff3a2a, alpha, width: 1.6 + stateProg * 1.2 });
+      } else {
+        const stalkPulse = 0.5 + 0.5 * Math.sin(totalTime * 2.4);
+        g.circle(0, 0, ringR);
+        g.stroke({ color: 0xfde68a, alpha: 0.18 * stalkPulse, width: 1 });
+      }
+    }
+
     // Marauder-sub: render as a sub silhouette (warm-red palette, grungy
     // plating). Detection by id prefix mirrors the AIManager wiring in
     // src/sim/ai/manager.ts — entity ids start with "marauder-sub-".
