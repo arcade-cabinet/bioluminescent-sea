@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.39.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.38.0...v0.39.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** adrenaline rising-edge trigger flash ([#201](https://github.com/arcade-cabinet/bioluminescent-sea/issues/201)) ([a24dce4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a24dce46d203c465d1e926e9a19e1fb1b58f1342))
+* **bs:** drydock Lux tally — floating ±N delta on change ([#199](https://github.com/arcade-cabinet/bioluminescent-sea/issues/199)) ([1c48f8e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/1c48f8ec57a66dca1146603dffe7f639e2c23f88))
+
 ## [0.38.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.37.0...v0.38.0) (2026-04-26)
 
 
