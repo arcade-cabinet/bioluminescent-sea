@@ -62,7 +62,7 @@ export function mountEntities(parent: Container): EntityController {
 
   return {
     sync({ anomalies: as, creatures: cs, predators: ps, pirates: ks, totalTime, camera }) {
-      syncAnomalies(anomalyHost, anomalies, as, camera);
+      syncAnomalies(anomalyHost, anomalies, as, camera, totalTime);
       syncCreatures(parent, creatures, cs, camera);
       syncPredatorWakes(parent, predatorWakes, predatorTrails, ps, totalTime);
       syncPredators(parent, predators, ps, totalTime);
@@ -90,7 +90,8 @@ function syncAnomalies(
   parent: Container,
   cache: Map<string, Graphics>,
   list: readonly Anomaly[],
-  camera: Camera | undefined
+  camera: Camera | undefined,
+  totalTime: number
 ): void {
   const seen = new Set<string>();
   for (const a of list) {
@@ -102,15 +103,33 @@ function syncAnomalies(
       cache.set(a.id, g);
     }
     g.clear();
-    
+
     if (camera && a.worldYMeters !== undefined) {
       const projected = camera.project({ x: 0, y: a.worldYMeters, z: 0 });
       g.position.set(a.x, projected.y);
     } else {
       g.position.set(a.x, a.y);
     }
-    
-    const pulse = 1 + Math.sin(a.pulsePhase) * 0.15;
+
+    // Loot freshness: predator-kill drops have ids like
+    // "loot-<predator-id>-<totalTimeMs>". Parse the trailing ms
+    // suffix to detect age and add a temporary brightness boost
+    // so the freshly-dropped loot grabs the eye. Falls back
+    // gracefully on any id that doesn't match the loot pattern.
+    let lootBoost = 0;
+    if (a.id.startsWith("loot-")) {
+      const lastDash = a.id.lastIndexOf("-");
+      const dropMs = Number.parseInt(a.id.slice(lastDash + 1), 10);
+      if (Number.isFinite(dropMs)) {
+        const age = totalTime - dropMs / 1000;
+        if (age >= 0 && age < 3) {
+          // 0..3s: linear fade from 1 → 0
+          lootBoost = 1 - age / 3;
+        }
+      }
+    }
+
+    const pulse = 1 + Math.sin(a.pulsePhase) * 0.15 + lootBoost * 0.35;
     const glowRadius = a.size * 2 * pulse;
     // Anomaly identity by type. Each buff carries its own colour
     // hint so the player learns "this glyph means X" without text.
@@ -129,7 +148,21 @@ function syncAnomalies(
       const t = (i + 1) / 3;
       g.circle(0, 0, glowRadius * t).fill({
         color,
-        alpha: 0.15 * (1 - t),
+        alpha: (0.15 + lootBoost * 0.18) * (1 - t),
+      });
+    }
+
+    // Loot freshness ring — expanding amber halo for the first 3s
+    // post-drop so the player's eye is drawn to where the
+    // predator died. Uses creamy yellow rather than the type
+    // color so the cue reads as "new loot here," not "another
+    // breath buff floating."
+    if (lootBoost > 0) {
+      const ringR = a.size * 2.5 + (1 - lootBoost) * a.size * 1.5;
+      g.circle(0, 0, ringR).stroke({
+        color: 0xfef9c3,
+        alpha: lootBoost * 0.55,
+        width: 1.5,
       });
     }
 
