@@ -111,6 +111,16 @@ export function advanceScene(
   const lureRadius = 300;
   const lurePullPerSecond = 240; // px/s at the inside edge
 
+  // Wake scatter: ambient creatures (jellyfish/glowfish/plankton)
+  // push gently away from the player when the sub passes close. The
+  // perpendicular component biases against the player's heading so it
+  // reads as a wake rather than a uniform repulsion field. Falls off
+  // with distance to keep distant fish calm.
+  const wakeRadius = 90;
+  const wakePushPerSecond = 110;
+  const playerHeadingX = Math.cos(player.angle);
+  const playerHeadingY = Math.sin(player.angle);
+
   const creatures = scene.creatures.map((creature) => {
     const base = advanceCreature(creature, dimensions, totalTime, deltaTime);
     const flocking = ai.readCreature(base);
@@ -125,6 +135,17 @@ export function advanceScene(
         nx += (dx / dist) * strength;
         ny += (dy / dist) * strength;
       }
+    }
+    const wdx = nx - player.x;
+    const wdy = ny - player.y;
+    const wDist = Math.hypot(wdx, wdy);
+    if (wDist > 1 && wDist < wakeRadius) {
+      const falloff = 1 - wDist / wakeRadius;
+      const approach = playerHeadingX * (wdx / wDist) + playerHeadingY * (wdy / wDist);
+      const wakeBoost = approach < 0 ? 1 + Math.abs(approach) * 1.2 : 1;
+      const push = falloff * wakePushPerSecond * wakeBoost * deltaTime;
+      nx += (wdx / wDist) * push;
+      ny += (wdy / wDist) * push;
     }
     return { ...base, x: nx, y: ny };
   });
