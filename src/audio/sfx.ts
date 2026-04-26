@@ -18,7 +18,8 @@ export type SfxEvent =
   | "pack-call"           // a predator broadcasts engage to its packmates
   | "predator-kill"       // the lamp breaks a predator
   | "adrenaline-engage"   // adrenaline burst triggers — rising bend, cinematic
-  | "adrenaline-disengage"; // adrenaline burst ends — falling bend, settles
+  | "adrenaline-disengage" // adrenaline burst ends — falling bend, settles
+  | "depth-mark";         // sub crosses a hectometer (every 100 m descent)
 
 let synth: Tone.PolySynth<Tone.Synth> | null = null;
 let pling: Tone.MembraneSynth | null = null;
@@ -100,6 +101,13 @@ export async function playSfx(event: SfxEvent): Promise<void> {
       synth.triggerAttackRelease("B5", "32n", now);
       synth.triggerAttackRelease("E5", "32n", now + 0.06);
       synth.triggerAttackRelease("A4", "8n", now + 0.12);
+      break;
+    case "depth-mark":
+      // Single soft sub-bass click on hectometer crossings. Quiet
+      // enough to live alongside the ambient pad without crowding
+      // it; the visual hectometer accent leads the read, the audio
+      // confirms it after a beat.
+      pling.triggerAttackRelease("E2", "16n", now);
       break;
   }
 }
