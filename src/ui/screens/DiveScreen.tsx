@@ -659,6 +659,13 @@ export function DiveScreen({
       for (let i = 0; i < result.predatorKillsThisFrame; i++) {
         void playSfx("predator-kill");
       }
+      // Pirate-alert SFX: one-shot descending horn when any pirate
+      // crosses the pursuit threshold. The brain's hysteresis
+      // (PURSUE > 0.4, PATROL < 0.15) prevents this from chattering
+      // on cone edges.
+      if (result.pirateAlertThisFrame) {
+        void playSfx("pirate-alert");
+      }
 
       if (result.collidedWithPredator) {
         const impact = resolveDiveThreatImpact({

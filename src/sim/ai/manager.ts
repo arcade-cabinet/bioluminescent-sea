@@ -379,6 +379,19 @@ export class AIManager {
   }
 
   /**
+   * True if any pirate's awareness crossed the pursuit threshold
+   * THIS tick. Drives a one-shot pirate-alert SFX so the player
+   * has an audio tell that a pirate just locked on, even if they
+   * weren't watching the lantern color/cone widen.
+   */
+  anyPirateAlertedThisFrame(): boolean {
+    for (const brain of this.pirateBrainMap.values()) {
+      if (brain.justAlerted) return true;
+    }
+    return false;
+  }
+
+  /**
    * Threat intensity in 0..1, computed from the count of predator
    * brains currently in stalk/charge/strike near the given point.
    * Used by the audio layer to ramp the ambient rumble + filter Q
