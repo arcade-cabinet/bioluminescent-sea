@@ -410,13 +410,25 @@ function syncPirates(
     const coreG = 243 + Math.round(awareness * (120 - 243));
     const coreB = 160 + Math.round(awareness * (80 - 160));
     const coreColor = (coreR << 16) | (coreG << 8) | coreB;
+    const coneReach = 128 + awareness * 48;
+    const coneSpread = 42 + awareness * 28;
     g.moveTo(34, -8);
-    g.lineTo(128, -42);
-    g.lineTo(128, 42);
+    g.lineTo(coneReach, -coneSpread);
+    g.lineTo(coneReach, coneSpread);
     g.lineTo(34, 8);
-    g.fill({ color: lanternColor, alpha: 0.18 * lanternIntensity });
+    g.fill({ color: lanternColor, alpha: (0.18 + awareness * 0.12) * lanternIntensity });
 
-    g.circle(34, 0, 4).fill({ color: coreColor, alpha: lanternIntensity });
+    if (awareness > 0.4) {
+      const innerReach = 60 + awareness * 30;
+      const innerSpread = 18 + awareness * 14;
+      g.moveTo(34, -4);
+      g.lineTo(innerReach, -innerSpread);
+      g.lineTo(innerReach, innerSpread);
+      g.lineTo(34, 4);
+      g.fill({ color: coreColor, alpha: 0.14 * lanternIntensity * awareness });
+    }
+
+    g.circle(34, 0, 4 + awareness * 2).fill({ color: coreColor, alpha: lanternIntensity });
   }
   for (const [id, g] of cache) {
     if (!seen.has(id)) {
