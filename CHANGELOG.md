@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.32.0...v0.33.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** biome transition cinematic ([#181](https://github.com/arcade-cabinet/bioluminescent-sea/issues/181)) ([ce73419](https://github.com/arcade-cabinet/bioluminescent-sea/commit/ce73419a3e74823529206ab16b6344a3cd57f34a))
+* **bs:** score-up flash pulse on HUD readouts ([#183](https://github.com/arcade-cabinet/bioluminescent-sea/issues/183)) ([b9a57e2](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b9a57e2faafc67a07e39b4d9909dfcedb9a4a86d))
+
 ## [0.32.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.31.0...v0.32.0) (2026-04-26)
 
 
