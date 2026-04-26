@@ -21,7 +21,12 @@ import {
   resolveDeepSeaSnapshot,
   type DeepSeaRunSnapshot,
 } from "@/lib/diveSnapshot";
-import { recordScoreIfBest } from "@/lib/bestScore";
+import {
+  type BestImprovements,
+  NO_IMPROVEMENTS,
+  recordDive,
+  ZERO_BESTS,
+} from "@/lib/personalBests";
 import { CompletionBackdrop } from "./CompletionBackdrop";
 import { DiveScreen } from "./DiveScreen";
 import { LandingScreen } from "./LandingScreen";
@@ -53,14 +58,19 @@ function buildGameOverStats(
   bestScore: number,
   summary: DiveRunSummary,
   kind: "gameover" | "complete",
+  improvements: BestImprovements,
 ): StatTileProps[] {
   const tiles: StatTileProps[] = [
-    { label: "Score", value: finalScore, countUp: true },
+    { label: "Score", value: finalScore, countUp: true, newBest: improvements.score },
     { label: "Best", value: bestScore, countUp: true },
   ];
 
   if (kind === "gameover") {
-    tiles.push({ label: "Depth", value: `${summary.depthMeters}m` });
+    tiles.push({
+      label: "Depth",
+      value: `${summary.depthMeters}m`,
+      newBest: improvements.depthMeters,
+    });
   } else {
     tiles.push({ label: "Oxygen banked", value: `${summary.timeLeft}s` });
   }
@@ -72,10 +82,15 @@ function buildGameOverStats(
         label: "Predators broken",
         value: stats.predatorsKilled,
         countUp: true,
+        newBest: improvements.predatorsKilled,
       });
     }
     if (stats.maxChain >= 3) {
-      tiles.push({ label: "Peak chain", value: `×${stats.maxChain}` });
+      tiles.push({
+        label: "Peak chain",
+        value: `×${stats.maxChain}`,
+        newBest: improvements.maxChain,
+      });
     }
     if (stats.biomesTraversed.length >= 2) {
       tiles.push({
@@ -175,16 +190,25 @@ export default function Game(props: GameProps = {}) {
     );
   const completionCelebration = getDiveCompletionCelebration(displaySummary);
 
-  // Record the score on transition into a terminal state, *not* during
-  // render. Side effects in render fire on every commit (including
-  // StrictMode double-invokes) — we only want to write best once per
-  // dive-end. `bestScore` is the stable value the GameOverScreen reads.
-  const [bestScore, setBestScore] = useState<number>(() => recordScoreIfBest(0));
+  // Record dive bests on transition into a terminal state. Side
+  // effects in render fire on every commit (incl. StrictMode double-
+  // invokes) — we only want to write once per dive-end. The
+  // recorded improvements drive "NEW BEST!" callouts on the
+  // post-dive screen.
+  const [bests, setBests] = useState(() => ZERO_BESTS);
+  const [improvements, setImprovements] = useState<BestImprovements>(NO_IMPROVEMENTS);
   useEffect(() => {
-    if (gameState === "gameover" || gameState === "complete") {
-      setBestScore(recordScoreIfBest(finalScore));
+    if ((gameState === "gameover" || gameState === "complete") && finalSummary) {
+      const result = recordDive(finalSummary);
+      setBests(result.bests);
+      setImprovements(result.improvements);
+    } else if (gameState === "landing" || gameState === "drydock") {
+      // Reset improvements when leaving the post-dive screen so a
+      // re-entry to dive doesn't show stale "NEW BEST" badges.
+      setImprovements(NO_IMPROVEMENTS);
     }
-  }, [gameState, finalScore]);
+  }, [gameState, finalSummary]);
+  const bestScore = bests.score;
 
   const startDive = (seed: number) => {
     // If a persisted snapshot exists for an *active* dive (timeLeft > 0,
@@ -301,7 +325,7 @@ export default function Game(props: GameProps = {}) {
                   ? "The trench remains. Follow beacon chains before oxygen or predators close in."
                   : "Surface for a breath, then chart a new route."
               }
-              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "gameover")}
+              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "gameover", improvements)}
             >
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock
@@ -324,7 +348,7 @@ export default function Game(props: GameProps = {}) {
             <GameOverScreen
               title={completionCelebration.title}
               subtitle={`${completionCelebration.message} ${completionCelebration.replayPrompt}`}
-              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "complete")}
+              stats={buildGameOverStats(finalScore, bestScore, displaySummary, "complete", improvements)}
             >
               <Button variant="ghost" onClick={() => setGameState("drydock")}>
                 Drydock

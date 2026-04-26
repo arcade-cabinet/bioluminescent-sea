@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Anchor, BatteryCharging, Lightbulb, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { getUpgradeCost, MAX_UPGRADE_LEVEL, type SubUpgrades } from "@/sim/meta/upgrades";
+import { getPersonalBests } from "@/lib/personalBests";
 import { Button, EmbossFilters } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
 
@@ -91,6 +92,8 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
           </div>
           <CurrencyTally currency={currency} />
         </header>
+
+        <LifetimeBand />
 
         <div className="flex flex-col gap-5">
           {UPGRADE_ROWS.map((row) => (
@@ -192,6 +195,68 @@ function CurrencyTally({ currency }: { currency: number }) {
           </motion.span>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/**
+ * Compact lifetime-stats band beneath the Drydock header. Reads from
+ * personalBests on mount and stays stable for the life of the panel
+ * (the band re-mounts on next Drydock visit, so a dive completed in
+ * between will show the latest values without ad-hoc refresh logic).
+ *
+ * Values are subdued — readouts, not headline tiles. The drydock's
+ * narrative focus is *spending* the Lux on upgrades; the band exists
+ * so a returning player can see "what I've done so far" without
+ * navigating away.
+ */
+function LifetimeBand() {
+  const bests = getPersonalBests();
+  if (bests.divesLogged === 0) return null;
+
+  const cells: { label: string; value: string }[] = [
+    { label: "Dives", value: String(bests.divesLogged) },
+    { label: "Lifetime Lux", value: String(bests.lifetimeScore) },
+    { label: "Best score", value: String(bests.score) },
+    { label: "Deepest", value: `${bests.depthMeters}m` },
+  ];
+  if (bests.maxChain >= 3) {
+    cells.push({ label: "Peak chain", value: `×${bests.maxChain}` });
+  }
+  if (bests.predatorsKilled > 0) {
+    cells.push({
+      label: "Predators broken",
+      value: String(bests.predatorsKilled),
+    });
+  }
+
+  return (
+    <div
+      data-testid="drydock-lifetime-band"
+      className="flex flex-wrap gap-x-6 gap-y-2 border-y py-3"
+      style={{
+        borderColor: "color-mix(in srgb, var(--color-glow) 8%, transparent)",
+      }}
+    >
+      {cells.map((c) => (
+        <div key={c.label} className="flex flex-col">
+          <span
+            className="bs-label text-[0.55rem] text-fg-muted"
+            style={{ filter: "url(#bs-soft-glow)" }}
+          >
+            {c.label}
+          </span>
+          <span
+            className="bs-numeral text-base text-fg"
+            style={{
+              fontFamily: "var(--font-body)",
+              textShadow: "0 0 10px rgba(2,6,17,0.85)",
+            }}
+          >
+            {c.value}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
