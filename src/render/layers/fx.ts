@@ -76,8 +76,9 @@ export interface FxController {
     biomeTintHex: string | undefined;
     /** Score popups *this frame* — one per creature collected. The
      *  FX layer pools Text objects and animates each "+N" upward
-     *  ~32 px while fading. */
-    scorePopups: readonly { x: number; y: number; amount: number }[];
+     *  ~32 px while fading. Multiplier informs the fill color so a
+     *  high-chain pop reads warmer than a baseline pop. */
+    scorePopups: readonly { x: number; y: number; amount: number; multiplier: number }[];
   }): void;
   destroy(): void;
 }
@@ -185,11 +186,17 @@ export function mountFx(parent: Container): FxController {
 
   return {
     sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups }) {
-      // Ingest new score popups, acquire pooled Text nodes.
+      // Ingest new score popups, acquire pooled Text nodes. Color
+      // ramps with multiplier: ×1 = mint, ×3+ = creamy yellow,
+      // ×5+ = amber. The numeric amount already encodes multiplier
+      // so this is reinforcement, not duplicate info.
       for (const sp of scorePopups) {
         const t = acquirePopupText();
         t.text = sp.amount >= 1000 ? `+${(sp.amount / 1000).toFixed(1)}k` : `+${sp.amount}`;
         t.anchor.set(0.5, 0.5);
+        const fill =
+          sp.multiplier >= 5 ? 0xfde68a : sp.multiplier >= 3 ? 0xfef9c3 : 0x6be6c1;
+        t.style.fill = fill;
         scorePopupHost.addChild(t);
         activePopups.push({ text: t, startedAt: totalTime, x: sp.x, y: sp.y });
       }
