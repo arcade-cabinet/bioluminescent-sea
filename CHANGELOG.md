@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.29.0...v0.30.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** adrenaline cooldown arc ([#172](https://github.com/arcade-cabinet/bioluminescent-sea/issues/172)) ([d55231f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d55231f87b0341c66b97e1a7c12653f349da7121))
+* **bs:** depth strata markers ([#173](https://github.com/arcade-cabinet/bioluminescent-sea/issues/173)) ([b4fdb09](https://github.com/arcade-cabinet/bioluminescent-sea/commit/b4fdb0910441bffe9808003af8c92f74bec10374))
+* **bs:** predator state telegraph rings ([#170](https://github.com/arcade-cabinet/bioluminescent-sea/issues/170)) ([cf35464](https://github.com/arcade-cabinet/bioluminescent-sea/commit/cf35464e445d6b69c418fbce7248b4875956282f))
+
 ## [0.29.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.28.0...v0.29.0) (2026-04-26)
 
 
