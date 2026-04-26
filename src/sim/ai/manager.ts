@@ -121,6 +121,11 @@ export class AIManager {
         } else {
           brain.attachPlayer(this.playerVehicle);
         }
+        // Spawned predators start neutral (hunger factor 1) — the
+        // ramp begins from spawn, not from t=0. Without this a fresh
+        // chunk's predators would arrive pre-starved and feel
+        // artificially aggressive.
+        brain.lastStrikeAttemptTime = this.currentTime;
         this.entityManager.add(brain);
         this.predatorBrainMap.set(p.id, brain);
       }
@@ -583,6 +588,7 @@ export class AIManager {
         stateProgress: brain.currentStateProgress,
         damageFraction: 1 - brain.hp,
         deathProgress: brain.deathProgress(),
+        hungerLevel: brain.hungerLevel(),
       };
     }
     const vehicle = this.vehicleMap.get(p.id);

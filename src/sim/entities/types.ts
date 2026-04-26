@@ -101,6 +101,13 @@ export interface Predator {
    * not affect AI. Optional so tests / fixtures can omit it.
    */
   biomeTintHex?: string;
+  /**
+   * 0..1 hunger level. 0 = recently struck (well-fed), 1 = at the
+   * 30 s starvation cap. Drives renderer tint shifts (cooler/sharper
+   * for hungry predators) so the player can read which predators
+   * are pressing harder. Optional so tests / fixtures can omit it.
+   */
+  hungerLevel?: number;
 }
 
 export interface Pirate {

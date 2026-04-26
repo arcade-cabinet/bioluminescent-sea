@@ -174,6 +174,10 @@ export class StrikeState extends TimedState {
 
   exit(owner: PredatorBrain): void {
     owner.deactivateStrikeBehaviour();
+    // Hunger reset: a strike was attempted (regardless of hit). The
+    // brain returns to its baseline aggression and ramps up again
+    // only if it goes 30+ seconds without another committed strike.
+    owner.lastStrikeAttemptTime = owner.currentTime;
   }
 }
 
