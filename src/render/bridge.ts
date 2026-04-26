@@ -138,6 +138,13 @@ export interface RenderFrameInput {
    * passed-through so the fill color can ramp with chain depth.
    */
   scorePopups?: readonly { x: number; y: number; amount: number; multiplier: number }[];
+  /**
+   * Bearing (radians, world-space) toward the nearest scoring
+   * beacon, or null if no beacon. The FX layer paints a soft
+   * mint chevron orbiting the player at this bearing so the
+   * player can read direction-to-target without a full HUD chip.
+   */
+  beaconBearingRadians?: number | null;
 }
 
 export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<RenderBridge> {
@@ -207,7 +214,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
 
   return {
     camera,
-    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, scorePopups }) {
+    renderFrame({ world, bursts, viewportScale, biomeTintHex, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, scorePopups, beaconBearingRadians }) {
       const v = viewport();
 
       // Keep the camera's viewport + scroll in sync with the sim.
@@ -341,6 +348,7 @@ export async function createRenderBridge(canvas: HTMLCanvasElement): Promise<Ren
         biomeTransitionTriggered: biomeTransitionTriggered ?? false,
         biomeTintHex,
         scorePopups: scorePopups ?? [],
+        beaconBearingRadians: beaconBearingRadians ?? null,
       });
 
       // Apply camera shake to the entire stage based on threatFlashAlpha

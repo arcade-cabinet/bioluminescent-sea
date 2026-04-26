@@ -79,6 +79,10 @@ export interface FxController {
      *  ~32 px while fading. Multiplier informs the fill color so a
      *  high-chain pop reads warmer than a baseline pop. */
     scorePopups: readonly { x: number; y: number; amount: number; multiplier: number }[];
+    /** Bearing toward the nearest beacon, or null. The FX layer
+     *  paints a faint mint chevron orbiting the player so the
+     *  direction-to-target is glanceable. */
+    beaconBearingRadians: number | null;
   }): void;
   destroy(): void;
 }
@@ -185,7 +189,7 @@ export function mountFx(parent: Container): FxController {
   };
 
   return {
-    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups }) {
+    sync({ player, totalTime, bursts: list, threatFlashAlpha, viewport, lampScatterPoints, threatBearings, impactRippleAt, leviathanProximity, flankBroadcasts, adrenalineActive, adrenalineReadiness, oxygenRatio, anomalyPickups, biomeTransitionTriggered, biomeTintHex, scorePopups, beaconBearingRadians }) {
       // Ingest new score popups, acquire pooled Text nodes. Color
       // ramps with multiplier: ×1 = mint, ×3+ = creamy yellow,
       // ×5+ = amber. The numeric amount already encodes multiplier
@@ -261,6 +265,33 @@ export function mountFx(parent: Container): FxController {
         alpha: 0.4 * (1 - phase),
         width: 1.6,
       });
+
+      // Beacon chevron — a small mint chevron orbiting the player
+      // ring at the bearing of the nearest scoring beacon. Hidden
+      // when no beacon is in scope. Pulses subtly so the eye picks
+      // it up without it competing with predator threat arcs.
+      if (beaconBearingRadians !== null) {
+        const orbitR = 56;
+        const cx = player.x + Math.cos(beaconBearingRadians) * orbitR;
+        const cy = player.y + Math.sin(beaconBearingRadians) * orbitR;
+        const chevronPulse = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 2.4));
+        const chevronSize = 8;
+        // Chevron points outward — perpendicular vectors define the
+        // two trailing tails so the arrow reads as "this way."
+        const cosA = Math.cos(beaconBearingRadians);
+        const sinA = Math.sin(beaconBearingRadians);
+        const tipX = cx + cosA * chevronSize;
+        const tipY = cy + sinA * chevronSize;
+        const wing = chevronSize * 0.85;
+        const leftX = cx - cosA * wing - sinA * wing;
+        const leftY = cy - sinA * wing + cosA * wing;
+        const rightX = cx - cosA * wing + sinA * wing;
+        const rightY = cy - sinA * wing - cosA * wing;
+        sonar.moveTo(leftX, leftY);
+        sonar.lineTo(tipX, tipY);
+        sonar.lineTo(rightX, rightY);
+        sonar.stroke({ color: 0x6be6c1, alpha: 0.55 * chevronPulse, width: 2 });
+      }
 
       // Adrenaline readiness ring — a thin mint pulse around the
       // player that brightens with readiness so the player can see

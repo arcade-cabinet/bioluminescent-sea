@@ -731,6 +731,7 @@ export function DiveScreen({
         anomalyPickups: result.anomalyPickups,
         biomeTransitionTriggered,
         scorePopups: framePopups,
+        beaconBearingRadians: result.telemetry.beaconBearingRadians,
       });
     },
     [
