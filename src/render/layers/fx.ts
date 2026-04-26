@@ -138,12 +138,30 @@ export function mountFx(parent: Container): FxController {
       // 70%–100% alpha at 1.2 Hz; below 0.05 it goes invisible.
       if (adrenalineReadiness >= 0.05) {
         const breath = 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(totalTime * 1.2));
-        const ringAlpha = adrenalineReadiness * 0.45 * breath;
-        sonar.circle(player.x, player.y, 80).stroke({
-          color: 0x6be6c1,
-          alpha: ringAlpha,
-          width: 1 + adrenalineReadiness * 1.4,
-        });
+        const ringR = 80;
+        if (adrenalineReadiness < 1) {
+          // Cooldown: filling arc starting at 12 o'clock, sweeping
+          // clockwise as readiness climbs. Reads as "the gauge is
+          // refilling" — radically more legible than a fading
+          // circle.
+          const arcStart = -Math.PI / 2;
+          const arcEnd = arcStart + Math.PI * 2 * adrenalineReadiness;
+          sonar.moveTo(player.x + Math.cos(arcStart) * ringR, player.y + Math.sin(arcStart) * ringR);
+          sonar.arc(player.x, player.y, ringR, arcStart, arcEnd);
+          sonar.stroke({
+            color: 0x6be6c1,
+            alpha: 0.35 + adrenalineReadiness * 0.3,
+            width: 1.4,
+          });
+        } else {
+          // Ready: full breathing ring, brighter than the cooldown
+          // arc so the readiness state pops.
+          sonar.circle(player.x, player.y, ringR).stroke({
+            color: 0x6be6c1,
+            alpha: 0.55 * breath,
+            width: 2.4,
+          });
+        }
       }
 
       // Threat-bearing arcs on a fixed-radius warning ring around
