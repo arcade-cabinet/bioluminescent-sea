@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.33.0...v0.34.0) (2026-04-26)
+
+
+### Features
+
+* **bs:** chain decay telegraph ([#184](https://github.com/arcade-cabinet/bioluminescent-sea/issues/184)) ([0461203](https://github.com/arcade-cabinet/bioluminescent-sea/commit/04612032f5a1a6da98c00ab3e4e141ee2f06e91c))
+* **bs:** landmark chip enter/exit transitions ([#186](https://github.com/arcade-cabinet/bioluminescent-sea/issues/186)) ([e1445f6](https://github.com/arcade-cabinet/bioluminescent-sea/commit/e1445f60e2d1168f28e16eb8c95a09d3513b7469))
+
 ## [0.33.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.32.0...v0.33.0) (2026-04-26)
 
 
