@@ -75,10 +75,10 @@ export function SeedPickerOverlay({
               {meta.label} dive
             </p>
           )}
-          <DialogTitle>Chart your route</DialogTitle>
+          <DialogTitle>Choose your dive</DialogTitle>
           <DialogDescription>
             {meta?.description ??
-              "Every trench is generated from a three-word phrase."}
+              "Every dive is generated from a three-word codename. Same codename, same ocean."}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,7 +89,7 @@ export function SeedPickerOverlay({
               className="bs-label text-[0.62rem] text-fg-muted"
               style={{ filter: "url(#bs-soft-glow)" }}
             >
-              Trench codename
+              Dive codename
             </label>
             <Input
               id="seed-codename"

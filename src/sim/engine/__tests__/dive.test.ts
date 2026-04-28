@@ -362,7 +362,7 @@ describe("deep sea simulation", () => {
     expect(telemetry.depthMeters).toBeGreaterThan(2_800);
     expect(telemetry.oxygenRatio).toBeCloseTo(1 / 60);
     expect(explorationTelemetry.oxygenRatio).toBeLessThan(telemetry.oxygenRatio);
-    expect(["Ascent", "Hunted", "Critical", "Calm"]).toContain(telemetry.pressureLabel);
+    expect(["Low oxygen", "Predator near", "Critical", "Calm"]).toContain(telemetry.pressureLabel);
   });
 
   test("points sonar telemetry at the nearest uncharted beacon", () => {
@@ -380,10 +380,10 @@ describe("deep sea simulation", () => {
     const mid = getDiveRouteLandmark(0.46, { bearingRadians: 0.1, distance: 120 });
     const late = getDiveRouteLandmark(0.94, { bearingRadians: -0.2, distance: 42 });
 
-    expect(early.label).toBe("Kelp Gate");
+    expect(early.label).toBe("Surface");
     expect(early.bearingRadians).toBeCloseTo(0.4);
-    expect(mid.label).toBe("Whale-Fall Windows");
-    expect(late.label).toBe("Living Map");
+    expect(mid.label).toBe("Twilight zone");
+    expect(late.label).toBe("The abyss");
     expect(late.distance).toBeLessThan(early.distance);
   });
 
@@ -405,7 +405,7 @@ describe("deep sea simulation", () => {
       rating: "Aborted Descent",
       title: "Dive Logged",
     });
-    expect(celebration.landmarkSequence).toContain("Abyss Orchard");
+    expect(celebration.landmarkSequence).toContain("Deep ocean");
   });
 });
 
