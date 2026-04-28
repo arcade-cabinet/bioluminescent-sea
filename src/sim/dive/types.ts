@@ -7,6 +7,8 @@ import type {
   Player,
   Predator,
 } from "@/sim/entities/types";
+import type { Torpedo } from "@/sim/player/torpedo";
+import type { CavitationEvent } from "@/sim/player/cavitation";
 
 export interface ViewportDimensions {
   width: number;
@@ -34,6 +36,11 @@ export interface DiveInput {
    * Sustained sprint at speed produces cavitation events.
    */
   sprint?: boolean;
+  /**
+   * True when the player is attempting to fire a torpedo this frame.
+   * The runtime checks cooldown and oxygen before actually launching.
+   */
+  fire?: boolean;
 }
 
 /**
@@ -104,6 +111,16 @@ export interface SceneState {
    * Empty/missing for non-pocket modes.
    */
   clearedChunks?: number[];
+  /**
+   * Active torpedoes in flight. New torpedoes are appended when
+   * fired; expired/collided torpedoes are removed each frame.
+   */
+  torpedoes: Torpedo[];
+  /**
+   * Cavitation events fired this frame for renderer particle FX.
+   * Cleared every frame — the runtime consumes them immediately.
+   */
+  cavitationEvents: CavitationEvent[];
 }
 
 export interface CreatureCollectionResult {
@@ -168,6 +185,12 @@ export interface SceneAdvanceResult {
    * pure — no localStorage / React calls. 0 most frames.
    */
   oxygenBonusSeconds: number;
+  /**
+   * Oxygen seconds spent firing torpedoes this frame. The runtime
+   * subtracts this from its `timeModifier` (negative modifier) so
+   * the HUD shows the cost immediately. 0 most frames.
+   */
+  torpedoOxygenCost: number;
   /**
    * True if any predator entered StrikeState near the player this
    * frame. Drives a brief screen-shake + flash burst even when the
@@ -274,6 +297,12 @@ export interface SceneAdvanceResult {
     y: number;
     type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
   }[];
+  /**
+   * Perception context for GOAP bot observation. Mirrors the AIManager's
+   * current occluder list so the runtime can build observations without
+   * importing the AI module directly.
+   */
+  perception: import("@/sim/ai/perception/perception").PerceptionContext;
 }
 
 export interface DiveModeTuning {

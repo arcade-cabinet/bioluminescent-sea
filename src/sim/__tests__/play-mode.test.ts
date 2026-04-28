@@ -21,6 +21,8 @@ import {
   getDiveDurationSeconds,
   resolveDiveThreatImpact,
   resetAIManager,
+  resetTorpedoLauncher,
+  resetCavitationEmitter,
   type SceneState,
 } from "@/sim/dive";
 import { getModeSlots } from "@/sim/factories/dive/slots";
@@ -63,6 +65,8 @@ function playMode(
   seed = 0xCAFE,
 ): PlayResult {
   resetAIManager();
+  resetTorpedoLauncher();
+  resetCavitationEmitter();
   const scene0 = createInitialScene(dimensions);
   let scene: SceneState = scene0;
   let score = 0;

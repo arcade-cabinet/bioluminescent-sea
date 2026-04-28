@@ -30,6 +30,15 @@ import type {
   SceneState,
   ViewportDimensions,
 } from "@/sim/dive/types";
+import {
+  createTorpedoLauncher,
+  advanceTorpedo,
+  type Torpedo,
+} from "@/sim/player/torpedo";
+import {
+  createCavitationEmitter,
+  type CavitationEvent,
+} from "@/sim/player/cavitation";
 
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
@@ -53,13 +62,25 @@ export function createInitialScene(
     depthTravelMeters: 0,
     objectiveQueue: createObjectiveQueue(normalizeSessionMode(mode)),
     clearedChunks: [],
+    torpedoes: [],
+    cavitationEvents: [],
   };
 }
 
 let aiManager: AIManager | null = null;
+let torpedoLauncher: ReturnType<typeof createTorpedoLauncher> | null = null;
+let cavitationEmitter: ReturnType<typeof createCavitationEmitter> | null = null;
 
 export function resetAIManager() {
   aiManager = null;
+}
+
+export function resetTorpedoLauncher() {
+  torpedoLauncher = null;
+}
+
+export function resetCavitationEmitter() {
+  cavitationEmitter = null;
 }
 
 /**
@@ -90,6 +111,14 @@ export function advanceScene(
   if (!aiManager) {
     aiManager = new AIManager(dimensions, seed);
   }
+  if (!torpedoLauncher) {
+    torpedoLauncher = createTorpedoLauncher();
+  }
+  if (!cavitationEmitter) {
+    // Cruise = base movement speed, sprint = sprint speed
+    // These are approximate pixel/second speeds
+    cavitationEmitter = createCavitationEmitter(120, 240);
+  }
   const ai = aiManager;
 
   const player = advancePlayer(
@@ -100,6 +129,41 @@ export function advanceScene(
     deltaTime,
     !tuning.freeLateralMovement,
   );
+
+  // Torpedo firing and stepping
+  const TORPEDO_OXYGEN_COST = 5; // seconds
+  let newTorpedo: Torpedo | null = null;
+  let torpedoOxygenCost = 0;
+  if (input.fire && timeLeft > TORPEDO_OXYGEN_COST + 1) {
+    newTorpedo = torpedoLauncher(player, player.angle, totalTime);
+    if (newTorpedo) {
+      torpedoOxygenCost = TORPEDO_OXYGEN_COST;
+    }
+  }
+
+  // Advance existing torpedoes and filter expired
+  const steppedTorpedoes: Torpedo[] = [];
+  for (const t of scene.torpedoes ?? []) {
+    if (totalTime < t.expiresAt) {
+      const stepped = advanceTorpedo(t, deltaTime);
+      if (stepped) steppedTorpedoes.push(stepped);
+    }
+  }
+  if (newTorpedo) {
+    steppedTorpedoes.push(newTorpedo);
+  }
+
+  // Step cavitation emitter — produces events for particle FX
+  const cavEvent = cavitationEmitter.step(
+    (player as unknown as { vx?: number }).vx ?? 0,
+    (player as unknown as { vy?: number }).vy ?? 0,
+    !!input.sprint,
+    deltaTime,
+    totalTime,
+    player.x,
+    player.y
+  );
+  const cavitationEvents: CavitationEvent[] = cavEvent ? [cavEvent] : [];
 
   ai.updatePlayer(player);
   // Biome-driven aggression: deeper biomes turn the dial up.
@@ -213,6 +277,30 @@ export function advanceScene(
       const updated = ai.readPredator(p);
       return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
     });
+
+  // Torpedo-predator collision: torpedo within predator size → damage
+  const hitTorpedoIds = new Set<string>();
+  const damagedPredatorIds = new Set<string>();
+  for (const t of steppedTorpedoes) {
+    for (const p of predators) {
+      if (hitTorpedoIds.has(t.id)) break;
+      const dist = Math.hypot(t.x - p.x, t.y - p.y);
+      if (dist < (p.size ?? 20)) {
+        hitTorpedoIds.add(t.id);
+        damagedPredatorIds.add(p.id);
+        break;
+      }
+    }
+  }
+  // Apply damage via AI manager
+  if (damagedPredatorIds.size > 0) {
+    ai.applyTorpedoDamage([...damagedPredatorIds], 3); // 3 HP damage
+  }
+  // Remove hit torpedoes
+  const survivingTorpedoes = steppedTorpedoes.filter(t => !hitTorpedoIds.has(t.id));
+  // Update steppedTorpedoes to surviving ones for the scene state
+  steppedTorpedoes.length = 0;
+  for (const t of survivingTorpedoes) steppedTorpedoes.push(t);
 
   const pirates = scene.pirates.map((p) => {
     const updated = ai.readPirate(p);
@@ -412,6 +500,8 @@ export function advanceScene(
     depthTravelMeters: nextDepthTravelMeters,
     objectiveQueue: scene.objectiveQueue,
     clearedChunks: nextClearedChunks,
+    torpedoes: steppedTorpedoes,
+    cavitationEvents,
   };
 
   // Objective progress advance. First apply per-frame increments
@@ -478,6 +568,7 @@ export function advanceScene(
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
     oxygenBonusSeconds: breathBonus,
+    torpedoOxygenCost,
     predatorStrikeNearPlayer,
     threatIntensity,
     predatorPackCallThisFrame,
@@ -518,6 +609,7 @@ export function advanceScene(
       y: a.y,
       type: a.type,
     })),
+    perception: ai.perception,
   };
 }
 

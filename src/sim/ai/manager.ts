@@ -756,6 +756,22 @@ export class AIManager {
     };
   }
 
+  applyTorpedoDamage(predatorIds: string[], damage: number): void {
+    for (const id of predatorIds) {
+      const brain = this.predatorBrainMap.get(id);
+      if (brain && brain.hp > 0) {
+        // Apply damage directly; if HP hits 0, the next frame's
+        // getJustKilled/getDead will pick it up. Torpedoes bypass
+        // the damage cooldown since they're discrete impacts.
+        brain.hp = Math.max(0, brain.hp - damage);
+        if (brain.hp <= 0) {
+          // Mark damage time so the death pipeline picks it up
+          brain.lastDamageReceivedTime = this.currentTime;
+        }
+      }
+    }
+  }
+
   readCreature(c: Creature): Creature {
     if (c.type === "plankton") return c;
     

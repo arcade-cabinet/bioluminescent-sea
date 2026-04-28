@@ -143,6 +143,8 @@ export function readSceneFromWorld(w: DiveWorld): SceneState {
     player,
     depthTravelMeters: root?.depthTravelMeters ?? 0,
     objectiveQueue: parseObjectiveQueueJson(root?.objectiveQueueJson),
+    torpedoes: [], // ECS doesn't track torpedoes as entities; sim owns them
+    cavitationEvents: [],
   };
 }
 

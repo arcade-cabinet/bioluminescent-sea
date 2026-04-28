@@ -16,7 +16,13 @@ export {
   resolveModeSlots,
   type ModeSlots,
 } from "@/sim/factories/dive/slots";
-export { advanceScene, createInitialScene, resetAIManager } from "@/sim/engine/advance";
+export {
+  advanceScene,
+  createInitialScene,
+  resetAIManager,
+  resetTorpedoLauncher,
+  resetCavitationEmitter,
+} from "@/sim/engine/advance";
 export {
   calculateMultiplier,
   collectCreatures,

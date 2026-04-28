@@ -21,7 +21,7 @@ import { useDevFastDive } from "@/hooks/useDevFastDive";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useResolvedInput } from "@/hooks/useResolvedInput";
 import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
-import { getCurrentPerception } from "@/sim/engine/advance";
+import { resetAIManager, resetTorpedoLauncher, resetCavitationEmitter } from "@/sim/engine/advance";
 import { createAmbient, disposeSfx, playSfx } from "@/audio";
 import {
   hapticAdrenaline,
@@ -224,6 +224,10 @@ export function DiveScreen({
         destroyDiveWorld(worldRef.current);
         worldRef.current = null;
       }
+      // Reset singleton module state
+      resetAIManager();
+      resetTorpedoLauncher();
+      resetCavitationEmitter();
     };
   }, []);
 
@@ -317,6 +321,8 @@ export function DiveScreen({
           predators: predatorsRef.current,
           depthTravelMeters: depthTravelMetersRef.current,
           objectiveQueue: objectiveQueueRef.current,
+          torpedoes: [],
+          cavitationEvents: [],
         },
         timeLeft,
         durationSeconds,
@@ -345,6 +351,8 @@ export function DiveScreen({
         predators: predatorsRef.current,
         depthTravelMeters: depthTravelMetersRef.current,
         objectiveQueue: objectiveQueueRef.current,
+        torpedoes: [],
+        cavitationEvents: [],
       }),
       score: scoreRef.current,
       seed,
@@ -461,6 +469,8 @@ export function DiveScreen({
             predators: predatorsRef.current,
             depthTravelMeters: depthTravelMetersRef.current,
             objectiveQueue: objectiveQueueRef.current,
+            torpedoes: [],
+            cavitationEvents: [],
           },
           scoreRef.current,
           timeLeftForSummary,
@@ -525,7 +535,7 @@ export function DiveScreen({
           totalTime: effectiveTotalTime,
           deltaTime,
           timeLeft: newTimeLeft,
-          perception: getCurrentPerception(),
+          perception: result.perception,
         };
       }
       piratesRef.current = result.scene.pirates;
@@ -627,7 +637,24 @@ export function DiveScreen({
             showOxygenPulse(cappedBonus, effectiveTotalTime);
           }
         }
+
       }
+
+      // Torpedo oxygen cost — deduct from timeModifier so the wall-clock
+      // HUD reflects the trade-off immediately (independent of collection).
+      if (result.torpedoOxygenCost > 0) {
+        timeModifierRef.current -= result.torpedoOxygenCost;
+        newTimeLeft = getAdjustedTimeLeft();
+        setTimeLeft(newTimeLeft);
+        showImpactPulse(result.torpedoOxygenCost, effectiveTotalTime);
+        if (newTimeLeft === 0) {
+          setIsGameOver(true);
+          hapticGameOver();
+          onGameOver(scoreRef.current, getCurrentSummary(0));
+          return;
+        }
+      }
+
       if (isDiveComplete(result.scene, mode, seed)) {
         setIsGameOver(true);
         void playSfx("dive-complete");
