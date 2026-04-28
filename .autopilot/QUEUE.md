@@ -12,7 +12,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [ ] Wire authored `config/raw/creatures/*.json` into actor-archetype spawn weights so the JSON actually drives gameplay, not just docs
 - [ ] Add 3–5 new creature JSONs per pelagic zone reflecting the authored ecology (lanternfish, hatchetfish, anglerfish, gulper-eel, dumbo-octopus, hadal-snailfish) — even if they reuse existing visual archetypes, the *names* land
 - [x] Audit the Drydock screen copy for stale lore-jargon — Drydock player-facing copy was already clean, but stale biome-id references in code/doc comments across fx/water/chunk/region/entities/advance/DrydockScreen/VISUAL_REVIEW were swept (PR #234)
-- [ ] Sweep `docs/STATE.md` (if present) and `docs/RELEASE.md` to reflect the post-taxonomy state of the world
+- [x] Refresh `docs/STATE.md` to reflect the post-taxonomy era; `docs/RELEASE.md` was already accurate (PR pending)
 - [x] Visually assess the existing screenshot bundle — done in this PR; findings recorded in `docs/screenshots/iteration-1/ASSESSMENT.md`. Action items below were extracted from that pass.
 - [ ] **CRITICAL fix**: shallow-water dive render is washed-out white. Cap GodrayFilter gain + lower surfaceRect alpha at very shallow depths so the scene actually reads as deep ocean. Spec in ASSESSMENT.md.
 - [ ] **MEDIUM fix**: mode card carousel `>` arrow + pagination dots are too low-contrast — new players miss that there are three modes.
