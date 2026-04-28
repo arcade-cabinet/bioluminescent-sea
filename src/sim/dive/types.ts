@@ -7,6 +7,7 @@ import type {
   Player,
   Predator,
 } from "@/sim/entities/types";
+import type { Torpedo } from "@/sim/player/torpedo";
 
 export interface ViewportDimensions {
   width: number;
@@ -104,6 +105,11 @@ export interface SceneState {
    * Empty/missing for non-pocket modes.
    */
   clearedChunks?: number[];
+  /**
+   * Active torpedoes in flight. New torpedoes are appended when
+   * fired; expired/collided torpedoes are removed each frame.
+   */
+  torpedoes: Torpedo[];
 }
 
 export interface CreatureCollectionResult {

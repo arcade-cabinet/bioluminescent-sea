@@ -53,6 +53,7 @@ export function createInitialScene(
     depthTravelMeters: 0,
     objectiveQueue: createObjectiveQueue(normalizeSessionMode(mode)),
     clearedChunks: [],
+    torpedoes: [],
   };
 }
 
@@ -412,6 +413,7 @@ export function advanceScene(
     depthTravelMeters: nextDepthTravelMeters,
     objectiveQueue: scene.objectiveQueue,
     clearedChunks: nextClearedChunks,
+    torpedoes: [], // Will be populated below
   };
 
   // Objective progress advance. First apply per-frame increments
