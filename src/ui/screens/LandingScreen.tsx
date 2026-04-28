@@ -57,10 +57,20 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
       <EmbossFilters />
       <LandingHero />
 
-      {/* Drydock — top right. Floating label, no chip border. */}
+      {/* Drydock — top right. Floating label, no chip border.
+       *  Padding pulls the safe-area insets in via env() so phones
+       *  with rounded corners / notches don't clip the label. The
+       *  baseline `1rem` / `1.5rem` are the inland defaults; max()
+       *  picks whichever is larger so we never lose padding on a
+       *  device without a notch.
+       */}
       <header
-        className="relative flex items-start justify-end px-6 pt-4"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
+        className="relative flex items-start justify-end"
+        style={{
+          paddingTop: "max(env(safe-area-inset-top), 1rem)",
+          paddingRight: "max(env(safe-area-inset-right), 1.5rem)",
+          paddingLeft: "max(env(safe-area-inset-left), 1.5rem)",
+        }}
       >
         <button
           type="button"
