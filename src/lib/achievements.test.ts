@@ -35,6 +35,7 @@ function makeSummary(overrides: Partial<DiveRunSummary> = {}): DiveRunSummary {
       maxChain: 1,
       impactsTaken: 0,
       adrenalineTriggers: 0,
+      landmarksPassed: [],
     },
     ...overrides,
   };
@@ -101,6 +102,7 @@ describe("achievements — first-blood unlock", () => {
           maxChain: 1,
           impactsTaken: 0,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });
@@ -197,6 +199,7 @@ describe("achievements — single-dive criteria", () => {
           maxChain: 1,
           impactsTaken: 0,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });
@@ -214,6 +217,7 @@ describe("achievements — single-dive criteria", () => {
           maxChain: 1,
           impactsTaken: 0,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });
@@ -237,6 +241,7 @@ describe("achievements — single-dive criteria", () => {
           maxChain: 1,
           impactsTaken: 0,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });
@@ -257,6 +262,7 @@ describe("achievements — perfect-run special case", () => {
           maxChain: 1,
           impactsTaken: 0,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });
@@ -275,6 +281,7 @@ describe("achievements — perfect-run special case", () => {
           maxChain: 1,
           impactsTaken: 1,
           adrenalineTriggers: 0,
+      landmarksPassed: [],
         },
       }),
     });

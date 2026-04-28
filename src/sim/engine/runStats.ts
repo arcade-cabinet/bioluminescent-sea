@@ -1,4 +1,5 @@
 import type { DiveRunStats } from "@/sim/dive/types";
+import { lastPassedLandmark } from "@/sim/factories/region/landmarks";
 
 /**
  * Pure accumulators for cumulative dive statistics. Each function
@@ -17,16 +18,23 @@ export const ZERO_STATS: DiveRunStats = {
   maxChain: 1,
   impactsTaken: 0,
   adrenalineTriggers: 0,
+  landmarksPassed: [],
 };
 
 export function ensureRunStats(stats: DiveRunStats | undefined): DiveRunStats {
-  return stats ?? ZERO_STATS;
+  // Older snapshots may have been written before `landmarksPassed`
+  // joined the schema — coerce to an empty array so callers can
+  // always read the field without a guard.
+  if (!stats) return ZERO_STATS;
+  if (stats.landmarksPassed) return stats;
+  return { ...stats, landmarksPassed: [] };
 }
 
 export interface RunStatsFrameInput {
   predatorKillsThisFrame: number;
   anomalyPickupsThisFrame: number;
   currentBiomeId: string;
+  currentDepthMeters: number;
   currentMultiplier: number;
   collidedThisFrame: boolean;
   adrenalineRisingEdge: boolean;
@@ -46,6 +54,16 @@ export function advanceRunStats(
     ? previous.biomesTraversed
     : [...previous.biomesTraversed, frame.currentBiomeId];
 
+  // Landmarks-passed: deepest authored landmark whose depth is at or
+  // shallower than `currentDepthMeters` is the "last passed" — append
+  // to the dive's running list when it's a new entry. Naturally
+  // descent-ordered because deeper landmarks become eligible later.
+  const lastPassed = lastPassedLandmark(frame.currentDepthMeters);
+  const landmarksPassed =
+    lastPassed && !previous.landmarksPassed.includes(lastPassed.id)
+      ? [...previous.landmarksPassed, lastPassed.id]
+      : previous.landmarksPassed;
+
   return {
     predatorsKilled: previous.predatorsKilled + frame.predatorKillsThisFrame,
     buffsCollected: previous.buffsCollected + frame.anomalyPickupsThisFrame,
@@ -54,5 +72,6 @@ export function advanceRunStats(
     impactsTaken: previous.impactsTaken + (frame.collidedThisFrame ? 1 : 0),
     adrenalineTriggers:
       previous.adrenalineTriggers + (frame.adrenalineRisingEdge ? 1 : 0),
+    landmarksPassed,
   };
 }

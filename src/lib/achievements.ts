@@ -1,4 +1,5 @@
 import type { DiveRunSummary } from "@/sim";
+import { LANDMARKS } from "@/sim/factories/region/landmarks";
 import { type PersonalBests, getPersonalBests } from "./personalBests";
 
 /**
@@ -124,6 +125,13 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
     description: "Pass through all five depth zones in a single dive.",
     test: ({ summary }) =>
       (summary.stats?.biomesTraversed.length ?? 0) >= 5,
+  },
+  {
+    id: "complete-chart",
+    title: "Complete Chart",
+    description: "Pass every named landmark in a single dive.",
+    test: ({ summary }) =>
+      (summary.stats?.landmarksPassed.length ?? 0) >= LANDMARKS.length,
   },
 
   // ---- Endurance ----
