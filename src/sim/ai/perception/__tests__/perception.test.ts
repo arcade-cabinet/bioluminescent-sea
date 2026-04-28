@@ -67,14 +67,15 @@ describe("perceives — cone cull", () => {
     ).toBe(true);
   });
 
-  test("target at +half-angle boundary is perceived", () => {
-    // 45° = (cos 45° × 100, sin 45° × 100) ≈ (70.7, 70.7)
+  test("target inside half-angle boundary is perceived", () => {
+    // 44° from forward — clearly inside the 45° cone, no float ambiguity.
+    const angle = Math.PI / 4 - 0.02;
     expect(
       perceives(
         EMPTY_CONTEXT,
         { x: 0, y: 0, headingRad: 0 },
         FORWARD_CONE,
-        { x: 70.7, y: 70.7 },
+        { x: Math.cos(angle) * 100, y: Math.sin(angle) * 100 },
       ),
     ).toBe(true);
   });

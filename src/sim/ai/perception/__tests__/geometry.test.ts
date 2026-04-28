@@ -48,10 +48,8 @@ describe("segmentIntersectsCircle", () => {
 
   test("NaN coordinates do not produce a spurious hit (security guard)", () => {
     // perceives() guards NaN inputs; geometry primitives must not
-    // silently say "yes" on degenerate floats either. Either return
-    // false consistently or a NaN-result the caller's guard rejects.
-    const r = segmentIntersectsCircle(NaN, 0, 10, 0, 5, 0, 3);
-    expect(r === false || Number.isNaN(r as unknown as number)).toBe(true);
+    // silently say "yes" on degenerate floats either.
+    expect(segmentIntersectsCircle(NaN, 0, 10, 0, 5, 0, 3)).toBe(false);
   });
 });
 

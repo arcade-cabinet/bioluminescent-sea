@@ -81,6 +81,7 @@ import {
   STRIKE,
 } from "./states";
 import type { PredatorArchetypeProfile } from "./types";
+import { perceives, predatorProfile, type PerceptionContext } from "../perception/perception";
 
 const TELEGRAM_FLANK = "flank";
 
@@ -108,6 +109,13 @@ export class PredatorBrain extends Vehicle {
   /** Mirrored each tick from StateMachine for the renderer. */
   public currentAiState: PredatorAiState = "ambient";
   public currentStateProgress = 0;
+  /**
+   * Perception context for the current tick. Set by AIManager via
+   * `attachPerception()` immediately before this brain ticks. Null
+   * when the brain is constructed in a unit-test outside an AIManager;
+   * `canSeePlayer` then falls back to local radius+cone math.
+   */
+  public perceptionContext: PerceptionContext | null = null;
 
   /** The shared player vehicle (reference, not copy). */
   private playerRef: Vehicle | null = null;
@@ -518,9 +526,28 @@ export class PredatorBrain extends Vehicle {
 
   canSeePlayer(): boolean {
     if (!this.playerRef) return false;
+    // Delegates to the unified perception module. Same radius + cone
+    // contract as the legacy inline test, plus LoS through the shared
+    // occluder set (debris, leviathans, locked-room walls). The
+    // perception context is published by AIManager.rebuildPerception
+    // once per tick BEFORE this brain ticks. Falls back to local
+    // radius+cone math when no perception context is yet attached
+    // (legacy unit tests that construct a brain without an AIManager).
+    if (this.perceptionContext) {
+      return perceives(
+        this.perceptionContext,
+        {
+          x: this.position.x,
+          y: this.position.y,
+          headingRad: Math.atan2(this.forward.y, this.forward.x),
+        },
+        predatorProfile(this.effectiveDetectionRadius(), this.profile.fovRadians),
+        { x: this.playerRef.position.x, y: this.playerRef.position.y },
+      );
+    }
+    // Legacy fallback (unit tests). Identical math to pre-perception.
     const distance = this.playerRef.position.distanceTo(this.position);
     if (distance > this.effectiveDetectionRadius()) return false;
-    // Cone test: dot of forward vs to-player must exceed the half-angle
     this._toPlayer
       .copy(this.playerRef.position)
       .sub(this.position)

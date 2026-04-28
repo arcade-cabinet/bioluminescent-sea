@@ -62,6 +62,18 @@ export function resetAIManager() {
   aiManager = null;
 }
 
+/**
+ * Read the current AI manager's perception context. Used by
+ * runtime adapters that build a `PlayerSubObservation` outside
+ * `advanceScene` (test bot, future autoplay) so the GOAP brain
+ * sees what the production runtime sees. Returns an empty context
+ * if the manager hasn't been initialised yet (no `advanceScene`
+ * call has happened) — bot fallbacks to direct scene reads.
+ */
+export function getCurrentPerception() {
+  return aiManager ? aiManager.perception : { occluders: [] };
+}
+
 export function advanceScene(
   scene: SceneState,
   input: DiveInput,
@@ -98,6 +110,15 @@ export function advanceScene(
   ai.syncPredators(scene.predators);
   ai.syncPirates(scene.pirates);
   ai.syncCreatures(scene.creatures);
+  // Refresh perception BEFORE brains tick so canSeePlayer + cone
+  // tests run against an occluder list reflecting THIS frame's scene.
+  // Producers (predator canSeePlayer, pirate cone, GOAP profiles) all
+  // read `ai.perception` from here. `lockedRoom` defaults false until
+  // the chunk-lifecycle adapter forwards the active chunk's travel
+  // slot; Spec 1c lands the module + the wire, the locked-room hook
+  // follows when the first locked-room chunk archetype ships its
+  // perception case.
+  ai.rebuildPerception(scene);
   ai.update(deltaTime);
 
   // Lamp-pressure: predators inside the player's lamp cone take

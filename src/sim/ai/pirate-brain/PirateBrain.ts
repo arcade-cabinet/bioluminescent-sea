@@ -33,10 +33,16 @@ import {
   WanderBehavior,
 } from "yuka";
 import { WrapPlayBandBehavior } from "@/sim/ai/steering";
+import { perceives, type PerceptionContext, type PerceiverProfile } from "@/sim/ai/perception/perception";
 
 /** Cone geometry — mirrors the renderer's lantern wedge. */
 const CONE_LENGTH_PX = 220;
 const CONE_HALF_ANGLE = Math.PI / 5; // ~36°
+/** Pre-built profile so we don't allocate per cone-test. */
+const PIRATE_CONE_PROFILE: PerceiverProfile = {
+  radiusPx: CONE_LENGTH_PX,
+  coneHalfAngleRad: CONE_HALF_ANGLE,
+};
 /** Awareness ramps up at this rate while the player is in cone. */
 const AWARENESS_RAMP_PER_SECOND = 2.5;
 /** Decay rate while player is OUT of cone. Asymmetric so pursuit
@@ -139,8 +145,32 @@ export class PirateBrain extends Vehicle {
     }
   }
 
+  /**
+   * Perception context for the current tick. AIManager publishes this
+   * via `attachPerception()` immediately before the brain ticks. Null
+   * in unit tests that construct a brain without an AIManager; the
+   * cone test then falls back to local geometry.
+   */
+  public perceptionContext: PerceptionContext | null = null;
+
   private _isPlayerInCone(): boolean {
     if (!this.playerRef) return false;
+    if (this.perceptionContext) {
+      // Same radius + cone profile, plus LoS through the shared
+      // occluder set. A pirate cannot see the player through debris,
+      // a leviathan, or a locked-room wall.
+      return perceives(
+        this.perceptionContext,
+        {
+          x: this.position.x,
+          y: this.position.y,
+          headingRad: Math.atan2(this.forward.y, this.forward.x),
+        },
+        PIRATE_CONE_PROFILE,
+        { x: this.playerRef.position.x, y: this.playerRef.position.y },
+      );
+    }
+    // Legacy fallback (unit tests without an AIManager).
     _toPlayer.copy(this.playerRef.position).sub(this.position);
     const distSq = _toPlayer.x * _toPlayer.x + _toPlayer.y * _toPlayer.y;
     if (distSq > CONE_LENGTH_PX * CONE_LENGTH_PX) return false;

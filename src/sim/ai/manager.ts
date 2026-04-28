@@ -9,8 +9,10 @@ import {
 import { PredatorBrain } from "./predator-brain/PredatorBrain";
 import { profileForPredatorId } from "./predator-brain/archetype-profiles";
 import { PirateBrain } from "./pirate-brain/PirateBrain";
-import type { ViewportDimensions } from "@/sim/dive/types";
+import type { SceneState, ViewportDimensions } from "@/sim/dive/types";
 import { resolveNumeric } from "@/sim/_shared/variance";
+import { collectOccluders } from "./perception/occluders";
+import type { PerceptionContext } from "./perception/perception";
 
 const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
 
@@ -32,7 +34,19 @@ export class AIManager {
    *  work without each brain tracking its own clock. */
   private currentTime = 0;
   private viewportWidth: number;
+  private viewportHeight: number;
   private diveSeed: number;
+  /**
+   * Perception context for the current tick. Rebuilt by
+   * `rebuildPerception(scene, lockedRoom)` once per frame from the
+   * runtime, before any GOAP provider's `next()` runs. Public so
+   * callers can pass it into `PlayerSubObservation.perception`.
+   *
+   * Empty until the first `rebuildPerception` call — production
+   * runtime always rebuilds before the first GOAP tick. Tests that
+   * skip rebuild see helpers fall back to direct scene reads.
+   */
+  public perception: PerceptionContext = { occluders: [] };
   private flockingBehaviors: Map<string, {
     alignment: AlignmentBehavior;
     cohesion: CohesionBehavior;
@@ -53,6 +67,7 @@ export class AIManager {
     this.vehicleMap = new Map();
     this.flockingBehaviors = new Map();
     this.viewportWidth = viewport.width;
+    this.viewportHeight = viewport.height;
     this.diveSeed = diveSeed;
 
     this.playerVehicle = new GameVehicle("player");
@@ -266,17 +281,49 @@ export class AIManager {
 
   update(deltaTime: number) {
     this.currentTime += deltaTime;
-    // Tick every PredatorBrain so the StateMachine + memory advance
-    // before EntityManager integrates positions. Doing the brain tick
-    // first ensures any state-induced steering toggle is in place
-    // when the integration step runs.
+    // Publish the current-tick perception context onto every brain
+    // BEFORE it ticks, so canSeePlayer and the pirate cone test see
+    // a consistent occluder list. AIManager built this in
+    // `rebuildPerception` (called by advanceScene before update).
     for (const brain of this.predatorBrainMap.values()) {
+      brain.perceptionContext = this.perception;
       brain.tick(deltaTime, this.currentTime);
     }
     for (const brain of this.pirateBrainMap.values()) {
+      brain.perceptionContext = this.perception;
       brain.tick(deltaTime);
     }
     this.entityManager.update(deltaTime);
+  }
+
+  /**
+   * Rebuild the perception context for the current tick from the
+   * scene state and chunk-travel hint.
+   *
+   * Called once per frame by `advanceScene` BEFORE any per-entity
+   * detection check (predator canSeePlayer, pirate cone, GOAP bot).
+   * The result is published on `this.perception` for any caller to
+   * read — `advanceScene` forwards it onto the GOAP observation,
+   * predator + pirate brains read it through accessors below.
+   *
+   * `lockedRoom = true` adds the four viewport-edge wall segments;
+   * `false` leaves perception unbounded by walls (open / corridor
+   * chunks). The chunk lifecycle pushes the current chunk's travel
+   * slot in via this argument.
+   *
+   * `perceiverEntityId` excludes that entity's own leviathan entry
+   * from the occluder list — prevents a leviathan from occluding
+   * its own line-of-sight. Default: undefined (no exclusion).
+   */
+  rebuildPerception(scene: SceneState, lockedRoom = false, perceiverEntityId?: string): void {
+    this.perception = {
+      occluders: collectOccluders(
+        scene,
+        { width: this.viewportWidth, height: this.viewportHeight },
+        perceiverEntityId,
+        lockedRoom,
+      ),
+    };
   }
 
   /**
