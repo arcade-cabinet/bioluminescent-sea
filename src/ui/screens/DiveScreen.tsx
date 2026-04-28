@@ -21,6 +21,7 @@ import { useDevFastDive } from "@/hooks/useDevFastDive";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useResolvedInput } from "@/hooks/useResolvedInput";
 import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
+import { resetAIManager, resetTorpedoLauncher, resetCavitationEmitter } from "@/sim/engine/advance";
 import { createAmbient, disposeSfx, playSfx } from "@/audio";
 import {
   hapticAdrenaline,
@@ -223,6 +224,10 @@ export function DiveScreen({
         destroyDiveWorld(worldRef.current);
         worldRef.current = null;
       }
+      // Reset singleton module state
+      resetAIManager();
+      resetTorpedoLauncher();
+      resetCavitationEmitter();
     };
   }, []);
 
