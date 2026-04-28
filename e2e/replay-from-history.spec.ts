@@ -65,7 +65,10 @@ test.describe("Replay from Drydock history", () => {
     const drydockChip = page.getByTestId("drydock-chip");
     await expect(drydockChip).toBeVisible();
     await drydockChip.click();
-    await expect(page.getByTestId("drydock-screen")).toBeVisible();
+    // AnimatePresence with mode="wait" sequences landing-exit (600ms)
+    // → drydock-enter (~600ms). Under xvfb-run on CI, RAF throttling
+    // can stretch that to several seconds — bump from default 5s.
+    await expect(page.getByTestId("drydock-screen")).toBeVisible({ timeout: 15_000 });
 
     // Newest entry (seed 4242 / descent) should be row 0 with a replay
     // button. Verify the codename rendered alongside the row.

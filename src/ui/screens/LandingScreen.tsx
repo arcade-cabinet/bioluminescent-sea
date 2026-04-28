@@ -110,7 +110,13 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
           transition={{ delay: 0.2, duration: 0.9 }}
           className="bs-display m-0 font-medium text-glow"
           style={{
-            fontSize: "clamp(1.6rem, min(7vw, 8vh), 5rem)",
+            // Phone-portrait was eating 35 % of the viewport with
+            // a two-line "BIOLUMINESCENT SEA" + 1.2 line-height —
+            // pinching the carousel below the fold. Slightly tighter
+            // type-scale + leading reclaims ~80 px without losing
+            // the "engraved in water" feeling. (Iter-2 finding #5.)
+            fontSize: "clamp(1.4rem, min(6vw, 7.5vh), 5rem)",
+            lineHeight: 1.05,
             letterSpacing: "0.16em",
             filter: "url(#bs-emboss-glow)",
             textShadow:
