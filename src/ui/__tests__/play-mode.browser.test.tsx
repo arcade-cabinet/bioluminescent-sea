@@ -93,7 +93,10 @@ describe("per-mode browser integration (GOAP bot drives the live game)", () => {
       // Wait for the playing screen to mount.
       const ready = await waitFor(
         () => host.querySelector('[data-testid="playing-screen"]') !== null,
-        3000,
+        // Bumped from 3s to 8s. CI runners under xvfb-run can throttle
+        // RAF heavily during initial Pixi mount + asset load, leaving
+        // <Game>'s state machine still on landing past the 3s mark.
+        8000,
       );
       expect(ready, "playing-screen should mount").toBe(true);
       // Let the dive run for 3 seconds wall-clock. Exploration's
@@ -112,7 +115,10 @@ describe("per-mode browser integration (GOAP bot drives the live game)", () => {
       const host = mountGame("arena", makeBot(createRamPredatorProfile));
       const ready = await waitFor(
         () => host.querySelector('[data-testid="playing-screen"]') !== null,
-        3000,
+        // Bumped from 3s to 8s. CI runners under xvfb-run can throttle
+        // RAF heavily during initial Pixi mount + asset load, leaving
+        // <Game>'s state machine still on landing past the 3s mark.
+        8000,
       );
       expect(ready, "playing-screen should mount").toBe(true);
 
@@ -146,7 +152,10 @@ describe("per-mode browser integration (GOAP bot drives the live game)", () => {
       const host = mountGame("descent", makeBot(createCollectBeaconsProfile));
       const ready = await waitFor(
         () => host.querySelector('[data-testid="playing-screen"]') !== null,
-        3000,
+        // Bumped from 3s to 8s. CI runners under xvfb-run can throttle
+        // RAF heavily during initial Pixi mount + asset load, leaving
+        // <Game>'s state machine still on landing past the 3s mark.
+        8000,
       );
       expect(ready, "playing-screen should mount").toBe(true);
       // Let the bot collect for ~4s then snapshot the score / chain.
