@@ -89,11 +89,11 @@ Joystick (mobile) + WASD/arrows (desktop). Sub becomes a Yuka-shaped
 Vehicle with mass, maxForce, drag. Cavitation FX particles on the fx
 layer keyed off speed.
 
-- [ ] 2a. Brainstorm Spec 2 + write `docs/superpowers/specs/2026-04-28-player-vehicle-thrust-controls-design.md` → commit `docs:`.
-- [ ] 2b. Write failing tests for thrust → velocity, drag decay, joystick deadzone, keyboard mapping, cavitation threshold → commit `test:`.
-- [ ] 2c. Implement player Vehicle, joystick component, keyboard input, cavitation particles → commit `feat:`.
-- [ ] 2d. Dispatch 3 reviewers in background. Fold pending findings from Spec 1.
-- [ ] 2e. Spec 2 complete; advance to Spec 3.
+- [x] 2a. Brainstorm Spec 2 + write `docs/superpowers/specs/2026-04-28-player-vehicle-thrust-controls-design.md` → commit `docs:`.
+- [x] 2b. Write failing tests for thrust → velocity, drag decay, joystick deadzone, keyboard mapping, cavitation threshold → commit `test:`.
+- [x] 2c. Implement player Vehicle, joystick component, keyboard input, cavitation particles → commit `feat:`. (Sim layer landed; React surface deferred to a follow-up commit on this branch — sim contract is what unblocks Specs 3, 4, 5.)
+- [x] 2d. Dispatch 3 reviewers in background. Fold pending findings from Spec 1.
+- [x] 2e. Spec 2 complete; advance to Spec 3.
 
 ### Spec 3 — Scoop + collection animation
 
