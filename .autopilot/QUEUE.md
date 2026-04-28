@@ -40,12 +40,12 @@ visual-assessment pass — broken into shippable pieces.
 
 ## Iteration-2 — findings
 
-- [x] **CRITICAL fix**: mobile carousel clips mode-card body copy — Exploration tagline shows `…avo…`, Descent shows `k straight down. Steer left and right. See h…`. Card body overflows the viewport AND chevrons overlap the card body on `<sm`. (PR #269)
-- [x] **HIGH fix**: DRYDOCK chip overlaps wrapped title on mobile-portrait. Title wraps to `BIOLUMINESCENT / SEA` and the chip's right-anchored placement clips into "CENT". (PR #269)
+- [x] **CRITICAL fix**: mobile carousel clips mode-card body copy — Exploration tagline shows `…avo…`, Descent shows `k straight down. Steer left and right. See h…`. Card body overflows the viewport AND chevrons overlap the card body on `<sm`. (PR #275)
+- [x] **HIGH fix**: DRYDOCK chip overlaps wrapped title on mobile-portrait. Title wraps to `BIOLUMINESCENT / SEA` and the chip's right-anchored placement clips into "CENT". (PR #275)
 - [x] **MEDIUM fix**: Drydock upgrade-cost chips render in `--color-warn` red regardless of affordability. (PR #270)
-- [ ] **MEDIUM fix**: pagination dots disappear against the parallax canvas on mobile-portrait. PR #243 fixed chevrons but dots stayed `bg-fg/55`. Bump dot opacity or add a subtle backdrop pill behind the row.
+- [x] **MEDIUM fix**: pagination dots disappear against the parallax canvas on mobile-portrait. (PR #275 — bumped dot opacity `bg-fg/55` → `bg-fg/70`, ring `ring-fg/20` → `ring-fg/30`, and added a `rounded-full bg-abyss/60 px-3 py-1.5 ring-1 ring-glow/30 backdrop-blur-sm` backdrop pill behind the row in the same patch as the carousel-clipping fix.)
 - [x] **MEDIUM fix**: mobile-portrait title block consumes top 35 % before the carousel starts. (PR #271)
-- [ ] **LOW fix**: desktop carousel only shows the centred card — no peripheral cue that two more exist. Render adjacent cards as ghost previews at the gutters (~15 % opacity, scaled 0.85).
+- [?] **LOW fix → deferred**: desktop carousel only shows the centred card — no peripheral cue that two more exist. Investigated implementing ghost previews via `basis-[64%]` items + `ghosted` prop on `ModeCard`. The shared `Carousel` primitive uses `IntersectionObserver` at `threshold: 0.5` to count visible items and divides translate by that count — so adjacent peeks would silently collapse the per-click translate from 100% to 33%, breaking nav. Implementing properly requires either a separate carousel primitive (a one-screen project of its own) or refactoring the existing one to accept an explicit `slidesPerPage` override. Defer to iteration-3 when carousel scope is up for revisit; the discovery affordance is already covered on desktop by the always-visible nav chevrons added in PR #243.
 - [x] **LOW fix**: desktop seedpicker overlay wastes ~50 % of vertical space. (PR #272)
 
 ## Done
