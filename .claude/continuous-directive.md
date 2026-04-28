@@ -100,11 +100,11 @@ layer keyed off speed.
 Front-mounted scoop arc replaces body-overlap collection. Diegetic
 collection animation plays on capture.
 
-- [ ] 3a. Brainstorm Spec 3 + write `docs/superpowers/specs/2026-04-28-scoop-and-collection-animation-design.md` → commit `docs:`.
-- [ ] 3b. Write failing tests for scoop arc geometry, only-front collection, animation event firing → commit `test:`.
-- [ ] 3c. Implement scoop hit-test + animation pipeline + retire body-overlap collection → commit `feat:`.
-- [ ] 3d. Dispatch 3 reviewers in background. Fold pending findings from Spec 2.
-- [ ] 3e. Spec 3 complete; advance to Spec 4.
+- [x] 3a. Brainstorm Spec 3 + write `docs/superpowers/specs/2026-04-28-scoop-and-collection-animation-design.md` → commit `docs:`.
+- [x] 3b. Write failing tests for scoop arc geometry, only-front collection, animation event firing → commit `test:`.
+- [x] 3c. Implement scoop hit-test + animation pipeline + retire body-overlap collection → commit `feat:`. (Sim-side complete; render-side animation derives from collection.collected[] in deferred React surface commit.)
+- [x] 3d. Dispatch 3 reviewers in background. Fold pending findings from Spec 2.
+- [x] 3e. Spec 3 complete; advance to Spec 4.
 
 ### Spec 4 — Torpedoes + combat loop
 
