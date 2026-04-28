@@ -132,22 +132,36 @@ type CarouselNavigationProps = {
   className?: string;
   classNameButton?: string;
   alwaysShow?: boolean;
+  /**
+   * `floating` (default) — arrows are absolutely positioned over the
+   * carousel viewport. Used on tablet+ where the cards have room to
+   * breathe and the chevrons can sit in the gutters.
+   *
+   * `inline` — arrows are rendered as a static flex row, sized to
+   * sit alongside other controls (e.g. pagination dots) in a
+   * separate strip below the carousel. Used on `<sm` where floating
+   * arrows would overlap mode-card body copy.
+   *
+   * (Iter-2 finding #1 — mobile carousel was clipping mode-card
+   * tagline because floating chevrons overlapped the card.)
+   */
+  layout?: "floating" | "inline";
 };
 
 export function CarouselNavigation({
   className,
   classNameButton,
   alwaysShow,
+  layout = "floating",
 }: CarouselNavigationProps) {
   const { index, setIndex, itemsCount } = useCarousel();
+  const isInline = layout === "inline";
   return (
     <div
       className={cn(
-        // Arrows live inside the carousel's viewport on small
-        // breakpoints (so they aren't clipped by `overflow-hidden` on
-        // the page) and bleed slightly outside on tablet+ for a
-        // sweeter visual rhythm.
-        "pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between px-2 sm:left-[-12.5%] sm:inset-x-auto sm:w-[125%]",
+        isInline
+          ? "flex items-center justify-between gap-3"
+          : "pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between px-2 sm:left-[-12.5%] sm:inset-x-auto sm:w-[125%]",
         className,
       )}
     >
@@ -156,7 +170,8 @@ export function CarouselNavigation({
         aria-label="Previous mode"
         data-testid="carousel-prev"
         className={cn(
-          "pointer-events-auto h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
+          "h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
+          isInline ? "" : "pointer-events-auto",
           alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100",
           alwaysShow ? "disabled:opacity-30" : "group-hover/hover:disabled:opacity-30",
           classNameButton,
@@ -172,7 +187,8 @@ export function CarouselNavigation({
         aria-label="Next mode"
         data-testid="carousel-next"
         className={cn(
-          "pointer-events-auto h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
+          "h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
+          isInline ? "" : "pointer-events-auto",
           alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100",
           alwaysShow ? "disabled:opacity-30" : "group-hover/hover:disabled:opacity-30",
           classNameButton,
@@ -191,18 +207,30 @@ type CarouselIndicatorProps = {
   className?: string;
   /** Per-mode metadata so dots can carry the mode's accent colour. */
   modeIds?: readonly string[];
+  /**
+   * `floating` (default) — dot row is absolutely positioned just
+   * below the carousel (the original behaviour). `inline` — dots
+   * render in normal flow so they can share a row with the inline
+   * `<CarouselNavigation>` arrows. (Iter-2 finding #1.)
+   */
+  layout?: "floating" | "inline";
 };
 
-export function CarouselIndicator({ className, modeIds }: CarouselIndicatorProps) {
+export function CarouselIndicator({ className, modeIds, layout = "floating" }: CarouselIndicatorProps) {
   const { index, itemsCount, setIndex } = useCarousel();
   return (
     <div
       className={cn(
-        "absolute -bottom-2 z-10 flex w-full items-center justify-center",
+        layout === "floating"
+          ? "absolute -bottom-2 z-10 flex w-full items-center justify-center"
+          : "flex items-center justify-center",
         className,
       )}
     >
-      <div className="flex items-center space-x-2.5">
+      {/* Backdrop pill behind the dot row matches the chevron pill
+          style — without it the dots disappear against the
+          LandingHero canvas's parallax. (Iter-2 finding #4.) */}
+      <div className="flex items-center space-x-2.5 rounded-full bg-abyss/60 px-3 py-1.5 ring-1 ring-glow/30 backdrop-blur-sm">
         {Array.from({ length: itemsCount }, (_, i) => {
           const isActive = index === i;
           const testId = modeIds?.[i] ? `mode-dot-${modeIds[i]}` : undefined;
@@ -218,7 +246,7 @@ export function CarouselIndicator({ className, modeIds }: CarouselIndicatorProps
               className={
                 isActive
                   ? "h-2 w-8 rounded-full bg-glow shadow-[0_0_12px_rgba(107,230,193,0.7)] transition-all"
-                  : "h-2 w-2 rounded-full bg-fg/55 ring-1 ring-fg/20 transition-all hover:bg-fg hover:ring-fg/40"
+                  : "h-2 w-2 rounded-full bg-fg/70 ring-1 ring-fg/30 transition-all hover:bg-fg hover:ring-fg/50"
               }
             />
           );
