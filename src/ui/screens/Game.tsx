@@ -320,6 +320,24 @@ export default function Game(props: GameProps = {}) {
     setGameState("landing");
   };
 
+  /**
+   * Replay a logged dive from the Drydock history. Skips the seed
+   * picker — the player explicitly chose this entry, the seed +
+   * codename are already in front of them — and drops any active
+   * snapshot so the replay starts from the trench's beginning rather
+   * than resuming a half-finished run on a different seed.
+   */
+  const replayDiveFromHistory = (seed: number, mode: SessionMode) => {
+    clearDeepSeaSnapshot();
+    setInitialSnapshot(null);
+    setSessionMode(mode);
+    setActiveSeed(seed);
+    setPreviewSeed(seed);
+    pushSeedToUrl(seed);
+    setPickerMode(null);
+    setGameState("playing");
+  };
+
   return (
     <GameViewport background="var(--color-bg)" data-browser-screenshot-mode="page">
       <AnimatePresence mode="wait">
@@ -342,6 +360,7 @@ export default function Game(props: GameProps = {}) {
             upgrades={upgrades}
             onBuy={buyUpgrade}
             onBack={() => setGameState("landing")}
+            onReplayDive={replayDiveFromHistory}
           />
         )}
 
