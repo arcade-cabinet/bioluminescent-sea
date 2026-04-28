@@ -122,12 +122,11 @@ function runOneDive(seed: number): RunResult {
   let multiplier = 1;
   let lastImpactTime = 0;
   let totalTime = 0;
-  let timeLeft = getDiveDurationSeconds("exploration", seed);
   let impactsTaken = 0;
 
   for (let frame = 0; frame < FRAMES_TO_RUN; frame++) {
     totalTime += DELTA;
-    timeLeft = Math.max(0, getDiveDurationSeconds("exploration", seed) - totalTime);
+    const timeLeft = Math.max(0, getDiveDurationSeconds("exploration", seed) - totalTime);
     if (timeLeft <= 0) {
       return { finalScore: score, impactsTaken, framesRan: frame };
     }

@@ -131,8 +131,8 @@ Use the already-imported `AlignmentBehavior` + `CohesionBehavior` +
 
 ### Final pass
 
-- [ ] Final cumulative review (3 agents on the full branch diff). Fold findings.
-- [ ] `pnpm lint && pnpm typecheck && pnpm test && pnpm test:browser && pnpm test:e2e` all green locally.
+- [x] Final cumulative review (3 agents on the full branch diff). Fold findings.
+- [x] `pnpm lint && pnpm typecheck && pnpm test && pnpm test:browser && pnpm test:e2e` all green locally.
 - [ ] Push branch.
 - [ ] Open single PR titled `feat: pre-launch polish — perception, controls, scoop, combat, schools`.
 - [ ] Wait for CI green; address any CodeRabbit / human feedback.
