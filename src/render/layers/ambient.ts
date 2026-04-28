@@ -76,8 +76,10 @@ export function mountAmbient(parent: Container): AmbientController {
           drawAnglerfishLures(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
         case "abyssopelagic":
+          drawAbyssalPlain(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
+          break;
         case "hadopelagic":
-          drawAbyssalLandmarks(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
+          drawHadalGeology(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
       }
     },
@@ -208,8 +210,82 @@ function drawAnglerfishLures(
   }
 }
 
-// ── Abyssal trench — volcanic vents + rocky outcrops + shipwreck ────────────
-function drawAbyssalLandmarks(
+// ── Abyssopelagic plain — whale-fall + dumbo-octopus drift ──────────────────
+// Quiet, ancient, sparse. The reference comment for this zone calls
+// for "whale-fall silhouettes, dumbo octopus drifting past, deep-jelly
+// trails" — soft drifting silhouettes on a near-black field. Distinct
+// from the hadal painter below (which is dramatic vents + geology).
+function drawAbyssalPlain(
+  g: Graphics,
+  widthPx: number,
+  heightPx: number,
+  totalTime: number,
+  parallaxY: number,
+  diveSeed: number,
+): void {
+  // Whale-fall silhouette — one per dive, placed by seed.
+  const wfX = noise(diveSeed, 4242) * widthPx;
+  const wfY = heightPx * 0.82 + parallaxY * 0.3;
+  // Long ribcage arc — a series of pale ribs over a dark hull shadow.
+  g.ellipse(wfX, wfY, 90, 14).fill({ color: 0x05080c, alpha: 0.78 });
+  for (let r = -4; r <= 4; r++) {
+    const rx = wfX + r * 14;
+    const ry = wfY - 4;
+    g.moveTo(rx, ry);
+    g.bezierCurveTo(rx, ry - 22, rx + 4, ry - 24, rx + 6, ry - 22);
+    g.stroke({ color: 0x9aa6b0, alpha: 0.18, width: 1 });
+  }
+  // Spine line on top of the carcass
+  g.moveTo(wfX - 70, wfY - 3);
+  g.lineTo(wfX + 70, wfY - 3);
+  g.stroke({ color: 0xb0bcc6, alpha: 0.12, width: 1 });
+
+  // Dumbo octopus drift — small soft silhouettes flapping past on a
+  // slow phase cycle. Pure decoration; a few of them peppered across
+  // the viewport at deep parallax depth.
+  const dumboCount = 5;
+  for (let i = 0; i < dumboCount; i++) {
+    const x = noise(diveSeed, i * 41) * widthPx;
+    const yBase = noise(diveSeed, i * 47) * heightPx;
+    const y = ((yBase + parallaxY) % heightPx + heightPx) % heightPx;
+    const flap = 0.5 + Math.sin(totalTime * 0.6 + i * 1.3) * 0.5;
+    const w = 11 + noise(diveSeed, i * 53) * 5;
+    const h = 7 + flap * 3;
+    // Body
+    g.ellipse(x, y, w, h).fill({ color: 0x3a1d24, alpha: 0.42 });
+    // Ear-fins flapping outward
+    g.ellipse(x - w, y - 2, w * 0.55, h * 0.6).fill({
+      color: 0x4a2530,
+      alpha: 0.32 * flap,
+    });
+    g.ellipse(x + w, y - 2, w * 0.55, h * 0.6).fill({
+      color: 0x4a2530,
+      alpha: 0.32 * flap,
+    });
+  }
+
+  // Deep-jelly trails — soft violet vertical streaks falling through
+  // the viewport. Slow, subtle, evokes the marine-snow feel a level
+  // below the bathypelagic anglerfish field.
+  const jellyCount = 4;
+  for (let i = 0; i < jellyCount; i++) {
+    const x = noise(diveSeed, i * 59) * widthPx;
+    const yBase = noise(diveSeed, i * 61) * heightPx;
+    const y = ((yBase + parallaxY * 0.7) % heightPx + heightPx) % heightPx;
+    const trailLen = 24 + noise(diveSeed, i * 67) * 18;
+    const sway = Math.sin(totalTime * 0.4 + i) * 3;
+    g.ellipse(x + sway, y, 5, 6).fill({ color: 0x9d7bff, alpha: 0.22 });
+    g.moveTo(x + sway, y + 4);
+    g.lineTo(x + sway * 0.3, y + 4 + trailLen);
+    g.stroke({ color: 0x7c63d8, alpha: 0.14, width: 1.4 });
+  }
+}
+
+// ── Hadopelagic geology — volcanic vents + rocky outcrops + shipwreck ───────
+// Dramatic and geological. The reference comment for this zone calls
+// for "volcanic vent glow, hydrothermal column shimmer, rocky outcrop
+// silhouettes, hadal-trench geometry."
+function drawHadalGeology(
   g: Graphics,
   widthPx: number,
   heightPx: number,
