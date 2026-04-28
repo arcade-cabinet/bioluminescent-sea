@@ -186,6 +186,12 @@ export interface SceneAdvanceResult {
    */
   oxygenBonusSeconds: number;
   /**
+   * Oxygen seconds spent firing torpedoes this frame. The runtime
+   * subtracts this from its `timeModifier` (negative modifier) so
+   * the HUD shows the cost immediately. 0 most frames.
+   */
+  torpedoOxygenCost: number;
+  /**
    * True if any predator entered StrikeState near the player this
    * frame. Drives a brief screen-shake + flash burst even when the
    * strike misses the collision check — the *attempt* is the

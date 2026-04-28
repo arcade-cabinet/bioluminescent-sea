@@ -133,10 +133,11 @@ export function advanceScene(
   // Torpedo firing and stepping
   const TORPEDO_OXYGEN_COST = 5; // seconds
   let newTorpedo: Torpedo | null = null;
+  let torpedoOxygenCost = 0;
   if (input.fire && timeLeft > TORPEDO_OXYGEN_COST + 1) {
     newTorpedo = torpedoLauncher(player, player.angle, totalTime);
     if (newTorpedo) {
-      timeLeft -= TORPEDO_OXYGEN_COST;
+      torpedoOxygenCost = TORPEDO_OXYGEN_COST;
     }
   }
 
@@ -567,6 +568,7 @@ export function advanceScene(
     scene: nextScene,
     telemetry: getDiveTelemetry(nextScene, timeLeft, tuning.durationSeconds),
     oxygenBonusSeconds: breathBonus,
+    torpedoOxygenCost,
     predatorStrikeNearPlayer,
     threatIntensity,
     predatorPackCallThisFrame,

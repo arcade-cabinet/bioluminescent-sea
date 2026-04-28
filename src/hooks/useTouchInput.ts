@@ -91,12 +91,24 @@ export function useTouchInput(containerRef: React.RefObject<HTMLElement | null>)
   // Expose a stable object-shape for the game loop. The x/y are live
   // from the ref on every access, but the returned object identity is
   // stable across renders so downstream useCallback deps don't flip.
-  const inputRef = useRef<InputPosition>({ x: 0, y: 0, isActive: false, fire: false });
+  //
+  // `fire` is a getter so the game loop RAF reads the flag at frame time
+  // rather than at render time. Without this, a double-tap while isActive
+  // is already true skips the re-render and the flag never propagates.
+  const inputRef = useRef<InputPosition>({ x: 0, y: 0, isActive: false });
+  if (!Object.getOwnPropertyDescriptor(inputRef.current, "fire")?.get) {
+    Object.defineProperty(inputRef.current, "fire", {
+      get() {
+        const val = fireThisFrameRef.current;
+        fireThisFrameRef.current = false;
+        return val;
+      },
+      configurable: true,
+      enumerable: true,
+    });
+  }
   inputRef.current.x = positionRef.current.x;
   inputRef.current.y = positionRef.current.y;
   inputRef.current.isActive = isActive;
-  inputRef.current.fire = fireThisFrameRef.current;
-  // Reset fire so it only triggers once per tap
-  fireThisFrameRef.current = false;
   return inputRef.current;
 }

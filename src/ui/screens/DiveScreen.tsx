@@ -637,7 +637,18 @@ export function DiveScreen({
             showOxygenPulse(cappedBonus, effectiveTotalTime);
           }
         }
+
       }
+
+      // Torpedo oxygen cost — deduct from timeModifier so the wall-clock
+      // HUD reflects the trade-off immediately (independent of collection).
+      if (result.torpedoOxygenCost > 0) {
+        timeModifierRef.current -= result.torpedoOxygenCost;
+        newTimeLeft = getAdjustedTimeLeft();
+        setTimeLeft(newTimeLeft);
+        showImpactPulse(result.torpedoOxygenCost, effectiveTotalTime);
+      }
+
       if (isDiveComplete(result.scene, mode, seed)) {
         setIsGameOver(true);
         void playSfx("dive-complete");
