@@ -68,8 +68,8 @@ drained or `Status` flips to `RELEASED`.
 
 ### Branch + scaffolding
 
-- [ ] Create branch `feat/pre-launch-polish` off `main`.
-- [ ] Initial commit: this directive + anti-stop hook + settings update.
+- [x] Create branch `feat/pre-launch-polish` off `main`.
+- [x] Initial commit: this directive + anti-stop hook + settings update.
 
 ### Spec 1 — Perception layer (`src/sim/ai/perception/`)
 
@@ -77,11 +77,11 @@ Cone-of-vision + radius + line-of-sight. Wire into GOAP profiles so the
 test bot reasons only from what a real player can see. Pirates already
 have an awareness model — generalize it.
 
-- [ ] 1a. Brainstorm Spec 1 + write `docs/superpowers/specs/2026-04-28-perception-layer-design.md` → commit `docs:`.
-- [ ] 1b. Write failing tests asserting GOAP bot survival under realistic perception drops to player-realistic numbers → commit `test:`.
-- [ ] 1c. Implement perception module + retire direct `scene.creatures` / `scene.predators` reads in GOAP profiles → commit `feat:`.
-- [ ] 1d. Dispatch 3 reviewers in background.
-- [ ] 1e. Spec 1 complete; advance to Spec 2.
+- [x] 1a. Brainstorm Spec 1 + write `docs/superpowers/specs/2026-04-28-perception-layer-design.md` → commit `docs:`.
+- [x] 1b. Write failing tests asserting GOAP bot survival under realistic perception drops to player-realistic numbers → commit `test:`.
+- [x] 1c. Implement perception module + retire direct `scene.creatures` / `scene.predators` reads in GOAP profiles → commit `feat:`.
+- [x] 1d. Dispatch 3 reviewers in background.
+- [x] 1e. Spec 1 complete; advance to Spec 2.
 
 ### Spec 2 — Player Vehicle + thrust controls
 
