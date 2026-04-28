@@ -67,15 +67,18 @@ describe("createTorpedoLauncher — fire and cooldown", () => {
 describe("createTorpedoLauncher — aim (folds quality CRITICAL #3)", () => {
   test("torpedo velocity tracks the aim arg, not player heading", () => {
     const launcher = createTorpedoLauncher();
-    // aim=0 → +X
-    const t = launcher.fire({ x: 0, y: 0 }, 0, 0)!;
+    const t = launcher.fire({ x: 0, y: 0 }, 0, 0);
+    expect(t).not.toBeNull();
+    if (!t) throw new Error("unreachable");
     expect(t.vx).toBeCloseTo(TORPEDO_SPEED_PX_PER_SEC, 1);
     expect(t.vy).toBeCloseTo(0, 5);
   });
 
   test("aim=PI/2 → torpedo flies +Y", () => {
     const launcher = createTorpedoLauncher();
-    const t = launcher.fire({ x: 0, y: 0 }, Math.PI / 2, 0)!;
+    const t = launcher.fire({ x: 0, y: 0 }, Math.PI / 2, 0);
+    expect(t).not.toBeNull();
+    if (!t) throw new Error("unreachable");
     expect(t.vx).toBeCloseTo(0, 5);
     expect(t.vy).toBeCloseTo(TORPEDO_SPEED_PX_PER_SEC, 1);
   });
@@ -85,7 +88,9 @@ describe("createTorpedoLauncher — aim (folds quality CRITICAL #3)", () => {
     // launcher takes aim explicitly so the runtime can pass aim
     // when set, falling back to heading when not.
     const launcher = createTorpedoLauncher();
-    const t = launcher.fire({ x: 0, y: 0 }, Math.PI / 4, 0)!;
+    const t = launcher.fire({ x: 0, y: 0 }, Math.PI / 4, 0);
+    expect(t).not.toBeNull();
+    if (!t) throw new Error("unreachable");
     const speed = Math.hypot(t.vx, t.vy);
     expect(speed).toBeCloseTo(TORPEDO_SPEED_PX_PER_SEC, 1);
   });
@@ -132,7 +137,7 @@ describe("stepTorpedo — projectile motion", () => {
 
   test("step advances position by velocity × dt", () => {
     const t = makeTorpedo();
-    const next = stepTorpedo(t, 0.5);
+    const next = stepTorpedo(t, 0.1, 0.5);
     expect(next).not.toBeNull();
     if (!next) throw new Error("unreachable");
     expect(next.x).toBeCloseTo(TORPEDO_SPEED_PX_PER_SEC * 0.5, 1);
@@ -141,14 +146,20 @@ describe("stepTorpedo — projectile motion", () => {
 
   test("step preserves velocity (no drag)", () => {
     const t = makeTorpedo();
-    const next = stepTorpedo(t, 0.5)!;
+    const next = stepTorpedo(t, 0.1, 0.5);
+    expect(next).not.toBeNull();
+    if (!next) throw new Error("unreachable");
     expect(next.vx).toBe(t.vx);
     expect(next.vy).toBe(t.vy);
   });
 
   test("step at simTime past expiresAt returns null (despawn)", () => {
     const t = makeTorpedo({ expiresAt: 1 });
-    const next = stepTorpedo(t, 1.5); // 1.5s elapsed > 1s lifespan
+    const next = stepTorpedo(t, 1.5, 1 / 30); // simTime 1.5 > 1s expiresAt
     expect(next).toBeNull();
+  });
+
+  test("step with NaN simTime returns null", () => {
+    expect(stepTorpedo(makeTorpedo(), NaN, 0.5)).toBeNull();
   });
 });
