@@ -8,6 +8,7 @@ import type {
   Predator,
 } from "@/sim/entities/types";
 import type { Torpedo } from "@/sim/player/torpedo";
+import type { CavitationEvent } from "@/sim/player/cavitation";
 
 export interface ViewportDimensions {
   width: number;
@@ -115,6 +116,11 @@ export interface SceneState {
    * fired; expired/collided torpedoes are removed each frame.
    */
   torpedoes: Torpedo[];
+  /**
+   * Cavitation events fired this frame for renderer particle FX.
+   * Cleared every frame — the runtime consumes them immediately.
+   */
+  cavitationEvents: CavitationEvent[];
 }
 
 export interface CreatureCollectionResult {

@@ -35,6 +35,10 @@ import {
   advanceTorpedo,
   type Torpedo,
 } from "@/sim/player/torpedo";
+import {
+  createCavitationEmitter,
+  type CavitationEvent,
+} from "@/sim/player/cavitation";
 
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
@@ -59,11 +63,13 @@ export function createInitialScene(
     objectiveQueue: createObjectiveQueue(normalizeSessionMode(mode)),
     clearedChunks: [],
     torpedoes: [],
+    cavitationEvents: [],
   };
 }
 
 let aiManager: AIManager | null = null;
 let torpedoLauncher: ReturnType<typeof createTorpedoLauncher> | null = null;
+let cavitationEmitter: ReturnType<typeof createCavitationEmitter> | null = null;
 
 export function resetAIManager() {
   aiManager = null;
@@ -71,6 +77,10 @@ export function resetAIManager() {
 
 export function resetTorpedoLauncher() {
   torpedoLauncher = null;
+}
+
+export function resetCavitationEmitter() {
+  cavitationEmitter = null;
 }
 
 /**
@@ -104,6 +114,11 @@ export function advanceScene(
   if (!torpedoLauncher) {
     torpedoLauncher = createTorpedoLauncher();
   }
+  if (!cavitationEmitter) {
+    // Cruise = base movement speed, sprint = sprint speed
+    // These are approximate pixel/second speeds
+    cavitationEmitter = createCavitationEmitter(120, 240);
+  }
   const ai = aiManager;
 
   const player = advancePlayer(
@@ -136,6 +151,18 @@ export function advanceScene(
   if (newTorpedo) {
     steppedTorpedoes.push(newTorpedo);
   }
+
+  // Step cavitation emitter — produces events for particle FX
+  const cavEvent = cavitationEmitter.step(
+    (player as unknown as { vx?: number }).vx ?? 0,
+    (player as unknown as { vy?: number }).vy ?? 0,
+    !!input.sprint,
+    deltaTime,
+    totalTime,
+    player.x,
+    player.y
+  );
+  const cavitationEvents: CavitationEvent[] = cavEvent ? [cavEvent] : [];
 
   ai.updatePlayer(player);
   // Biome-driven aggression: deeper biomes turn the dial up.
@@ -473,6 +500,7 @@ export function advanceScene(
     objectiveQueue: scene.objectiveQueue,
     clearedChunks: nextClearedChunks,
     torpedoes: steppedTorpedoes,
+    cavitationEvents,
   };
 
   // Objective progress advance. First apply per-frame increments
