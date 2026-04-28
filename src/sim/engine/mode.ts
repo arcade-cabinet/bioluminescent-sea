@@ -24,6 +24,7 @@ function tuningFromSlots(slots: ModeSlots): DiveModeTuning {
     targetDepthMeters: slots.targetDepthMeters ?? undefined,
     respawnThreats: slots.respawnThreats,
     difficultyScaling: slots.difficultyScaling,
+    seafloorBehavior: slots.seafloorBehavior,
   };
 }
 

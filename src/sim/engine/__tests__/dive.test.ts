@@ -343,6 +343,54 @@ describe("deep sea simulation", () => {
     expect(result.scene.depthTravelMeters).toBeLessThanOrEqual(6400);
   });
 
+  test("seafloor symmetry: exploration clamps depth at the ocean floor (11000m)", () => {
+    // Start near the deepest authored zone. A few seconds of sim should
+    // not push depth past OCEAN_FLOOR_METERS — instead the player is now
+    // free-roaming with depth pinned to the floor.
+    const scene = { ...createInitialScene(desktop), depthTravelMeters: 10990 };
+    let current = scene;
+    for (let f = 0; f < 240; f++) {
+      const result = advanceScene(
+        current,
+        { isActive: true, x: 0.5, y: 1 },
+        desktop,
+        f * (1 / 60),
+        1 / 60,
+        0,
+        1,
+        GAME_DURATION,
+        "exploration",
+        0xCAFE,
+      );
+      current = result.scene;
+    }
+    expect(current.depthTravelMeters).toBeLessThanOrEqual(11000);
+    // And depth has progressed to the floor — confirming the clamp
+    // engaged rather than the sim being stuck.
+    expect(current.depthTravelMeters).toBeGreaterThanOrEqual(10999);
+  });
+
+  test("seafloor symmetry: arena clamps depth at the ocean floor (11000m)", () => {
+    const scene = { ...createInitialScene(desktop), depthTravelMeters: 10990 };
+    let current = scene;
+    for (let f = 0; f < 240; f++) {
+      const result = advanceScene(
+        current,
+        { isActive: true, x: 0, y: 1 },
+        desktop,
+        f * (1 / 60),
+        1 / 60,
+        0,
+        1,
+        GAME_DURATION,
+        "arena",
+        0xCAFE,
+      );
+      current = result.scene;
+    }
+    expect(current.depthTravelMeters).toBeLessThanOrEqual(11000);
+  });
+
   test("describes oxygen, depth, and collection telemetry", () => {
     const scene = createInitialScene(desktop);
     // depthTravelMeters is now a real sim state — set it explicitly so

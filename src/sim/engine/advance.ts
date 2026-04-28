@@ -18,6 +18,7 @@ import {
 } from "./collection";
 import {
   DESCENT_SPEED_METERS_PER_SECOND,
+  OCEAN_FLOOR_METERS,
   TRENCH_FLOOR_METERS,
 } from "@/sim/dive/constants";
 import { getDiveModeTuning } from "./mode";
@@ -321,7 +322,16 @@ export function advanceScene(
       scene.depthTravelMeters + targetDepthOffset,
     );
   } else if (tuning.completionCondition === "infinite") {
-    nextDepthTravelMeters = scene.depthTravelMeters + targetDepthOffset;
+    // Seafloor symmetry: in `free-roam` modes the depth counter clamps
+    // at the deepest authored zone so the bottom of the world mirrors
+    // the surface — the player keeps moving laterally and collecting
+    // but stops descending. In `win` modes infinite descent stays
+    // unbounded (no current mode uses that combination).
+    const proposed = scene.depthTravelMeters + targetDepthOffset;
+    nextDepthTravelMeters =
+      tuning.seafloorBehavior === "free-roam"
+        ? Math.min(OCEAN_FLOOR_METERS, proposed)
+        : proposed;
   } else {
     nextDepthTravelMeters = Math.min(
       tuning.targetDepthMeters ?? TRENCH_FLOOR_METERS,

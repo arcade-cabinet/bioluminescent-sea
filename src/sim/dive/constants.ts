@@ -20,3 +20,12 @@ export const DESCENT_SPEED_METERS_PER_SECOND = 11;
  * pipeline's abyssal-trench biome ends here.
  */
 export const TRENCH_FLOOR_METERS = 6400;
+
+/**
+ * The deepest authored point in the world — end of the hadopelagic
+ * zone, ~Challenger Deep. In infinite modes this is the floor: the
+ * depth counter clamps here and the player keeps moving laterally
+ * (mirrors the surface). Descent ends on its own `targetDepthMeters`
+ * before reaching this — the floor only matters for free-roam modes.
+ */
+export const OCEAN_FLOOR_METERS = 11000;
