@@ -156,32 +156,32 @@ export function CarouselNavigation({
         aria-label="Previous mode"
         data-testid="carousel-prev"
         className={cn(
-          "pointer-events-auto h-fit w-fit bg-transparent p-2 text-fg-muted transition-all hover:text-glow",
+          "pointer-events-auto h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
           alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100",
-          alwaysShow ? "disabled:opacity-20" : "group-hover/hover:disabled:opacity-20",
+          alwaysShow ? "disabled:opacity-30" : "group-hover/hover:disabled:opacity-30",
           classNameButton,
         )}
         style={{ filter: "url(#bs-soft-glow)" }}
         disabled={index === 0}
         onClick={() => index > 0 && setIndex(index - 1)}
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={28} />
       </button>
       <button
         type="button"
         aria-label="Next mode"
         data-testid="carousel-next"
         className={cn(
-          "pointer-events-auto h-fit w-fit bg-transparent p-2 text-fg-muted transition-all hover:text-glow",
+          "pointer-events-auto h-fit w-fit rounded-full bg-abyss/60 p-2 text-fg ring-1 ring-glow/40 backdrop-blur-sm transition-all hover:text-glow hover:ring-glow",
           alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100",
-          alwaysShow ? "disabled:opacity-20" : "group-hover/hover:disabled:opacity-20",
+          alwaysShow ? "disabled:opacity-30" : "group-hover/hover:disabled:opacity-30",
           classNameButton,
         )}
         style={{ filter: "url(#bs-soft-glow)" }}
         disabled={index + 1 === itemsCount}
         onClick={() => index < itemsCount - 1 && setIndex(index + 1)}
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={28} />
       </button>
     </div>
   );
@@ -217,8 +217,8 @@ export function CarouselIndicator({ className, modeIds }: CarouselIndicatorProps
               onClick={() => setIndex(i)}
               className={
                 isActive
-                  ? "h-1.5 w-7 rounded-full bg-glow shadow-[0_0_10px_rgba(107,230,193,0.6)] transition-all"
-                  : "h-1.5 w-1.5 rounded-full bg-fg-muted/40 transition-all hover:bg-fg-muted/70"
+                  ? "h-2 w-8 rounded-full bg-glow shadow-[0_0_12px_rgba(107,230,193,0.7)] transition-all"
+                  : "h-2 w-2 rounded-full bg-fg/55 ring-1 ring-fg/20 transition-all hover:bg-fg hover:ring-fg/40"
               }
             />
           );
