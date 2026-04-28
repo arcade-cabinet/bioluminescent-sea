@@ -110,7 +110,15 @@ function segmentsIntersect(
     const maxAy = Math.max(ay1, ay2);
     const onA1 = bx1 >= minAx && bx1 <= maxAx && by1 >= minAy && by1 <= maxAy;
     const onA2 = bx2 >= minAx && bx2 <= maxAx && by2 >= minAy && by2 <= maxAy;
-    return onA1 || onA2;
+    // Also check the inverse: A's endpoints within B's bounding box
+    // covers the case where A is fully contained within B.
+    const minBx = Math.min(bx1, bx2);
+    const maxBx = Math.max(bx1, bx2);
+    const minBy = Math.min(by1, by2);
+    const maxBy = Math.max(by1, by2);
+    const onB1 = ax1 >= minBx && ax1 <= maxBx && ay1 >= minBy && ay1 <= maxBy;
+    const onB2 = ax2 >= minBx && ax2 <= maxBx && ay2 >= minBy && ay2 <= maxBy;
+    return onA1 || onA2 || onB1 || onB2;
   }
 
   const tNum = (bx1 - ax1) * dby - (by1 - ay1) * dbx;

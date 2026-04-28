@@ -9,6 +9,7 @@ import {
   resetAIManager,
   type SceneState,
 } from "@/sim/dive";
+import { getCurrentPerception } from "@/sim/engine/advance";
 import {
   createCollectBeaconsProfile,
   createGoapBrainOwner,
@@ -131,11 +132,10 @@ function runOneDive(seed: number): RunResult {
       return { finalScore: score, impactsTaken, framesRan: frame };
     }
 
-    // The runtime-built perception context is published on the
-    // observation each tick. Empty until the first advanceScene
-    // call rebuilds it; on subsequent frames it reflects the
-    // current scene's occluders.
-    const perception: PerceptionContext = owner.observation.perception;
+    // Use the perception context that advanceScene rebuilt last frame.
+    // getCurrentPerception() returns the AIManager's live occluder list,
+    // so the bot reasons from the same context the brains used.
+    const perception: PerceptionContext = getCurrentPerception();
 
     const input: DiveInput = bot.next({
       scene,
@@ -214,6 +214,11 @@ describe("perception-bot-survival gate", () => {
       expect(r.framesRan).toBe(FRAMES_TO_RUN);
       expect(Number.isFinite(r.finalScore)).toBe(true);
     }
+    // Second pass: same seeds must produce identical frame counts and
+    // scores — seeded PRNG, no wall-clock, pure determinism.
+    const secondPass = SEEDS.map(runOneDive);
+    expect(secondPass.map((r) => r.framesRan)).toEqual(RESULTS.map((r) => r.framesRan));
+    expect(secondPass.map((r) => r.finalScore)).toEqual(RESULTS.map((r) => r.finalScore));
   });
 
   test("perception hides a beacon behind a debris occluder (unit-level proof)", () => {

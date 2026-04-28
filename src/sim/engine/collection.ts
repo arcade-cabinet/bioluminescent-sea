@@ -111,7 +111,8 @@ export function collectCreatures(
   // and widening the arc would change feel, not just range. Negative
   // reachScale is a caller bug; clamp to 0 so the radius test
   // rejects deterministically rather than producing surprising behaviour.
-  const reach = SCOOP_REACH_PX * Math.max(0, reachScale);
+  const safeScale = Number.isFinite(reachScale) ? Math.max(0, reachScale) : 0;
+  const reach = SCOOP_REACH_PX * safeScale;
 
   for (const creature of creatures) {
     if (creature.ambient) {

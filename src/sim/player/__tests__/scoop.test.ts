@@ -62,6 +62,17 @@ describe("isInScoop — angle cases (player faces +X / angle=0)", () => {
     ).toBe(true);
   });
 
+  test("target at exact half-angle is IN (closed boundary)", () => {
+    expect(
+      isInScoop(
+        PLAYER_FACING_RIGHT,
+        { x: Math.cos(HALF_ANGLE) * 40, y: Math.sin(HALF_ANGLE) * 40 },
+        REACH,
+        HALF_ANGLE,
+      ),
+    ).toBe(true);
+  });
+
   test("target just past half-angle is OUT", () => {
     const angle = HALF_ANGLE + 0.05;
     expect(

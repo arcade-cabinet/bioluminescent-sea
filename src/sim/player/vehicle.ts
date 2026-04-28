@@ -92,7 +92,8 @@ export function applyThrust(
   // Cap dt so a backgrounded-tab return doesn't produce a single-frame
   // velocity spike. Drag will absorb anything in-band over multiple
   // frames; this just bounds the per-frame overshoot.
-  const dt = Math.min(deltaTime, MAX_DELTA_TIME);
+  const dt = Math.max(0, Math.min(deltaTime, MAX_DELTA_TIME));
+  if (dt === 0) return;
 
   vehicle.maxSpeed = input.sprint
     ? config.cruiseMaxSpeed * config.sprintMultiplier

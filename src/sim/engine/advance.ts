@@ -117,7 +117,10 @@ export function advanceScene(
   // slot; Spec 1c lands the module + the wire, the locked-room hook
   // follows when the first locked-room chunk archetype ships its
   // perception case.
-  ai.rebuildPerception(scene);
+  // Arena is the only mode whose chunks use the locked-room travel
+  // slot (collisionEndsDive + respawnThreats), so that flag is the
+  // right proxy for "add viewport-edge wall occluders this frame."
+  ai.rebuildPerception(scene, tuning.collisionEndsDive && tuning.respawnThreats);
   ai.update(deltaTime);
 
   // Lamp-pressure: predators inside the player's lamp cone take

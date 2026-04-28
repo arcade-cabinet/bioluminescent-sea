@@ -65,7 +65,9 @@ export function createCavitationEmitter(
         !Number.isFinite(velocityX) ||
         !Number.isFinite(velocityY) ||
         !Number.isFinite(deltaTime) ||
-        !Number.isFinite(simTime)
+        !Number.isFinite(simTime) ||
+        !Number.isFinite(posX) ||
+        !Number.isFinite(posY)
       ) {
         return null;
       }
