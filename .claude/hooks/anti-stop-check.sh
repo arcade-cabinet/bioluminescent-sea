@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # anti-stop-check.sh — generic continuous-work guardrail.
 #
-# Reads the directive (.claude/continuous-directive.md) for ACTIVE/RELEASED.
+# Reads the directive (.agent-state/directive.md) for ACTIVE/RELEASED.
 # Counts unchecked `- [ ]` items in:
-#   - .claude/continuous-directive.md (the active work-unit queue)
+#   - .agent-state/directive.md (the active work-unit queue)
 #   - docs/PRODUCTION.md               (the long-running production queue)
 #   - .autopilot/QUEUE.md              (the /loop autopilot queue, if used)
 #
@@ -21,7 +21,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO"
 
-DIRECTIVE="$REPO/.claude/continuous-directive.md"
+DIRECTIVE="$REPO/.agent-state/directive.md"
 QUEUE_FILES=(
   "$DIRECTIVE"
   "$REPO/docs/PRODUCTION.md"

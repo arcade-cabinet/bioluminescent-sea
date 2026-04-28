@@ -57,10 +57,10 @@ count_open() {
   echo "[autopilot] Brief acknowledgement — do not stop, do not summarize."
   echo ""
 
-  DIRECTIVE="$REPO/.claude/continuous-directive.md"
+  DIRECTIVE="$REPO/.agent-state/directive.md"
   if [ -f "$DIRECTIVE" ]; then
     DIR_OPEN=$(count_open "$DIRECTIVE")
-    echo "$DIR_OPEN .claude/continuous-directive.md items still open."
+    echo "$DIR_OPEN .agent-state/directive.md items still open."
     echo ""
     if [ "$DIR_OPEN" != "0" ]; then
       echo "Top open directive items:"

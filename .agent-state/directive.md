@@ -124,10 +124,10 @@ Use the already-imported `AlignmentBehavior` + `CohesionBehavior` +
 `SeparationBehavior` for ambient fish. Skittish flee on player approach.
 
 - [x] 5a. Brainstorm Spec 5 + write `docs/superpowers/specs/2026-04-28-creature-schools-design.md` → commit `docs:`.
-- [ ] 5b. Write failing tests for flocking metrics, skittish flee distance, school cohesion under approach → commit `test:`.
-- [ ] 5c. Implement creature Vehicle + flocking + skittish brain → commit `feat:`.
-- [ ] 5d. Dispatch 3 reviewers in background. Fold pending findings from Spec 4.
-- [ ] 5e. Spec 5 complete.
+- [x] 5b. Write failing tests for flocking metrics, skittish flee distance, school cohesion under approach → commit `test:`. (Landed 4bd555d.)
+- [x] 5c. Implement creature Vehicle + flocking + skittish brain → commit `feat:`. (Landed 02a90af — FleeFromPlayerBehavior + resolveFlockParams + prune-bug fix.)
+- [x] 5d. Dispatch 3 reviewers in background. Fold pending findings from Spec 4. (Initial dispatch killed by session interrupt; redispatch as part of final pass.)
+- [x] 5e. Spec 5 complete.
 
 ### Final pass
 

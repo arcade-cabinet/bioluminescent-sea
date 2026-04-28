@@ -10,7 +10,7 @@ TMP=$(mktemp -t orient.XXXXXX)
 trap 'rm -f "$TMP"' EXIT
 
 PRODUCTION_FILE="$REPO/docs/PRODUCTION.md"
-DIRECTIVE_FILE="$REPO/.claude/continuous-directive.md"
+DIRECTIVE_FILE="$REPO/.agent-state/directive.md"
 
 # See pat-on-back-trap.sh: grep -c on zero matches needs `|| true`
 # (not `|| echo 0`) under set -euo pipefail or the variable becomes
@@ -38,7 +38,7 @@ count_marker() {
     DIR_STATUS=${DIR_STATUS:-ACTIVE}
     DIR_OPEN=$(count_marker "$DIRECTIVE_FILE" '^\- \[ \]')
     DIR_DONE=$(count_marker "$DIRECTIVE_FILE" '^\- \[x\]')
-    echo "Directive (.claude/continuous-directive.md): Status=${DIR_STATUS} · ${DIR_DONE} done · ${DIR_OPEN} open"
+    echo "Directive (.agent-state/directive.md): Status=${DIR_STATUS} · ${DIR_DONE} done · ${DIR_OPEN} open"
     echo ""
     if [ "$DIR_OPEN" != "0" ]; then
       echo "## Directive — next open items (top 10)"
@@ -72,7 +72,7 @@ count_marker() {
 
   echo "## Autopilot directive"
   echo ""
-  echo "1. The directive at .claude/continuous-directive.md is the active"
+  echo "1. The directive at .agent-state/directive.md is the active"
   echo "   work-unit queue. While Status: ACTIVE, the Stop hook blocks"
   echo "   session end until every '- [ ]' is checked."
   echo "2. Read CLAUDE.md, STANDARDS.md, docs/DESIGN.md for context."
