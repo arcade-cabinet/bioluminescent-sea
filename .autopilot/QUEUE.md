@@ -35,8 +35,8 @@ affordance, HUD landmark direction glyph, abyssal ambient split,
 visual-assessment pass — broken into shippable pieces.
 
 - [x] Fix stale e2e tagline assertion in `e2e/golden-path.spec.ts` (asserted the old "sink into an abyssal trench" copy; landing now reads "Pilot a submarine into the deep ocean"). (PR #265)
-- [ ] Build a Playwright capture spec under `e2e/capture-iteration-2.spec.ts` that drives the dev preview through landing → mode carousel (each card) → seed-picker (today + reroll states) → dive at each of the 5 zones → drydock (mixed upgrade levels) and writes pngs to `docs/screenshots/iteration-2/`. No assertions — pure capture; assessment is a separate iteration.
-- [ ] Eyes-on review the iteration-2 capture set and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings, severity-ordered. Each finding becomes a queue item below.
+- [x] Build a Playwright capture spec under `e2e/capture-iteration-2.spec.ts` that drives the dev preview through landing → mode carousel (each card) → seed-picker (today + reroll states) → dive at each of the 5 zones → drydock (mixed upgrade levels) and writes pngs to `docs/screenshots/iteration-2/`. No assertions — pure capture; assessment is a separate iteration. (PR #267)
+- [x] Eyes-on review the iteration-2 capture set and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings, severity-ordered. Each finding becomes a queue item below. (PR #268 — 7 findings: CRITICAL mobile carousel clipping #269, HIGH drydock-chip/title collision #269, MEDIUM cost-chip warn-red #270, MEDIUM mobile title fold #271, LOW seed-picker desktop space #272, plus dot-contrast and desktop-peek follow-ups deferred)
 
 ## Done
 
