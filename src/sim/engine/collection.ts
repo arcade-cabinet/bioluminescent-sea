@@ -34,13 +34,56 @@ export function collectAnomalies(
 
   return { collected, anomalies: remaining };
 }
+/**
+ * Front-mounted scoop arc — apex at player, centerline at player.angle,
+ * `halfAngleRad` to each side, `reachPx` as the radius. Closed boundary:
+ * a target at exactly reach AND/OR exactly halfAngleRad is IN (modulo
+ * float epsilon). A target at zero distance from the player is IN
+ * regardless of heading — a creature on top of the player has no
+ * defined direction. Non-finite player or target coords → false.
+ */
+export function isInScoop(
+  player: { x: number; y: number; angle: number },
+  target: { x: number; y: number },
+  reachPx: number,
+  halfAngleRad: number,
+): boolean {
+  if (
+    !Number.isFinite(player.x) ||
+    !Number.isFinite(player.y) ||
+    !Number.isFinite(player.angle) ||
+    !Number.isFinite(target.x) ||
+    !Number.isFinite(target.y)
+  ) {
+    return false;
+  }
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  const distSq = dx * dx + dy * dy;
+  if (distSq > reachPx * reachPx) return false;
+  // Zero-distance short-circuit — atan2(0,0)=0 is finite but the
+  // angular delta has no defined direction; treat as IN.
+  if (distSq === 0) return true;
+  const dist = Math.sqrt(distSq);
+  const fx = Math.cos(player.angle);
+  const fy = Math.sin(player.angle);
+  const dot = (fx * dx + fy * dy) / dist;
+  return dot >= Math.cos(halfAngleRad);
+}
+
+/** Front-mounted scoop reach in playfield pixels. */
+const SCOOP_REACH_PX = 60;
+/** Half-angle of the scoop arc — 60° each side, 120° total. */
+const SCOOP_HALF_ANGLE = Math.PI / 3;
+
 export function collectCreatures(
   creatures: Creature[],
   player: Player,
   totalTime: number,
   lastCollectTime: number,
   currentMultiplier: number,
-  oxygenScale = 1
+  oxygenScale = 1,
+  reachScale = 1,
 ): CreatureCollectionResult {
   const collected: Creature[] = [];
   const remaining: Creature[] = [];
@@ -48,15 +91,18 @@ export function collectCreatures(
   let oxygenBonusSeconds = 0;
   let scoreDelta = 0;
   let nextLastCollectTime = lastCollectTime;
+  // lamp-flare and similar buffs scale the scoop reach. Half-angle
+  // stays fixed — the scoop's geometric identity is its arc shape,
+  // and widening the arc would change feel, not just range.
+  const reach = SCOOP_REACH_PX * reachScale;
 
   for (const creature of creatures) {
     if (creature.ambient) {
       remaining.push(creature);
       continue;
     }
-    const distance = Math.hypot(creature.x - player.x, creature.y - player.y);
 
-    if (distance < creature.size * 0.56 + 30) {
+    if (isInScoop(player, creature, reach, SCOOP_HALF_ANGLE)) {
       multiplier = calculateMultiplier(nextLastCollectTime, totalTime, multiplier);
       oxygenBonusSeconds += CREATURE_OXYGEN_BONUS_SECONDS[creature.type] * oxygenScale;
       scoreDelta += CREATURE_POINTS[creature.type] * multiplier;

@@ -219,13 +219,18 @@ export function advanceScene(
   const particles = scene.particles.map((particle) =>
     advanceParticle(particle, dimensions, totalTime, deltaTime)
   );
+  // lamp-flare extends collection reach (the documented "extends
+  // collection radius" buff effect). Half-angle stays fixed — the
+  // scoop's identity is its arc shape, not its radius.
+  const collectionReachScale = isLampFlareActive ? 1.5 : 1;
   const collection = collectCreatures(
     creatures,
     player,
     totalTime,
     lastCollectTime,
     multiplier,
-    tuning.collectionOxygenScale
+    tuning.collectionOxygenScale,
+    collectionReachScale,
   );
 
   const anomalyCollection = collectAnomalies(scene.anomalies as import("@/sim/entities/types").Anomaly[], player);
