@@ -35,8 +35,18 @@ affordance, HUD landmark direction glyph, abyssal ambient split,
 visual-assessment pass — broken into shippable pieces.
 
 - [x] Fix stale e2e tagline assertion in `e2e/golden-path.spec.ts` (asserted the old "sink into an abyssal trench" copy; landing now reads "Pilot a submarine into the deep ocean"). (PR #265)
-- [ ] Build a Playwright capture spec under `e2e/capture-iteration-2.spec.ts` that drives the dev preview through landing → mode carousel (each card) → seed-picker (today + reroll states) → dive at each of the 5 zones → drydock (mixed upgrade levels) and writes pngs to `docs/screenshots/iteration-2/`. No assertions — pure capture; assessment is a separate iteration.
-- [ ] Eyes-on review the iteration-2 capture set and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings, severity-ordered. Each finding becomes a queue item below.
+- [x] Build a Playwright capture spec under `e2e/capture-iteration-2.spec.ts` that drives the dev preview through landing → mode carousel (each card) → seed-picker (today + reroll states) → drydock and writes pngs to `docs/screenshots/iteration-2/`. (PR #267 — 6 scenes × 2 viewports = 12 captures; in-dive zone captures + mixed-upgrade drydock deferred to follow-up since they need fixture state plumbing — noted in README.)
+- [x] Eyes-on review the iteration-2 capture set and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings, severity-ordered. (PR #268 — 7 findings; CRITICAL/HIGH below.)
+
+## Iteration-2 — findings
+
+- [ ] **CRITICAL fix**: mobile carousel clips mode-card body copy — Exploration tagline shows `…avo…`, Descent shows `k straight down. Steer left and right. See h…`. Card body overflows the viewport AND chevrons overlap the card body on `<sm`. Fix in `LandingScreen` (gutters/max-width) + `Carousel.tsx` (push chevrons outside card or swap to dot-only nav under 480px).
+- [ ] **HIGH fix**: DRYDOCK chip overlaps wrapped title on mobile-portrait. Title wraps to `BIOLUMINESCENT / SEA` and the chip's right-anchored placement clips into "CENT". Fix: title `padding-right` ≥ chip width on `<sm`, or move the chip below the safe-area inset on a separate row.
+- [ ] **MEDIUM fix**: Drydock upgrade-cost chips render in `--color-warn` red regardless of affordability. Red signals threat in this palette — a row of red chips on a benign workshop reads as "something's wrong". Fix: default to mint, flip to warn only when `playerLux < cost`.
+- [ ] **MEDIUM fix**: pagination dots disappear against the parallax canvas on mobile-portrait. PR #243 fixed chevrons but dots stayed `bg-fg/55`. Bump dot opacity or add a subtle backdrop pill behind the row (chevrons got this treatment).
+- [ ] **MEDIUM fix**: mobile-portrait title block consumes top 35 % before the carousel starts; cold player sees one mode card pinned to the bottom edge with its tagline clipped. Shrink title on `<sm` or move tagline below the carousel.
+- [ ] **LOW fix**: desktop carousel only shows the centred card — no peripheral cue that two more exist. Render adjacent cards as ghost previews at the gutters (~15 % opacity, scaled 0.85).
+- [ ] **LOW fix**: desktop seedpicker overlay wastes ~50 % of vertical space. Either expand typography, add a biome-banner thumbnail, or render a depth-vs-time preview.
 
 ## Done
 
