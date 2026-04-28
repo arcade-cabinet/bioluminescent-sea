@@ -1,4 +1,4 @@
-import { Dice5, Sparkles } from "lucide-react";
+import { Check, Dices, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { codenameFromSeed, dailySeed, randomSeed, seedFromCodename, trenchBlurbForSeed } from "@/sim/rng";
 import { getModeMetadata, type SessionMode } from "@/sim";
@@ -49,6 +49,8 @@ export function SeedPickerOverlay({
 
   const blurb = trenchBlurbForSeed(seed).full;
   const meta = mode ? getModeMetadata(mode) : null;
+  const todaySeed = dailySeed();
+  const isOnTodaySeed = seed === todaySeed;
 
   return (
     <Dialog
@@ -109,23 +111,47 @@ export function SeedPickerOverlay({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-stretch justify-center gap-2">
+            {/* Today's chart — a "snap-to" affordance. When already on
+             *  today's seed, it shows a filled check + glow ring so the
+             *  player can read at a glance "yep, this is the daily."
+             *  Click while inactive snaps the seed to today; click
+             *  while active is a no-op visually but harmless to fire.
+             */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSeed(dailySeed())}
+              aria-pressed={isOnTodaySeed}
+              onClick={() => setSeed(todaySeed)}
               data-testid="seed-daily-button"
+              className={
+                isOnTodaySeed
+                  ? "border-glow/70 bg-glow/10 text-glow ring-1 ring-glow/40"
+                  : undefined
+              }
             >
-              <Sparkles className="size-3.5" aria-hidden="true" />
+              {isOnTodaySeed ? (
+                <Check className="size-3.5" aria-hidden="true" />
+              ) : (
+                <Sparkles className="size-3.5" aria-hidden="true" />
+              )}
               Today's chart
             </Button>
+
+            {/* Reroll — distinct action affordance. Outline button
+             *  (Begin Dive owns the page's primary slot) but a punchier
+             *  dice icon + slightly elevated stroke so it reads as
+             *  "spin me a new one" instead of "toggle a state." Always
+             *  functionally an action, never a toggle.
+             */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSeed(randomSeed())}
               data-testid="seed-reroll-button"
+              className="border-glow/40 hover:border-glow/70"
             >
-              <Dice5 className="size-3.5" aria-hidden="true" />
+              <Dices className="size-4" aria-hidden="true" />
               Reroll
             </Button>
           </div>
