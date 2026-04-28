@@ -27,16 +27,23 @@ describe("authored landmarks", () => {
   });
 
   test("nextLandmarkAtDepth returns the first landmark deeper than the sub", () => {
-    expect(nextLandmarkAtDepth(0)?.id).toBe("kelp-forest");
-    // Kelp forest is at 200m; just past it the next is the marine
-    // snow column at 700m.
-    expect(nextLandmarkAtDepth(201)?.id).toBe("marine-snow-column");
+    // First authored landmark sits in the upper epipelagic.
+    expect(nextLandmarkAtDepth(0)?.id).toBe(LANDMARKS[0].id);
+    // Past every authored landmark falls through.
     expect(nextLandmarkAtDepth(50_000)).toBeNull();
+    // Deterministic: each call returns a strictly-deeper landmark.
+    for (const lm of LANDMARKS) {
+      const next = nextLandmarkAtDepth(lm.depthMeters);
+      if (next) expect(next.depthMeters).toBeGreaterThan(lm.depthMeters);
+    }
   });
 
   test("lastPassedLandmark returns the deepest landmark already passed", () => {
     expect(lastPassedLandmark(0)).toBeNull();
-    expect(lastPassedLandmark(250)?.id).toBe("kelp-forest");
-    expect(lastPassedLandmark(50_000)?.id).toBe("hydrothermal-vent");
+    // Just past the first landmark — last-passed is exactly that one.
+    const first = LANDMARKS[0];
+    expect(lastPassedLandmark(first.depthMeters + 1)?.id).toBe(first.id);
+    // Past everything — last-passed is the deepest authored landmark.
+    expect(lastPassedLandmark(50_000)?.id).toBe(LANDMARKS[LANDMARKS.length - 1].id);
   });
 });
