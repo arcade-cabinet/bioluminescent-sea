@@ -24,7 +24,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] The HUD shows "next landmark + metres-to-go" but the *direction* hint (still null because landmarks are below) is silently dropped. Consider rendering a small ↓ glyph next to the metres-to-go so the spatial relationship is unambiguous (PR #255)
 - [x] Verify the chunk-spawn species table actually reflects every authored zone's `ecology.collectibles` array — eyeball + tighten if there's drift (PR #257 — comments + colours aligned, structural contract test added)
 - [x] Add an achievement for passing every named landmark in a single dive (12 currently — would require tracking landmarks-passed in run stats) (PR #260 — Complete Chart, scales to 13 with mud-volcano added)
-- [ ] Ambient render layer's per-biome description was updated in PR #228 but the actual painted ambient may still match the old 4-biome assumption. Verify `src/render/layers/ambient.ts` paints distinct ambient for all 5 zones, not just 4.
+- [x] Ambient render layer's per-biome description was updated in PR #228 but the actual painted ambient may still match the old 4-biome assumption. Verify `src/render/layers/ambient.ts` paints distinct ambient for all 5 zones, not just 4. (PR #262 — split abyssal-plain vs hadal-geology painters; abyssopelagic now paints whale-fall/dumbo/deep-jelly, hadopelagic keeps vents/outcrops/wreck)
 
 ## Done
 
