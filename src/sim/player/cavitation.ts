@@ -65,6 +65,9 @@ export function createCavitationEmitter(
     throw new Error(`createCavitationEmitter: sprintMaxSpeed must be >= cruiseMaxSpeed, got sprint=${sprintMaxSpeed}, cruise=${cruiseMaxSpeed}`);
   }
 
+  const speedThreshold = cruiseMaxSpeed * CAVITATION_SPEED_FRACTION;
+  const cruiseToSprint = sprintMaxSpeed - cruiseMaxSpeed;
+
   let secondsAboveThreshold = 0;
   let cooldownUntil = -1;
 
@@ -83,7 +86,6 @@ export function createCavitationEmitter(
       }
 
       const speed = Math.hypot(velocityX, velocityY);
-      const speedThreshold = cruiseMaxSpeed * CAVITATION_SPEED_FRACTION;
       const isCavitating = sprinting && speed >= speedThreshold;
 
       if (!isCavitating) {
@@ -97,7 +99,6 @@ export function createCavitationEmitter(
       if (secondsAboveThreshold < MIN_SECONDS_TO_EMIT) return null;
 
       // Fire one event, set cooldown.
-      const cruiseToSprint = sprintMaxSpeed - cruiseMaxSpeed;
       const intensity = cruiseToSprint > 0
         ? Math.max(0, Math.min(1, (speed - cruiseMaxSpeed) / cruiseToSprint))
         : 0;
