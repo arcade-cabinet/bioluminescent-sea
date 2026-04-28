@@ -31,25 +31,35 @@ const KIND_ORDER: Record<Occluder["kind"], number> = {
 const DEBRIS_RADIUS_MULTIPLIER = 1.4;
 
 /**
- * Soft cap on occluder count. Production scenes should never approach
- * this — the chunk archetype catalogue produces ≤4 anomalies and ≤1
- * leviathan per chunk, plus 4 walls in locked-room. The cap stops a
- * pathological scene state (fuzz, future content authoring) from
- * blowing the per-tick LoS budget.
+ * Soft cap on non-wall occluders. Production scenes should never
+ * approach this — the chunk archetype catalogue produces ≤4 anomalies
+ * and ≤1 leviathan per chunk. The cap stops a pathological scene
+ * state (fuzz, future content authoring) from blowing the per-tick
+ * LoS budget.
+ *
+ * Walls are NEVER capped: a locked-room chunk's 4 walls are
+ * load-bearing for room geometry — dropping them would let predators
+ * see through walls. Walls are appended after the cap.
  */
-const MAX_OCCLUDERS = 32;
+const MAX_NON_WALL_OCCLUDERS = 28;
 
+/**
+ * `perceiverEntityId` is reserved for a future per-brain perception
+ * context (currently the `manager.ts` rebuild call passes a single
+ * shared context with no exclusion). Documented as a known deferred
+ * extension — wired but unused on the production path.
+ */
 export function collectOccluders(
   scene: SceneState,
   dimensions: ViewportDimensions,
   perceiverEntityId?: string,
   lockedRoom = false,
 ): Occluder[] {
-  const out: Occluder[] = [];
+  const debrisAndLev: Occluder[] = [];
 
   for (const a of scene.anomalies) {
     if (a.type === "repel") {
-      out.push({
+      debrisAndLev.push({
         kind: "debris",
         x: a.x,
         y: a.y,
@@ -61,25 +71,24 @@ export function collectOccluders(
   for (const p of scene.predators) {
     if (!p.isLeviathan) continue;
     if (perceiverEntityId !== undefined && p.id === perceiverEntityId) continue;
-    out.push({ kind: "leviathan", x: p.x, y: p.y, radius: p.size });
+    debrisAndLev.push({ kind: "leviathan", x: p.x, y: p.y, radius: p.size });
   }
 
-  if (lockedRoom) {
-    const w = dimensions.width;
-    const h = dimensions.height;
-    out.push({ kind: "wall", x1: 0, y1: 0, x2: w, y2: 0 }); // top
-    out.push({ kind: "wall", x1: w, y1: 0, x2: w, y2: h }); // right
-    out.push({ kind: "wall", x1: 0, y1: h, x2: w, y2: h }); // bottom
-    out.push({ kind: "wall", x1: 0, y1: 0, x2: 0, y2: h }); // left
+  debrisAndLev.sort(compareOccluders);
+  if (debrisAndLev.length > MAX_NON_WALL_OCCLUDERS) {
+    debrisAndLev.length = MAX_NON_WALL_OCCLUDERS;
   }
 
-  out.sort(compareOccluders);
+  if (!lockedRoom) return debrisAndLev;
 
-  if (out.length > MAX_OCCLUDERS) {
-    out.length = MAX_OCCLUDERS;
-  }
-
-  return out;
+  // Walls go LAST and are never capped. The 4 viewport-edge segments.
+  const w = dimensions.width;
+  const h = dimensions.height;
+  debrisAndLev.push({ kind: "wall", x1: 0, y1: 0, x2: w, y2: 0 }); // top
+  debrisAndLev.push({ kind: "wall", x1: w, y1: 0, x2: w, y2: h }); // right
+  debrisAndLev.push({ kind: "wall", x1: 0, y1: h, x2: w, y2: h }); // bottom
+  debrisAndLev.push({ kind: "wall", x1: 0, y1: 0, x2: 0, y2: h }); // left
+  return debrisAndLev;
 }
 
 function compareOccluders(a: Occluder, b: Occluder): number {
@@ -91,5 +100,13 @@ function compareOccluders(a: Occluder, b: Occluder): number {
   if (ax !== bx) return ax - bx;
   const ay = a.kind === "wall" ? a.y1 : a.y;
   const by = b.kind === "wall" ? b.y1 : b.y;
-  return ay - by;
+  if (ay !== by) return ay - by;
+  // Walls share start coords (top/left both at 0,0) — break ties on
+  // end coords so the order is fully determined by the wall's own
+  // geometry, not by Array.sort's stability guarantee.
+  if (a.kind === "wall" && b.kind === "wall") {
+    if (a.x2 !== b.x2) return a.x2 - b.x2;
+    return a.y2 - b.y2;
+  }
+  return 0;
 }

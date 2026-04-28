@@ -63,14 +63,13 @@ export function resetAIManager() {
 }
 
 /**
- * Read the current AI manager's perception context. Used by
- * runtime adapters that build a `PlayerSubObservation` outside
- * `advanceScene` (test bot, future autoplay) so the GOAP brain
- * sees what the production runtime sees. Returns an empty context
- * if the manager hasn't been initialised yet (no `advanceScene`
- * call has happened) — bot fallbacks to direct scene reads.
+ * Read the current AI manager's perception context. Production
+ * runtime (DiveScreen) and tests both use this to build a
+ * `PlayerSubObservation` with the same perception the AIManager
+ * just rebuilt. Returns an empty context if no advanceScene call
+ * has happened yet.
  */
-export function getCurrentPerception() {
+export function getCurrentPerception(): import("@/sim/ai/perception/perception").PerceptionContext {
   return aiManager ? aiManager.perception : { occluders: [] };
 }
 

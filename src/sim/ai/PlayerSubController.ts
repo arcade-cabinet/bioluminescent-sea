@@ -28,15 +28,16 @@ export interface PlayerSubObservation {
   /** Seconds remaining in the current dive — bots can panic when low. */
   timeLeft: number;
   /**
-   * Perception context for THIS tick. Populated by `AIManager.update`
+   * Perception context for THIS tick. Populated by the runtime
    * before any provider's `next()` is called. The GOAP brain reads
    * scene contents only through `perception.perceives(...)` so the
    * bot governance is faithful to what a player can see.
    *
-   * Optional because tests / fixtures may construct an observation
-   * without a perception layer; production runtime always supplies it.
+   * Empty context (`{ occluders: [] }`) is the safe default for
+   * tests that don't care about LoS — `perceives` then runs only
+   * the radius + cone test, matching pre-perception behaviour.
    */
-  perception?: PerceptionContext;
+  perception: PerceptionContext;
 }
 
 export interface PlayerInputProvider {

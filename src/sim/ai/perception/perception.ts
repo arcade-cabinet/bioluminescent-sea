@@ -19,8 +19,6 @@
 import type { Occluder } from "./occluders";
 import { segmentIntersectsCircle, segmentIntersectsRect } from "./geometry";
 
-export type { Occluder } from "./occluders";
-
 export interface PerceptionContext {
   readonly occluders: readonly Occluder[];
 }

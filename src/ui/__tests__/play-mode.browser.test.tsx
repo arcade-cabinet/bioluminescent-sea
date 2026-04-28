@@ -41,6 +41,7 @@ function makeBot(
     deltaTime: 1 / 60,
     timeLeft: 600,
     totalTime: 0,
+    perception: { occluders: [] },
   });
   const brain = factory(owner);
   return new GoapInputProvider(brain, owner);

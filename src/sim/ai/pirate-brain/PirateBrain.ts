@@ -28,7 +28,6 @@
 import {
   PursuitBehavior,
   SeparationBehavior,
-  Vector3,
   Vehicle,
   WanderBehavior,
 } from "yuka";
@@ -63,8 +62,6 @@ interface PirateSteeringSlots {
   separation: SeparationBehavior;
   wrap: WrapPlayBandBehavior;
 }
-
-const _toPlayer = new Vector3();
 
 export class PirateBrain extends Vehicle {
   /** Reference to the shared player vehicle so pursuit can target it. */
@@ -146,38 +143,23 @@ export class PirateBrain extends Vehicle {
   }
 
   /**
-   * Perception context for the current tick. AIManager publishes this
-   * via `attachPerception()` immediately before the brain ticks. Null
-   * in unit tests that construct a brain without an AIManager; the
-   * cone test then falls back to local geometry.
+   * Perception context for the current tick. AIManager replaces it
+   * before every tick. Default empty context means unit tests that
+   * skip AIManager still get a valid radius+cone test (no LoS pass).
    */
-  public perceptionContext: PerceptionContext | null = null;
+  public perceptionContext: PerceptionContext = { occluders: [] };
 
   private _isPlayerInCone(): boolean {
     if (!this.playerRef) return false;
-    if (this.perceptionContext) {
-      // Same radius + cone profile, plus LoS through the shared
-      // occluder set. A pirate cannot see the player through debris,
-      // a leviathan, or a locked-room wall.
-      return perceives(
-        this.perceptionContext,
-        {
-          x: this.position.x,
-          y: this.position.y,
-          headingRad: Math.atan2(this.forward.y, this.forward.x),
-        },
-        PIRATE_CONE_PROFILE,
-        { x: this.playerRef.position.x, y: this.playerRef.position.y },
-      );
-    }
-    // Legacy fallback (unit tests without an AIManager).
-    _toPlayer.copy(this.playerRef.position).sub(this.position);
-    const distSq = _toPlayer.x * _toPlayer.x + _toPlayer.y * _toPlayer.y;
-    if (distSq > CONE_LENGTH_PX * CONE_LENGTH_PX) return false;
-    const dist = Math.sqrt(distSq);
-    if (dist < 0.01) return true; // touching → in cone
-    _toPlayer.divideScalar(dist);
-    const dot = this.forward.dot(_toPlayer);
-    return dot >= Math.cos(CONE_HALF_ANGLE);
+    return perceives(
+      this.perceptionContext,
+      {
+        x: this.position.x,
+        y: this.position.y,
+        headingRad: Math.atan2(this.forward.y, this.forward.x),
+      },
+      PIRATE_CONE_PROFILE,
+      { x: this.playerRef.position.x, y: this.playerRef.position.y },
+    );
   }
 }

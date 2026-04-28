@@ -110,12 +110,14 @@ export class PredatorBrain extends Vehicle {
   public currentAiState: PredatorAiState = "ambient";
   public currentStateProgress = 0;
   /**
-   * Perception context for the current tick. Set by AIManager via
-   * `attachPerception()` immediately before this brain ticks. Null
-   * when the brain is constructed in a unit-test outside an AIManager;
-   * `canSeePlayer` then falls back to local radius+cone math.
+   * Perception context for the current tick. Set by AIManager
+   * immediately before this brain ticks. Defaults to an empty context
+   * so a brain constructed in a unit test (no AIManager) still has
+   * a valid context to read from — the empty occluder list means
+   * `perceives()` runs the radius + cone test only, matching the
+   * pre-perception semantics of `canSeePlayer`.
    */
-  public perceptionContext: PerceptionContext | null = null;
+  public perceptionContext: PerceptionContext = { occluders: [] };
 
   /** The shared player vehicle (reference, not copy). */
   private playerRef: Vehicle | null = null;
@@ -247,7 +249,6 @@ export class PredatorBrain extends Vehicle {
   private slots: PredatorSteeringSlots;
 
   /** Allocated once + reused. Avoids per-frame allocation in `update`. */
-  private readonly _toPlayer = new Vector3();
 
   constructor(
     id: string,
@@ -526,35 +527,22 @@ export class PredatorBrain extends Vehicle {
 
   canSeePlayer(): boolean {
     if (!this.playerRef) return false;
-    // Delegates to the unified perception module. Same radius + cone
-    // contract as the legacy inline test, plus LoS through the shared
-    // occluder set (debris, leviathans, locked-room walls). The
-    // perception context is published by AIManager.rebuildPerception
-    // once per tick BEFORE this brain ticks. Falls back to local
-    // radius+cone math when no perception context is yet attached
-    // (legacy unit tests that construct a brain without an AIManager).
-    if (this.perceptionContext) {
-      return perceives(
-        this.perceptionContext,
-        {
-          x: this.position.x,
-          y: this.position.y,
-          headingRad: Math.atan2(this.forward.y, this.forward.x),
-        },
-        predatorProfile(this.effectiveDetectionRadius(), this.profile.fovRadians),
-        { x: this.playerRef.position.x, y: this.playerRef.position.y },
-      );
-    }
-    // Legacy fallback (unit tests). Identical math to pre-perception.
-    const distance = this.playerRef.position.distanceTo(this.position);
-    if (distance > this.effectiveDetectionRadius()) return false;
-    this._toPlayer
-      .copy(this.playerRef.position)
-      .sub(this.position)
-      .normalize();
-    const dot = this.forward.dot(this._toPlayer);
-    const halfAngle = this.profile.fovRadians * 0.5;
-    return dot >= Math.cos(halfAngle);
+    // Delegates to the unified perception module. Radius + cone +
+    // LoS through the occluder set (debris, leviathans, locked-room
+    // walls). The perception context is published by AIManager every
+    // tick BEFORE this brain ticks; in unit tests with no AIManager,
+    // the default empty context skips the LoS pass — same answer the
+    // pre-perception inline math would have produced.
+    return perceives(
+      this.perceptionContext,
+      {
+        x: this.position.x,
+        y: this.position.y,
+        headingRad: Math.atan2(this.forward.y, this.forward.x),
+      },
+      predatorProfile(this.effectiveDetectionRadius(), this.profile.fovRadians),
+      { x: this.playerRef.position.x, y: this.playerRef.position.y },
+    );
   }
 
   hasMemoryOfPlayer(): boolean {

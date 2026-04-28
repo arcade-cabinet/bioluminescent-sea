@@ -40,15 +40,16 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 /**
- * Filter targets the player can perceive. When perception is missing
- * (test fixture), pass the targets through unchanged.
+ * Filter targets the player can perceive. The perception context is
+ * always non-null (PlayerSubObservation requires it); an empty
+ * occluder list is the safe default for tests that don't care about
+ * LoS — only radius + cone are checked then.
  */
 function visibleTargets<T extends { x: number; y: number }>(
-  perception: PerceptionContext | undefined,
+  perception: PerceptionContext,
   player: Player,
   targets: readonly T[],
 ): readonly T[] {
-  if (!perception) return targets;
   const perceiver = { x: player.x, y: player.y, headingRad: player.angle };
   return targets.filter((t) => perceives(perception, perceiver, PLAYER_PERCEPTION_PROFILE, t));
 }
