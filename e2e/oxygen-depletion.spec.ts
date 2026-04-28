@@ -23,18 +23,10 @@ test.describe("Oxygen depletion", () => {
     });
 
     // With 80× burn, the dive's seed-resolved oxygen budget (Descent
-    // ranges 600–780s) drains in 7.5–9.75s wall clock. Local runs stay
-    // tight; CI doubles via the budget helper to absorb slow
-    // tablet-portrait containers + the per-frame Yuka brain tick added
-    // in PR #134 (StateMachine + MemorySystem + FuzzyModule per
-    // predator) which adds noticeable per-tick CPU on slow runners.
-    // Activate the page first so xvfb-run + Chromium don't classify the
-    // window as backgrounded; that's been observed to throttle RAF on CI
-    // runners despite the --disable-renderer-backgrounding launch flag,
-    // leaving oxygen frozen at its initial value past the 20s budget.
-    await page.bringToFront();
-    await page.mouse.move(10, 10);
-    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: budget(45_000) });
+    // ranges 600–780s) drains in 7.5–9.75s wall clock. The drain is
+    // wall-clock based when fastDiveScale > 1 (see DiveScreen.tsx) so
+    // it stays robust against CI runners that throttle RAF heavily.
+    await expect(page.getByTestId("gameover-screen")).toBeVisible({ timeout: budget(20_000) });
 
     // Final score + stats grid should be present on the surfaced screen.
     await expect(page.getByTestId("gameover-stats")).toBeVisible();
