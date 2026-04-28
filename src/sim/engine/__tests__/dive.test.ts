@@ -423,16 +423,26 @@ describe("deep sea simulation", () => {
     expect(vector.bearingRadians).toBeCloseTo(0);
   });
 
-  test("advances route landmark telemetry with the beacon chain", () => {
-    const early = getDiveRouteLandmark(0.1, { bearingRadians: 0.4, distance: 160 });
-    const mid = getDiveRouteLandmark(0.46, { bearingRadians: 0.1, distance: 120 });
-    const late = getDiveRouteLandmark(0.94, { bearingRadians: -0.2, distance: 42 });
+  test("route landmark surfaces the next authored landmark below the sub, with metres-to-go", () => {
+    // At 0m the next landmark is the Kelp Forest at 200m.
+    const surface = getDiveRouteLandmark(0);
+    expect(surface.label).toBe("Kelp Forest");
+    expect(surface.distance).toBe(200);
+    expect(surface.bearingRadians).toBeNull();
 
-    expect(early.label).toBe("Surface");
-    expect(early.bearingRadians).toBeCloseTo(0.4);
-    expect(mid.label).toBe("Twilight zone");
-    expect(late.label).toBe("The abyss");
-    expect(late.distance).toBeLessThan(early.distance);
+    // Just past the Kelp Forest (at 250m) the next is the Marine Snow
+    // Column at 700m.
+    const mid = getDiveRouteLandmark(250);
+    expect(mid.label).toBe("Marine Snow Column");
+    expect(mid.distance).toBe(450);
+
+    // Past every authored landmark the HUD falls back to the last
+    // passed one — distance reads zero because the player has cleared
+    // it (the dive objective banner takes over the "you're at the
+    // floor" cue).
+    const past = getDiveRouteLandmark(99_999);
+    expect(past.label).toBe("Hydrothermal Vent");
+    expect(past.distance).toBe(0);
   });
 
   test("reports dive completion and run summary when all beacons are recovered", () => {
