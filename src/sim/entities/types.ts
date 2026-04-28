@@ -183,22 +183,51 @@ export interface Player {
   lastImpactBearing?: number;
 }
 
-export const CREATURE_TYPES: CreatureType[] = ["jellyfish", "plankton", "fish"];
+import { COMPILED_CREATURES } from "../../../config/compiled/content";
 
-export const CREATURE_COLORS: Record<CreatureType, { color: string; glow: string }> = {
-  fish: { color: "#c4b5fd", glow: "#8b5cf6" },
-  jellyfish: { color: "#7dd3fc", glow: "#0ea5e9" },
-  plankton: { color: "#a5f3fc", glow: "#22d3ee" },
-};
+/**
+ * Creature gameplay tables derived from authored content under
+ * `config/raw/creatures/*.json` (compiled into `COMPILED_CREATURES`).
+ * Editing the JSON drives gameplay; do not hand-edit the maps below.
+ */
+const CREATURE_PROFILES: Record<
+  CreatureType,
+  { color: string; glow: string; points: number; oxygenBonusSeconds: number }
+> = COMPILED_CREATURES.reduce(
+  (acc, entry) => {
+    acc[entry.type as CreatureType] = {
+      color: entry.color,
+      glow: entry.glowColor,
+      points: entry.baseScore,
+      oxygenBonusSeconds: entry.oxygenBonusSeconds,
+    };
+    return acc;
+  },
+  {} as Record<
+    CreatureType,
+    { color: string; glow: string; points: number; oxygenBonusSeconds: number }
+  >,
+);
 
-export const CREATURE_POINTS: Record<CreatureType, number> = {
-  fish: 50,
-  jellyfish: 30,
-  plankton: 10,
-};
+export const CREATURE_TYPES: CreatureType[] = COMPILED_CREATURES.map(
+  (c) => c.type as CreatureType,
+);
 
-export const CREATURE_OXYGEN_BONUS_SECONDS: Record<CreatureType, number> = {
-  fish: 6,
-  jellyfish: 8,
-  plankton: 4,
-};
+export const CREATURE_COLORS: Record<CreatureType, { color: string; glow: string }> =
+  Object.fromEntries(
+    (Object.entries(CREATURE_PROFILES) as [CreatureType, (typeof CREATURE_PROFILES)[CreatureType]][]).map(
+      ([type, profile]) => [type, { color: profile.color, glow: profile.glow }],
+    ),
+  ) as Record<CreatureType, { color: string; glow: string }>;
+
+export const CREATURE_POINTS: Record<CreatureType, number> = Object.fromEntries(
+  (Object.entries(CREATURE_PROFILES) as [CreatureType, (typeof CREATURE_PROFILES)[CreatureType]][]).map(
+    ([type, profile]) => [type, profile.points],
+  ),
+) as Record<CreatureType, number>;
+
+export const CREATURE_OXYGEN_BONUS_SECONDS: Record<CreatureType, number> = Object.fromEntries(
+  (Object.entries(CREATURE_PROFILES) as [CreatureType, (typeof CREATURE_PROFILES)[CreatureType]][]).map(
+    ([type, profile]) => [type, profile.oxygenBonusSeconds],
+  ),
+) as Record<CreatureType, number>;
