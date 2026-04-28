@@ -461,8 +461,8 @@ describe("deep sea simulation", () => {
       totalBeacons: TOTAL_BEACONS,
     });
     expect(celebration).toMatchObject({
-      rating: "Aborted Descent",
-      title: "Dive Logged",
+      rating: "Surfaced early",
+      title: "Dive logged",
     });
     expect(celebration.landmarkSequence).toContain("Deep ocean");
   });
