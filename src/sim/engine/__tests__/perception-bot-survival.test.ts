@@ -1,5 +1,4 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { advancePlayer } from "@/sim/entities/player";
 import {
   type DiveInput,
   advanceScene,
@@ -145,17 +144,6 @@ function runOneDive(seed: number): RunResult {
       timeLeft,
       perception,
     });
-
-    scene = {
-      ...scene,
-      player: advancePlayer(
-        { ...scene.player, targetX: input.x, targetY: input.y },
-        input,
-        DIMENSIONS,
-        totalTime,
-        DELTA,
-      ),
-    };
 
     const result = advanceScene(
       scene,

@@ -54,10 +54,10 @@ export function createPlayerVehicle(
 ): GameVehicle {
   // Validate config — mass=0 would divide-by-zero into velocity.
   if (
-    !(config.mass > 0) ||
-    !(config.cruiseMaxSpeed > 0) ||
-    !(config.sprintMultiplier > 0) ||
-    !(config.drag >= 0) ||
+    !Number.isFinite(config.mass) || !(config.mass > 0) ||
+    !Number.isFinite(config.cruiseMaxSpeed) || !(config.cruiseMaxSpeed > 0) ||
+    !Number.isFinite(config.sprintMultiplier) || !(config.sprintMultiplier > 0) ||
+    !Number.isFinite(config.drag) || !(config.drag >= 0) ||
     !Number.isFinite(start.x) ||
     !Number.isFinite(start.y)
   ) {

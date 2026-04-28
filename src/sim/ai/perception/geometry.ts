@@ -102,16 +102,19 @@ function segmentsIntersect(
   const denom = dax * dby - day * dbx;
 
   if (denom === 0) {
-    // Parallel. Treat collinear-overlap as intersection by checking
-    // whether either endpoint of B lies on segment A's bounding box.
+    // Parallel. Only collinear segments can overlap — check via cross
+    // product of A's direction with the A→B1 vector. Non-zero means
+    // parallel-but-offset (no intersection possible).
+    const cross = dax * (by1 - ay1) - day * (bx1 - ax1);
+    if (cross !== 0) return false;
+    // Collinear: check endpoint overlap in both directions so the
+    // A⊂B case (A fully inside B) is also covered.
     const minAx = Math.min(ax1, ax2);
     const maxAx = Math.max(ax1, ax2);
     const minAy = Math.min(ay1, ay2);
     const maxAy = Math.max(ay1, ay2);
     const onA1 = bx1 >= minAx && bx1 <= maxAx && by1 >= minAy && by1 <= maxAy;
     const onA2 = bx2 >= minAx && bx2 <= maxAx && by2 >= minAy && by2 <= maxAy;
-    // Also check the inverse: A's endpoints within B's bounding box
-    // covers the case where A is fully contained within B.
     const minBx = Math.min(bx1, bx2);
     const maxBx = Math.max(bx1, bx2);
     const minBy = Math.min(by1, by2);
