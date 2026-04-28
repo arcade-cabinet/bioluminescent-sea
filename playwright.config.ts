@@ -5,6 +5,10 @@ const IS_HEADLESS = process.env.PW_HEADLESS === "1";
 const CHROMIUM_CHANNEL =
   process.env.PW_CHROMIUM_CHANNEL ?? (!IS_CI && !IS_HEADLESS ? "chrome" : undefined);
 const REUSE_SERVER = !IS_CI && process.env.PW_REUSE_SERVER === "1";
+// Capture specs (e2e/capture-*.spec.ts) are opt-in only — they're pure
+// capture (no assertions) and slow. Set PW_CAPTURE=1 to include them
+// even when explicitly targeted by filename.
+const RUN_CAPTURE = process.env.PW_CAPTURE === "1";
 
 // Flags match mean-streets: keep Canvas2D / PixiJS happy, mute the trench
 // drone, and prevent the browser from throttling RAF when the window is
@@ -22,6 +26,18 @@ const GAME_ARGS = [
 
 export default defineConfig({
   testDir: "./e2e",
+  // The iteration-2 capture spec is opt-in only — it's pure capture
+  // (no assertions) and slow (12 tests × 2 viewports under serial
+  // mode + reduced-motion emulation). Running it in the default CI
+  // matrix pushed the Playwright job past its 15min timeout, so
+  // capture specs are excluded by default. Set PW_CAPTURE=1 to run
+  // them — the env-gate keeps targeting an explicitly-named spec
+  // working, since Playwright applies testIgnore even when a file is
+  // listed on the CLI.
+  //
+  //   PW_CAPTURE=1 pnpm exec playwright test e2e/capture-iteration-2.spec.ts \
+  //     --project desktop --project mobile-portrait
+  testIgnore: RUN_CAPTURE ? [] : ["**/capture-*.spec.ts"],
   fullyParallel: true,
   forbidOnly: IS_CI,
   retries: IS_CI ? 1 : 0,

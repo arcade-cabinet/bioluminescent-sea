@@ -101,7 +101,7 @@ export function LandingHero() {
       const w = rect.width;
       const h = rect.height;
       if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) {
-        rafRef.current = requestAnimationFrame(frame);
+        if (!reducedMotion) rafRef.current = requestAnimationFrame(frame);
         return;
       }
 
@@ -239,7 +239,11 @@ export function LandingHero() {
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, w, h);
 
-      rafRef.current = requestAnimationFrame(frame);
+      // Under reduced-motion we paint once; never queue another
+      // frame. The previous loop unconditionally requeued, which
+      // kept Chromium's screenshot pipeline waiting on a stable
+      // frame indefinitely.
+      if (!reducedMotion) rafRef.current = requestAnimationFrame(frame);
     }
 
     const onResize = () => {
