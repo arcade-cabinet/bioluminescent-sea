@@ -16,6 +16,7 @@ import {
   EmbossFilters,
 } from "@/ui/primitives";
 import { LandingHero } from "@/ui/shell/LandingHero";
+import { useDeviceClass } from "@/hooks/useDeviceClass";
 
 interface LandingScreenProps {
   /** Lux balance to surface in the Drydock label on the landing. */
@@ -95,8 +96,14 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
 
       {/* Title + tagline — engraved into the water via SVG emboss filter.
        * Sizing scales on min(vw, vh) so phone-landscape (390px tall)
-       * doesn't push the carousel off-screen. */}
-      <div className="relative flex flex-col items-center justify-center px-6 pt-1 text-center sm:pt-3 md:pt-10 [@media(max-height:500px)]:pt-0.5">
+       * doesn't push the carousel off-screen.
+       *
+       * `pt-6` on `<sm` clears the Drydock chip in the header so the
+       * wrapped title's first line doesn't render in the chip's
+       * horizontal band. Without this the "BIOLUMINESCENT" wrap on
+       * mobile-portrait visually collides with "DRYDOCK · Lux".
+       * (Iter-2 finding #2.) */}
+      <div className="relative flex flex-col items-center justify-center px-6 pt-6 text-center sm:pt-3 md:pt-10 [@media(max-height:500px)]:pt-0.5">
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -272,6 +279,16 @@ interface ModeCarouselProps {
  * card with breathing room either side.
  */
 function ModeCarousel({ onPickMode }: ModeCarouselProps) {
+  const { klass } = useDeviceClass();
+  // Phones get the inline controls-strip layout (chevrons outside
+  // the card, dot row centred between them with a backdrop pill).
+  // Tablet+ keeps the original cinematic layout: floating chevrons
+  // in the gutters + dot row absolutely positioned beneath the
+  // viewport. Branching at the JS layer (not Tailwind responsive
+  // classes) keeps a single CarouselNavigation in the DOM so
+  // `getByTestId('carousel-next')` selects the visible button.
+  // (Iter-2 finding #1.)
+  const isPhone = klass === "phone-portrait" || klass === "phone-landscape";
   return (
     <div
       className="relative mx-auto w-full max-w-md sm:max-w-lg"
@@ -280,7 +297,10 @@ function ModeCarousel({ onPickMode }: ModeCarouselProps) {
       <Carousel>
         <CarouselContent>
           {SESSION_MODES.map((mode, index) => (
-            <CarouselItem key={mode} className="px-3">
+            // No horizontal padding on phone so the card uses the
+            // full carousel viewport width — the controls strip
+            // below carries pagination instead.
+            <CarouselItem key={mode} className={isPhone ? "" : "px-3"}>
               <ModeCard
                 meta={getModeMetadata(mode)}
                 icon={MODE_ICONS[mode]}
@@ -290,8 +310,21 @@ function ModeCarousel({ onPickMode }: ModeCarouselProps) {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselNavigation alwaysShow />
-        <CarouselIndicator modeIds={SESSION_MODES} />
+        {isPhone ? (
+          <div className="relative mt-4 flex items-center justify-between gap-3 px-2">
+            <CarouselNavigation alwaysShow layout="inline" className="flex-1" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="pointer-events-auto">
+                <CarouselIndicator modeIds={SESSION_MODES} layout="inline" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <CarouselNavigation alwaysShow />
+            <CarouselIndicator modeIds={SESSION_MODES} />
+          </>
+        )}
       </Carousel>
     </div>
   );
