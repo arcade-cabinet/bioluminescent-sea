@@ -756,6 +756,19 @@ export class AIManager {
     };
   }
 
+  applyTorpedoDamage(predatorIds: string[], damage: number): void {
+    for (const id of predatorIds) {
+      const brain = this.predatorBrains.get(id);
+      if (brain) {
+        brain.hp = Math.max(0, brain.hp - damage);
+        if (brain.hp <= 0 && brain.state !== "dying") {
+          brain.state = "dying";
+          brain.deathProgress = 0;
+        }
+      }
+    }
+  }
+
   readCreature(c: Creature): Creature {
     if (c.type === "plankton") return c;
     

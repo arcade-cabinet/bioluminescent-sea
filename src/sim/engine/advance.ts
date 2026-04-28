@@ -250,6 +250,30 @@ export function advanceScene(
       return { ...updated, y: Math.max(0, Math.min(updated.y, dimensions.height)) };
     });
 
+  // Torpedo-predator collision: torpedo within predator size → damage
+  const hitTorpedoIds = new Set<string>();
+  const damagedPredatorIds = new Set<string>();
+  for (const t of steppedTorpedoes) {
+    for (const p of predators) {
+      if (hitTorpedoIds.has(t.id)) break;
+      const dist = Math.hypot(t.x - p.x, t.y - p.y);
+      if (dist < (p.size ?? 20)) {
+        hitTorpedoIds.add(t.id);
+        damagedPredatorIds.add(p.id);
+        break;
+      }
+    }
+  }
+  // Apply damage via AI manager
+  if (damagedPredatorIds.size > 0) {
+    ai.applyTorpedoDamage([...damagedPredatorIds], 3); // 3 HP damage
+  }
+  // Remove hit torpedoes
+  const survivingTorpedoes = steppedTorpedoes.filter(t => !hitTorpedoIds.has(t.id));
+  // Update steppedTorpedoes to surviving ones for the scene state
+  steppedTorpedoes.length = 0;
+  for (const t of survivingTorpedoes) steppedTorpedoes.push(t);
+
   const pirates = scene.pirates.map((p) => {
     const updated = ai.readPirate(p);
     return { ...updated, y: Math.max(50, Math.min(updated.y, dimensions.height - 50)), lanternPhase: p.lanternPhase + deltaTime * 5 };
