@@ -15,7 +15,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] Refresh `docs/STATE.md` to reflect the post-taxonomy era; `docs/RELEASE.md` was already accurate (PR pending)
 - [x] Visually assess the existing screenshot bundle — done in this PR; findings recorded in `docs/screenshots/iteration-1/ASSESSMENT.md`. Action items below were extracted from that pass.
 - [?] **CRITICAL fix → demoted**: shallow-water "washed-out white" finding could not be reproduced from code review. At 52m the surfaceRect alpha is ~0.05 mint and GodrayFilter gain ~0.20; AdjustmentFilter doesn't attenuate until 2400m. A pink wash is more consistent with either (a) a screenshot captured during the 1.4s biome-sweep cinematic at dive start (band alpha up to 0.55 in biome tint), or (b) the low-O₂ red vignette firing (oxygenRatio < 0.18 paints `#ff3a2a` edges that compound with the mint base). The proposed "cap GodrayFilter gain" fix targets the wrong subsystem. Re-capture under controlled conditions before re-promoting.
-- [ ] **MEDIUM fix**: mode card carousel `>` arrow + pagination dots are too low-contrast — new players miss that there are three modes.
+- [x] **MEDIUM fix**: mode card carousel `>` arrow + pagination dots are too low-contrast — new players miss that there are three modes. (PR #243)
 - [ ] **MEDIUM fix**: TODAY'S CHART vs REROLL in seed picker have ambiguous affordance (toggle vs action). Use distinct visual treatment.
 - [ ] **LOW fix**: mobile DRYDOCK chip needs more safe-area padding.
 - [ ] **LOW fix**: Drydock level-0 upgrade rows should ghost slightly so unpurchased upgrades read at a glance.
