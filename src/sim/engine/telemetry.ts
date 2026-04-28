@@ -12,13 +12,18 @@ import type {
   SceneState,
 } from "@/sim/dive/types";
 
+// Progress milestones surfaced in the HUD as "you've reached X." Plain
+// labels — the player should glance and know how deep they are without
+// translating any lore. Open-ended at the bottom: descent has no floor,
+// so the deepest milestone names the abyss as a region the player
+// continues into rather than a terminus.
 export const ROUTE_LANDMARKS = [
-  { label: "Kelp Gate", threshold: 0, distanceOffset: 120 },
-  { label: "Lantern Shelf", threshold: 0.24, distanceOffset: 98 },
-  { label: "Whale-Fall Windows", threshold: 0.43, distanceOffset: 82 },
-  { label: "Trench Choir", threshold: 0.61, distanceOffset: 64 },
-  { label: "Abyss Orchard", threshold: 0.78, distanceOffset: 46 },
-  { label: "Living Map", threshold: 0.94, distanceOffset: 24 },
+  { label: "Surface", threshold: 0, distanceOffset: 120 },
+  { label: "Sunlight zone", threshold: 0.24, distanceOffset: 98 },
+  { label: "Twilight zone", threshold: 0.43, distanceOffset: 82 },
+  { label: "Midnight zone", threshold: 0.61, distanceOffset: 64 },
+  { label: "Deep ocean", threshold: 0.78, distanceOffset: 46 },
+  { label: "The abyss", threshold: 0.94, distanceOffset: 24 },
 ] as const;
 
 export function getDiveTelemetry(

@@ -117,8 +117,8 @@ export function LandingScreen({ currency, onPickMode, onOpenDrydock }: LandingSc
             textShadow: "0 0 12px rgba(2,6,17,0.85), 0 1px 0 rgba(2,6,17,0.6)",
           }}
         >
-          Sink into an abyssal trench. Trace glowing routes past landmark
-          creatures. Surface breathing easier than when you started.
+          Pilot a submarine into the deep ocean. Collect glowing creatures,
+          dodge predators, and see how far down you can go.
         </motion.p>
       </div>
 

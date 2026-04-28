@@ -415,8 +415,8 @@ export default function Game(props: GameProps = {}) {
               title="Dive Logged"
               subtitle={
                 finalScore > 0
-                  ? "The trench remains. Follow beacon chains before oxygen or predators close in."
-                  : "Surface for a breath, then chart a new route."
+                  ? "Try again. Chain creature pickups for a higher score, and watch your oxygen."
+                  : "Take a breath and try a new dive."
               }
               stats={buildGameOverStats(finalScore, bestScore, displaySummary, "gameover", improvements)}
             >
