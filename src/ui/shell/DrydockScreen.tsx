@@ -774,15 +774,20 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
       </div>
       <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:justify-end">
         <span
+          // Cost chip colour:
+          //   - max-rank → muted (no more upgrades to buy)
+          //   - can afford → mint (the lamp colour the player wants
+          //     to spend on)
+          //   - can't afford → muted (was warn-red, but in this
+          //     palette red specifically signals threat / low O₂;
+          //     a row of red chips on a benign workshop screen
+          //     reads as "something's wrong" instead of "save up
+          //     for these". Iter-2 finding #3.)
           className={`bs-numeral text-sm ${
-            isMax ? "text-fg-muted" : canAfford ? "text-glow" : "text-warn"
+            isMax || !canAfford ? "text-fg-muted" : "text-glow"
           }`}
           style={{
-            filter: canAfford
-              ? "url(#bs-soft-glow)"
-              : isMax
-                ? undefined
-                : "url(#bs-warm-glow)",
+            filter: canAfford && !isMax ? "url(#bs-soft-glow)" : undefined,
           }}
         >
           {isMax ? "Max" : `${cost} Lux`}
