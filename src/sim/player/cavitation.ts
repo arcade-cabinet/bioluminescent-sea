@@ -61,6 +61,9 @@ export function createCavitationEmitter(
   if (!Number.isFinite(sprintMaxSpeed) || sprintMaxSpeed <= 0) {
     throw new Error(`createCavitationEmitter: sprintMaxSpeed must be finite and > 0, got ${sprintMaxSpeed}`);
   }
+  if (sprintMaxSpeed < cruiseMaxSpeed) {
+    throw new Error(`createCavitationEmitter: sprintMaxSpeed must be >= cruiseMaxSpeed, got sprint=${sprintMaxSpeed}, cruise=${cruiseMaxSpeed}`);
+  }
 
   let secondsAboveThreshold = 0;
   let cooldownUntil = -1;

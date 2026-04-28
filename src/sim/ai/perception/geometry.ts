@@ -28,7 +28,7 @@ export function segmentIntersectsCircle(
   r: number,
 ): boolean {
   if (!isFinite4(x1, y1, x2, y2)) return false;
-  if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(r)) return false;
+  if (!Number.isFinite(cx) || !Number.isFinite(cy) || !Number.isFinite(r) || r < 0) return false;
 
   const dx = x2 - x1;
   const dy = y2 - y1;
