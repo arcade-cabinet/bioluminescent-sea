@@ -1,0 +1,7 @@
+{
+  "id": "mud-volcano",
+  "label": "Subduction Mud Volcano",
+  "depthMeters": 8000,
+  "biome": "hadopelagic",
+  "flavor": "A slow plume of cold sediment rises from a subduction-zone vent. Methane and brine seep with the mud, feeding chemosynthetic mussels along the dome. The water around it shimmers with suspended particles."
+}
