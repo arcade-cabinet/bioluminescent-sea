@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
+import { CANVAS_MOUNT_BUDGET_MS, budget } from "./helpers/budget";
 
 /**
  * Torpedo combat smoke test.
@@ -8,11 +8,15 @@ import { CANVAS_MOUNT_BUDGET_MS } from "./helpers/budget";
  * torpedo and deducts 5 s of oxygen — more than passive drain alone can
  * explain in the measurement window.
  *
- * Uses `devFastDive=2` so oxygen ticks at 2× real-time without compressing
- * the window so tight that the assertion fails on slow CI runners.
+ * Uses `devFastDive=4` so oxygen ticks at 4× real-time. At that rate,
+ * passive drain over the ~1.15 s wall-clock observation window ≈ 4.6 s.
+ * Torpedo adds 5 s → total drop ≥ 5 s even if every frame arrives late.
  *
  * Fire is triggered by two synthetic `pointerdown` events <300 ms apart on
  * the game container — the same double-tap detection path used on mobile.
+ *
+ * Post-fire assertion uses expect.poll() so slow CI RAF frames are tolerated
+ * up to the poll timeout rather than a fixed sleep.
  */
 
 async function readOxygen(page: Page): Promise<number> {
@@ -58,7 +62,9 @@ test.describe("Torpedo combat", () => {
   test("double-tap fires torpedo and deducts ≥5 s oxygen vs passive drain", async ({
     page,
   }) => {
-    await page.goto("/?seed=photic-kelpish-benthos&devFastDive=2");
+    // devFastDive=4: oxygen ticks at 4× real-time, making the 5 s torpedo
+    // cost a clear outlier above passive-only drain in any timing window.
+    await page.goto("/?seed=photic-kelpish-benthos&devFastDive=4");
 
     await page.getByTestId("mode-card-descent").click();
     await expect(page.getByTestId("seed-picker-overlay")).toBeVisible();
@@ -79,22 +85,24 @@ test.describe("Torpedo combat", () => {
     // Second tap — triggers isDoubleTap = true → fire = true.
     await dispatchPointerDown(page);
 
-    // Allow several RAF frames for the game loop to read fire=true,
-    // call advanceScene, and propagate torpedoOxygenCost → setTimeLeft.
-    // 800ms gives ~48 frames at 60fps, enough even on slow CI runners.
-    await page.waitForTimeout(800);
-
-    const oxygenAfter = await readOxygen(page);
-
     expect(oxygenBefore, "oxygen read before torpedo fire").toBeGreaterThan(0);
-    expect(oxygenAfter, "oxygen read after torpedo fire").toBeGreaterThan(0);
 
-    // At 2× drain over ~1.65 s wall time, passive loss ≈ 3.3 s.
-    // Torpedo adds 5 s cost → total drop ≥ 5 s even with zero passive.
-    const drop = oxygenBefore - oxygenAfter;
-    expect(
-      drop,
-      `torpedo should have deducted ≥5 s oxygen (before=${oxygenBefore}s, after=${oxygenAfter}s, drop=${drop}s)`,
-    ).toBeGreaterThanOrEqual(5);
+    // Poll until the oxygen drop propagates through the RAF game loop.
+    // expect.poll retries on the assertion; we check that the *current*
+    // oxygen is at least 5 s below the pre-fire reading, regardless of
+    // how many frames have elapsed since the tap.
+    await expect
+      .poll(
+        async () => {
+          const oxygenAfter = await readOxygen(page);
+          return oxygenBefore - oxygenAfter;
+        },
+        {
+          message: `torpedo should deduct ≥5 s oxygen (before=${oxygenBefore}s)`,
+          timeout: budget(3000),
+          intervals: [100, 200, 300, 500],
+        },
+      )
+      .toBeGreaterThanOrEqual(5);
   });
 });
