@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { COMPILED_CREATURES } from "../../../../config/compiled/content";
 import { BIOMES, biomeAtDepth, biomeById, nextBiome } from "./biomes";
 
 describe("BIOMES", () => {
@@ -64,5 +65,24 @@ describe("nextBiome", () => {
 
   it("returns null after the hadal — there is no zone deeper", () => {
     expect(nextBiome("hadopelagic")).toBeNull();
+  });
+});
+
+describe("BIOMES.ecology.collectibles ↔ authored creatures", () => {
+  it("every collectible named in a biome's ecology has an authored creature JSON", () => {
+    // Locks the contract: chunk-spawn species (the visual + scoring
+    // tables) must cover every species named in the authored
+    // ecology. Fails CI if a biome adds a creature name that has no
+    // matching `config/raw/creatures/<id>.json` — exactly the kind
+    // of drift the iteration-1 visual assessment flagged.
+    const authoredIds = new Set(COMPILED_CREATURES.map((c) => c.id));
+    for (const biome of BIOMES) {
+      for (const species of biome.ecology.collectibles) {
+        expect(
+          authoredIds,
+          `biome '${biome.id}' lists collectible '${species}' but no creature JSON authored under config/raw/creatures/`,
+        ).toContain(species);
+      }
+    }
   });
 });
