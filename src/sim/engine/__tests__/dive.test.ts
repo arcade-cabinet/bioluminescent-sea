@@ -5,6 +5,8 @@ import {
   advancePredator,
   advanceScene,
   resetAIManager,
+  resetTorpedoLauncher,
+  resetCavitationEmitter,
   type Creature,
   calculateMultiplier,
   collectCreatures,
@@ -32,6 +34,8 @@ const desktop = { width: 1280, height: 720 };
 describe("deep sea simulation", () => {
   beforeEach(() => {
     resetAIManager();
+    resetTorpedoLauncher();
+    resetCavitationEmitter();
   });
 
   test("creates a deterministic authored dive route", () => {

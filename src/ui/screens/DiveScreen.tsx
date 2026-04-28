@@ -647,6 +647,12 @@ export function DiveScreen({
         newTimeLeft = getAdjustedTimeLeft();
         setTimeLeft(newTimeLeft);
         showImpactPulse(result.torpedoOxygenCost, effectiveTotalTime);
+        if (newTimeLeft === 0) {
+          setIsGameOver(true);
+          hapticGameOver();
+          onGameOver(scoreRef.current, getCurrentSummary(0));
+          return;
+        }
       }
 
       if (isDiveComplete(result.scene, mode, seed)) {
