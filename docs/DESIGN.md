@@ -27,6 +27,10 @@ Five real oceanographic depth zones, surface to seafloor. Each carries distinct 
 
 Each zone's `ecology` block authored in JSON drives actor archetype selection at chunk-spawn time. Adding a new collectible/predator means adding an actor archetype tagged for the relevant zone(s) — no engine branches.
 
+### Named landmarks
+
+Inside the pelagic zones the player passes specific named landmarks — Kelp Forest, Marine Snow Column, Anglerfish Grove, Giant Squid Passage, Whale Fall, Hydrothermal Vent. These are **navigational beats**, not spawnable actors: each sits at a fixed depth and surfaces to the HUD as the *next upcoming* landmark with a metres-to-go counter. Authored in `config/raw/landmarks/*.json`; the engine reads them via `nextLandmarkAtDepth(depth)` from `src/sim/factories/region/landmarks.ts`. Adding a new landmark is one JSON file plus a recompile — no code changes.
+
 ### Seafloor symmetry
 
 The seafloor mirrors the surface. At the deepest authored zone the depth counter pins at `OCEAN_FLOOR_METERS` (11000 m) and lateral movement continues — the player keeps drifting, dodging, collecting, scoring. The world doesn't end at the bottom, it just stops descending. This is governed by the `seafloorBehavior` slot on each mode:

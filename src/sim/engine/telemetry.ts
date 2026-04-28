@@ -1,6 +1,7 @@
 import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
 import { biomeAtDepth } from "@/sim/factories/region/biomes";
+import { lastPassedLandmark, nextLandmarkAtDepth } from "@/sim/factories/region/landmarks";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
 import { GAME_DURATION, OCEAN_FLOOR_METERS, TRENCH_FLOOR_METERS } from "@/sim/dive/constants";
 import { describeDiveObjective, getPressureLabel } from "@/sim/dive/objectives";
@@ -39,8 +40,8 @@ export function getDiveTelemetry(
   const nearestBeacon = findNearestBeaconVector(scene.player, scene.creatures);
   const collectionRatio = clamp((TOTAL_BEACONS - scene.creatures.length) / TOTAL_BEACONS, 0, 1);
   const oxygenRatio = clamp(timeLeft / durationSeconds, 0, 1);
-  const routeLandmark = getDiveRouteLandmark(collectionRatio, nearestBeacon);
   const depthMeters = Math.round(scene.depthTravelMeters);
+  const routeLandmark = getDiveRouteLandmark(depthMeters);
   const biome = biomeAtDepth(depthMeters);
 
   return {
@@ -127,21 +128,35 @@ export function getDiveCompletionCelebration(summary: DiveRunSummary): DiveCompl
   };
 }
 
-export function getDiveRouteLandmark(
-  collectionRatio: number,
-  nearestBeacon: { bearingRadians: number | null; distance: number }
-) {
-  const normalizedRatio = clamp(collectionRatio, 0, 1);
-  let landmark: (typeof ROUTE_LANDMARKS)[number] = ROUTE_LANDMARKS[0];
-  for (const entry of ROUTE_LANDMARKS) {
-    if (normalizedRatio >= entry.threshold) {
-      landmark = entry;
-    }
+/**
+ * Surface the *next* authored landmark below the sub as a HUD beat
+ * (label + distance-in-metres). The HUD uses this to give the player
+ * a sense of "I'm approaching the Anglerfish Grove, 200 m below"
+ * instead of a generic biome-name pinned to a creature-collection
+ * ratio.
+ *
+ * Past the deepest authored landmark the function falls back to the
+ * last passed landmark so the HUD still has a name to render — at
+ * that point the dive's objective banner is doing the work of saying
+ * "the seafloor" via `describeDiveObjective`.
+ *
+ * Bearing is null because the route landmark is *below* — the HUD
+ * already uses depth-meters as the directional cue (depth ticker +
+ * downward-falling parallax).
+ */
+export function getDiveRouteLandmark(depthMeters: number) {
+  const next = nextLandmarkAtDepth(depthMeters);
+  if (next) {
+    return {
+      bearingRadians: null,
+      distance: Math.max(0, Math.round(next.depthMeters - depthMeters)),
+      label: next.label,
+    };
   }
-
+  const last = lastPassedLandmark(depthMeters);
   return {
-    bearingRadians: nearestBeacon.bearingRadians,
-    distance: Math.round(nearestBeacon.distance + landmark.distanceOffset * (1 - normalizedRatio)),
-    label: landmark.label,
+    bearingRadians: null,
+    distance: 0,
+    label: last?.label ?? "Surface",
   };
 }
