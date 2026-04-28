@@ -1,0 +1,20 @@
+{
+  "id": "epipelagic",
+  "label": "Sunlight Zone",
+  "scientificName": "Epipelagic",
+  "description": "Surface waters, lit by sunlight. Photosynthesis happens here — kelp forests sway, plankton clouds the water. Most of the ocean's life lives in this thin upper layer.",
+  "depthStartMeters": 0,
+  "depthEndMeters": 500,
+  "tintHex": "#2a8a68",
+  "lightLevel": 1.0,
+  "waterClarity": 0.9,
+  "creatureDensity": 0.95,
+  "predatorDensity": 0.3,
+  "pirateDensity": 0,
+  "ecology": {
+    "collectibles": ["sardine-shoal", "moon-jelly", "flying-fish"],
+    "predators": ["barracuda", "mahi-mahi"],
+    "ambient": ["kelp-strand", "sargassum-mat", "sea-turtle"],
+    "lightSources": "sunlight"
+  }
+}

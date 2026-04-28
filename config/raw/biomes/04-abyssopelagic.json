@@ -1,0 +1,20 @@
+{
+  "id": "abyssopelagic",
+  "label": "The Abyss",
+  "scientificName": "Abyssopelagic",
+  "description": "Crushing pressure. Glacial cold. Life is rare and ancient down here. Sight lines stretch forever because there is so little between you. When something does appear, it has come from far away, and it has come for a reason.",
+  "depthStartMeters": 3000,
+  "depthEndMeters": 5000,
+  "tintHex": "#6a1a2a",
+  "lightLevel": 0.0,
+  "waterClarity": 0.98,
+  "creatureDensity": 0.45,
+  "predatorDensity": 0.65,
+  "pirateDensity": 0.6,
+  "ecology": {
+    "collectibles": ["dumbo-octopus", "deep-jelly", "gulper-eel"],
+    "predators": ["chimaera", "giant-isopod", "oarfish"],
+    "ambient": ["marine-snow-thin", "drift-debris"],
+    "lightSources": "rare-bioluminescence"
+  }
+}

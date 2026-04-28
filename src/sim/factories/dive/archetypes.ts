@@ -28,10 +28,11 @@ export const EXPLORATION_DEFAULT: DiveArchetype = {
   label: "Exploration",
   mode: "exploration",
   regionSequence: [
-    "photic-gate",
-    "twilight-shelf",
-    "midnight-column",
-    "abyssal-trench",
+    "epipelagic",
+    "mesopelagic",
+    "bathypelagic",
+    "abyssopelagic",
+    "hadopelagic",
   ],
 };
 
@@ -40,10 +41,11 @@ export const DESCENT_DEFAULT: DiveArchetype = {
   label: "Descent",
   mode: "descent",
   regionSequence: [
-    "photic-gate",
-    "twilight-shelf",
-    "midnight-column",
-    "abyssal-trench",
+    "epipelagic",
+    "mesopelagic",
+    "bathypelagic",
+    "abyssopelagic",
+    "hadopelagic",
   ],
 };
 

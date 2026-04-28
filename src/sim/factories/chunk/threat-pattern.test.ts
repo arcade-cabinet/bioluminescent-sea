@@ -10,7 +10,7 @@ import { spawnPredatorsForChunk } from "./spawn";
 
 const viewport = { width: 800, height: 600 };
 
-function makeChunk(biome: Chunk["biome"] = "twilight-shelf"): Chunk {
+function makeChunk(biome: Chunk["biome"] = "mesopelagic"): Chunk {
   return {
     biome,
     index: 3,
@@ -65,19 +65,19 @@ describe("threat pattern dispatch in spawnPredatorsForChunk", () => {
   });
 
   test.each(["scattered", "swarm", "shoal-press"] as const)(
-    "stygian leviathan still spawns under %s pattern",
+    "hadal leviathan still spawns under %s pattern",
     (pattern) => {
       // The leviathan is a named boss spawned independently of the
       // pattern. Verify across all three patterns: in at least one
-      // seeded variant, the chunk should carry a leviathan.
+      // seeded variant, a hadal-zone chunk should carry a leviathan.
       let sawLeviathan = false;
       for (let seed = 0; seed < 20 && !sawLeviathan; seed++) {
         const chunk: Chunk = {
-          biome: "stygian-abyss",
+          biome: "hadopelagic",
           index: seed,
           seed: seed * 1000 + 17,
-          yTopMeters: 3400,
-          yBottomMeters: 3600,
+          yTopMeters: 6000,
+          yBottomMeters: 6200,
         };
         const pred = spawnPredatorsForChunk(chunk, viewport, pattern);
         if (pred.some((p) => p.isLeviathan)) sawLeviathan = true;

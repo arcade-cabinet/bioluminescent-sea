@@ -64,17 +64,17 @@ export function mountAmbient(parent: Container): AmbientController {
       const wrappedY = ((shift % heightPx) + heightPx) % heightPx;
 
       switch (biome.id) {
-        case "photic-gate":
+        case "epipelagic":
           drawKelpRibbons(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
-        case "twilight-shelf":
+        case "mesopelagic":
           drawJellyfishSwarm(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
-        case "midnight-column":
+        case "bathypelagic":
           drawAnglerfishLures(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
-        case "abyssal-trench":
-        case "stygian-abyss":
+        case "abyssopelagic":
+        case "hadopelagic":
           drawAbyssalLandmarks(g, widthPx, heightPx, totalTime, wrappedY, diveSeed);
           break;
       }

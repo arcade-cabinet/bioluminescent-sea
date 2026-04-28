@@ -41,11 +41,11 @@ import type { StatTileProps } from "@/ui/primitives";
 type GameState = "landing" | "drydock" | "playing" | "gameover" | "complete";
 
 const BIOME_LABELS: Record<string, string> = {
-  "photic-gate": "Photic Gate",
-  "twilight-shelf": "Twilight Shelf",
-  "midnight-column": "Midnight Column",
-  "abyssal-trench": "Abyssal Trench",
-  "stygian-abyss": "Stygian Abyss",
+  epipelagic: "Sunlight Zone",
+  mesopelagic: "Twilight Zone",
+  bathypelagic: "Midnight Zone",
+  abyssopelagic: "The Abyss",
+  hadopelagic: "The Hadal",
 };
 
 /**

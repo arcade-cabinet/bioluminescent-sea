@@ -123,24 +123,24 @@ describe("achievements — first-blood unlock", () => {
 });
 
 describe("achievements — depth tier ladder", () => {
-  test("600 m unlocks Photic Pioneer", () => {
+  test("500 m unlocks 'Past the Sunlight'", () => {
     const r = evaluateAchievements({
-      postBests: makeBests({ depthMeters: 600 }),
-      summary: makeSummary({ depthMeters: 600 }),
+      postBests: makeBests({ depthMeters: 500 }),
+      summary: makeSummary({ depthMeters: 500 }),
     });
-    expect(r.newlyUnlocked.map((a) => a.id)).toContain("kelp-gate-opened");
+    expect(r.newlyUnlocked.map((a) => a.id)).toContain("twilight-zone-reached");
   });
 
-  test("3200 m unlocks all four depth tiers in one dive", () => {
+  test("5000 m unlocks every zone tier reached in one dive", () => {
     const r = evaluateAchievements({
-      postBests: makeBests({ depthMeters: 3200 }),
-      summary: makeSummary({ depthMeters: 3200 }),
+      postBests: makeBests({ depthMeters: 5000 }),
+      summary: makeSummary({ depthMeters: 5000 }),
     });
     const ids = r.newlyUnlocked.map((a) => a.id);
-    expect(ids).toContain("kelp-gate-opened");
-    expect(ids).toContain("twilight-traveler");
-    expect(ids).toContain("midnight-resident");
-    expect(ids).toContain("abyss-cartographer");
+    expect(ids).toContain("twilight-zone-reached");
+    expect(ids).toContain("midnight-zone-reached");
+    expect(ids).toContain("abyss-reached");
+    expect(ids).toContain("hadal-reached");
   });
 
   test("subsequent dives don't re-unlock tiers", () => {
@@ -220,7 +220,7 @@ describe("achievements — single-dive criteria", () => {
     expect(r.newlyUnlocked.map((a) => a.id)).toContain("predator-hunter");
   });
 
-  test("biome-tour requires 4 biomes in one dive", () => {
+  test("five-zones requires all five depth zones in one dive", () => {
     const r = evaluateAchievements({
       postBests: makeBests(),
       summary: makeSummary({
@@ -228,10 +228,11 @@ describe("achievements — single-dive criteria", () => {
           predatorsKilled: 0,
           buffsCollected: 0,
           biomesTraversed: [
-            "photic-gate",
-            "twilight-shelf",
-            "midnight-column",
-            "abyssal-trench",
+            "epipelagic",
+            "mesopelagic",
+            "bathypelagic",
+            "abyssopelagic",
+            "hadopelagic",
           ],
           maxChain: 1,
           impactsTaken: 0,
@@ -239,7 +240,7 @@ describe("achievements — single-dive criteria", () => {
         },
       }),
     });
-    expect(r.newlyUnlocked.map((a) => a.id)).toContain("biome-tour");
+    expect(r.newlyUnlocked.map((a) => a.id)).toContain("five-zones");
   });
 });
 

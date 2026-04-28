@@ -46,7 +46,11 @@ export function advanceObjectiveQueue(
         // creature count subtracted from a rolling max attributes
         // charts to it. Heuristic — acceptable until the creature
         // layer stores regionId.
-        if (objective.regionId && biome.id === objective.regionId) {
+        // Region IDs and BiomeIds overlap on the pelagic zones but
+        // RegionArchetypeId also includes "arena-hall". String compare
+        // sidesteps the union narrowing — when biome.id matches the
+        // region's id we count it as "in region."
+        if (objective.regionId && (biome.id as string) === objective.regionId) {
           // Increment by +1 whenever the tracker is behind the raw
           // "creatures charted count" for this region window. A
           // better implementation piggybacks on collectCreatures'

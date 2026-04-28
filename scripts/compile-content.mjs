@@ -22,15 +22,30 @@ const rawRoot = join(repoRoot, "config/raw");
 const compiledRoot = join(repoRoot, "config/compiled");
 
 const BiomeSchema = z.object({
-  id: z.enum(["photic-gate", "twilight-shelf", "midnight-column", "abyssal-trench"]),
+  id: z.enum([
+    "epipelagic",
+    "mesopelagic",
+    "bathypelagic",
+    "abyssopelagic",
+    "hadopelagic",
+  ]),
   label: z.string().min(1),
+  scientificName: z.string().min(1),
   description: z.string().min(1),
   depthStartMeters: z.number().int().min(0),
   depthEndMeters: z.number().int().positive(),
   tintHex: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  lightLevel: z.number().min(0).max(1),
+  waterClarity: z.number().min(0).max(1),
   creatureDensity: z.number().min(0).max(2),
   predatorDensity: z.number().min(0).max(2),
   pirateDensity: z.number().min(0).max(2),
+  ecology: z.object({
+    collectibles: z.array(z.string().min(1)),
+    predators: z.array(z.string().min(1)),
+    ambient: z.array(z.string().min(1)),
+    lightSources: z.string().min(1),
+  }),
 });
 
 const CreatureSpeciesSchema = z.object({
@@ -50,7 +65,13 @@ const LandmarkSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   depthMeters: z.number().int().positive(),
-  biome: z.enum(["photic-gate", "twilight-shelf", "midnight-column", "abyssal-trench"]),
+  biome: z.enum([
+    "epipelagic",
+    "mesopelagic",
+    "bathypelagic",
+    "abyssopelagic",
+    "hadopelagic",
+  ]),
   flavor: z.string().min(1),
 });
 

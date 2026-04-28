@@ -4,9 +4,10 @@ import type { RegionSlots } from "./slots";
  * Authored region catalogue. Each entry is a named recipe the dive
  * factory can pull into its region sequence.
  *
- * Most regions map 1:1 to a biome + a default chunk pool. Arena halls
- * are a distinct region type that reuses the biome for palette but
- * overrides the chunk pool to be entirely locked rooms.
+ * One region per pelagic depth zone — the regions inherit their
+ * biome paint, density, and ecology from the JSON-authored biome
+ * catalogue. Arena halls are a separate region type that reuses a
+ * biome for palette but overrides the chunk pool to be locked rooms.
  */
 export interface RegionArchetype {
   id: string;
@@ -14,72 +15,86 @@ export interface RegionArchetype {
   slots: RegionSlots;
 }
 
-export const PHOTIC_GATE: RegionArchetype = {
-  id: "photic-gate",
-  label: "Photic Gate",
+export const EPIPELAGIC_REGION: RegionArchetype = {
+  id: "epipelagic",
+  label: "Sunlight Zone",
   slots: {
-    biome: "photic-gate",
+    biome: "epipelagic",
     traversal: "open",
     chunkPool: [
       { archetype: "open-drift", weight: 4 },
       { archetype: "beacon-grove", weight: 2 },
     ],
-    depthSpanMeters: { start: 0, end: 300 },
+    depthSpanMeters: { start: 0, end: 500 },
   },
 };
 
-export const TWILIGHT_SHELF: RegionArchetype = {
-  id: "twilight-shelf",
-  label: "Twilight Shelf",
+export const MESOPELAGIC_REGION: RegionArchetype = {
+  id: "mesopelagic",
+  label: "Twilight Zone",
   slots: {
-    biome: "twilight-shelf",
+    biome: "mesopelagic",
     traversal: "open",
     chunkPool: [
       { archetype: "open-drift", weight: 5 },
       { archetype: "beacon-grove", weight: 1 },
     ],
-    depthSpanMeters: { start: 300, end: 600 },
+    depthSpanMeters: { start: 500, end: 1500 },
   },
 };
 
-export const MIDNIGHT_COLUMN: RegionArchetype = {
-  id: "midnight-column",
-  label: "Midnight Column",
+export const BATHYPELAGIC_REGION: RegionArchetype = {
+  id: "bathypelagic",
+  label: "Midnight Zone",
   slots: {
-    biome: "midnight-column",
+    biome: "bathypelagic",
     traversal: "open",
     chunkPool: [
       { archetype: "open-drift", weight: 4 },
       { archetype: "descent-corridor", weight: 2 },
     ],
-    depthSpanMeters: { start: 600, end: 900 },
+    depthSpanMeters: { start: 1500, end: 3000 },
   },
 };
 
-export const ABYSSAL_TRENCH: RegionArchetype = {
-  id: "abyssal-trench",
-  label: "Abyssal Trench",
+export const ABYSSOPELAGIC_REGION: RegionArchetype = {
+  id: "abyssopelagic",
+  label: "The Abyss",
   slots: {
-    biome: "abyssal-trench",
+    biome: "abyssopelagic",
     traversal: "open",
     chunkPool: [
       { archetype: "descent-corridor", weight: 3 },
       { archetype: "open-drift", weight: 1 },
     ],
-    depthSpanMeters: { start: 900, end: 1500 },
+    depthSpanMeters: { start: 3000, end: 5000 },
+  },
+};
+
+export const HADOPELAGIC_REGION: RegionArchetype = {
+  id: "hadopelagic",
+  label: "The Hadal",
+  slots: {
+    biome: "hadopelagic",
+    traversal: "open",
+    chunkPool: [
+      { archetype: "descent-corridor", weight: 4 },
+      { archetype: "open-drift", weight: 1 },
+    ],
+    depthSpanMeters: { start: 5000, end: 11000 },
   },
 };
 
 /**
- * The arena hall — a gated region of locked rooms. Biome paint still
- * photic-gate for the palette (arena is not a descent experience) but
- * the chunk pool is entirely locked rooms.
+ * The arena hall — a gated region of locked rooms. Biome paint
+ * inherits epipelagic for the palette (arena is not a descent
+ * experience) but the chunk pool is entirely locked rooms.
  */
 export const ARENA_HALL: RegionArchetype = {
   id: "arena-hall",
   label: "Arena Hall",
   slots: {
-    biome: "photic-gate",
+    biome: "epipelagic",
     traversal: "gated",
     chunkPool: [{ archetype: "arena-room", weight: 1 }],
     depthSpanMeters: { start: 0, end: 600 },
@@ -87,10 +102,11 @@ export const ARENA_HALL: RegionArchetype = {
 };
 
 export const REGION_ARCHETYPE_CATALOGUE = {
-  "photic-gate": PHOTIC_GATE,
-  "twilight-shelf": TWILIGHT_SHELF,
-  "midnight-column": MIDNIGHT_COLUMN,
-  "abyssal-trench": ABYSSAL_TRENCH,
+  epipelagic: EPIPELAGIC_REGION,
+  mesopelagic: MESOPELAGIC_REGION,
+  bathypelagic: BATHYPELAGIC_REGION,
+  abyssopelagic: ABYSSOPELAGIC_REGION,
+  hadopelagic: HADOPELAGIC_REGION,
   "arena-hall": ARENA_HALL,
 } as const satisfies Record<string, RegionArchetype>;
 

@@ -42,12 +42,18 @@ interface AmbientController {
   stop(): void;
 }
 
+/**
+ * Per-zone chord voicings — each pelagic zone gets a register that
+ * sinks deeper as you descend. Sunlight zone is open and bright
+ * (lydian-flavoured high register); the hadal is the lowest growl
+ * the synth can voice without losing pitch entirely.
+ */
 const BIOME_VOICINGS: Record<BiomeId, readonly string[]> = {
-  "photic-gate": ["A3", "E4", "B4", "F#5"],
-  "twilight-shelf": ["A3", "D4", "E4", "A4"],
-  "midnight-column": ["A2", "E3", "C4", "B4"],
-  "abyssal-trench": ["A2", "Bb2", "E3", "F3"],
-  "stygian-abyss": ["A1", "C2", "C#2", "G2"],
+  epipelagic: ["A3", "E4", "B4", "F#5"],
+  mesopelagic: ["A3", "D4", "E4", "A4"],
+  bathypelagic: ["A2", "E3", "C4", "B4"],
+  abyssopelagic: ["A2", "Bb2", "E3", "F3"],
+  hadopelagic: ["A1", "C2", "C#2", "G2"],
 };
 
 export function createAmbient(): AmbientController {
@@ -65,7 +71,7 @@ export function createAmbient(): AmbientController {
    *  Independent gain ramps with leviathanProximity. */
   let leviathan: Tone.MonoSynth | null = null;
   let leviathanGain: Tone.Gain | null = null;
-  let currentBiome: BiomeId = "photic-gate";
+  let currentBiome: BiomeId = "epipelagic";
   let unsubMute: (() => void) | null = null;
 
   const scheduleChord = (time?: number) => {
