@@ -1,4 +1,5 @@
 import type { DiveInput, SceneState, ViewportDimensions } from "@/sim/dive/types";
+import type { PerceptionContext } from "./perception/perception";
 import { Think } from "./goap/Think";
 
 /**
@@ -26,6 +27,17 @@ export interface PlayerSubObservation {
   deltaTime: number;
   /** Seconds remaining in the current dive — bots can panic when low. */
   timeLeft: number;
+  /**
+   * Perception context for THIS tick. Populated by the runtime
+   * before any provider's `next()` is called. The GOAP brain reads
+   * scene contents only through `perception.perceives(...)` so the
+   * bot governance is faithful to what a player can see.
+   *
+   * Empty context (`{ occluders: [] }`) is the safe default for
+   * tests that don't care about LoS — `perceives` then runs only
+   * the radius + cone test, matching pre-perception behaviour.
+   */
+  perception: PerceptionContext;
 }
 
 export interface PlayerInputProvider {

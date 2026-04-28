@@ -94,6 +94,7 @@ function playMode(
       totalTime,
       deltaTime,
       timeLeft,
+      perception: { occluders: [] },
     });
 
     // Apply the input to the player record before handing it to the sim,
@@ -167,6 +168,7 @@ function makeBot(
     totalTime: 0,
     deltaTime: 1 / 30,
     timeLeft: 600,
+      perception: { occluders: [] },
   });
   const brain = factory(owner);
   return new GoapInputProvider(brain, owner);
@@ -533,6 +535,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       totalTime: 0,
       deltaTime: 1 / 30,
       timeLeft: 600,
+      perception: { occluders: [] },
     });
     const brain = createCollectBeaconsProfile(owner);
     const bot = new GoapInputProvider(brain, owner);
@@ -542,6 +545,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       totalTime: 0,
       deltaTime: 1 / 30,
       timeLeft: 600,
+      perception: { occluders: [] },
     });
     expect(input.isActive).toBe(true);
     // Bot's chosen target is the nearest beacon — assert direction matches.
@@ -576,6 +580,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       totalTime: 0,
       deltaTime: 1 / 30,
       timeLeft: 480,
+      perception: { occluders: [] },
     });
     const brain = createRamPredatorProfile(owner);
     const bot = new GoapInputProvider(brain, owner);
@@ -585,6 +590,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       totalTime: 0,
       deltaTime: 1 / 30,
       timeLeft: 480,
+      perception: { occluders: [] },
     });
     expect(input.isActive).toBe(true);
     expect(input.x).toBeCloseTo(scene.player.x + 200);
@@ -607,6 +613,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
       totalTime: 0,
       deltaTime: 1 / 30,
       timeLeft: 600,
+      perception: { occluders: [] },
     });
     const brain = createCollectBeaconsProfile(owner);
     const bot = new GoapInputProvider(brain, owner);
@@ -620,6 +627,7 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
         totalTime,
         deltaTime,
         timeLeft: 600 - totalTime,
+      perception: { occluders: [] },
       });
       scene = {
         ...scene,

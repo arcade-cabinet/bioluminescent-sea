@@ -3,16 +3,39 @@ import type { Player, Predator, Pirate, Creature } from "@/sim/entities/types";
 import { getArchetype } from "@/sim/factories/actor";
 import {
   EnemySubHuntBehavior,
+  FleeFromPlayerBehavior,
   GameVehicle,
   WrapPlayBandBehavior,
 } from "./steering";
 import { PredatorBrain } from "./predator-brain/PredatorBrain";
 import { profileForPredatorId } from "./predator-brain/archetype-profiles";
 import { PirateBrain } from "./pirate-brain/PirateBrain";
-import type { ViewportDimensions } from "@/sim/dive/types";
+import type { SceneState, ViewportDimensions } from "@/sim/dive/types";
 import { resolveNumeric } from "@/sim/_shared/variance";
+import { collectOccluders } from "./perception/occluders";
+import type { PerceptionContext } from "./perception/perception";
 
 const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
+
+/**
+ * Per-species per-dive flock parameter rolls. Each call uses
+ * resolveNumeric with a unique tag so adding a new param doesn't
+ * shift the seed-derived values for existing ones.
+ *
+ * skittishWeight upper bound (0.7) is intentionally below the
+ * cohesion upper bound (1.0) so a high flee + low cohesion roll
+ * cannot prevent the school from re-forming after the player passes
+ * through (quality review #5).
+ */
+function resolveFlockParams(type: string, diveSeed: number) {
+  return {
+    alignmentWeight: resolveNumeric([0.4, 1.1], diveSeed, `flock:${type}:alignment`),
+    cohesionWeight: resolveNumeric([0.3, 1.0], diveSeed, `flock:${type}:cohesion`),
+    separationWeight: resolveNumeric([0.6, 1.4], diveSeed, `flock:${type}:separation`),
+    skittishRadius: resolveNumeric([80, 220], diveSeed, `flock:${type}:skittishRadius`),
+    skittishWeight: resolveNumeric([0.0, 0.7], diveSeed, `flock:${type}:skittishWeight`),
+  };
+}
 
 export class AIManager {
   public entityManager: EntityManager;
@@ -32,11 +55,26 @@ export class AIManager {
    *  work without each brain tracking its own clock. */
   private currentTime = 0;
   private viewportWidth: number;
+  private viewportHeight: number;
   private diveSeed: number;
+  /**
+   * Perception context for the current tick. Rebuilt by
+   * `rebuildPerception(scene, lockedRoom)` once per frame from the
+   * runtime, before any GOAP provider's `next()` runs. Public so
+   * callers can pass it into `PlayerSubObservation.perception`.
+   *
+   * Empty until the first `rebuildPerception` call — production
+   * runtime always rebuilds before the first GOAP tick. Tests that
+   * skip rebuild see helpers fall back to direct scene reads.
+   */
+  public perception: PerceptionContext = { occluders: [] };
   private flockingBehaviors: Map<string, {
     alignment: AlignmentBehavior;
     cohesion: CohesionBehavior;
     separation: SeparationBehavior;
+    /** May be null when the rolled skittishWeight is below threshold
+     *  (gated registration — see syncCreatures comment). */
+    fleeFromPlayer: FleeFromPlayerBehavior | null;
   }>;
 
   /**
@@ -53,6 +91,7 @@ export class AIManager {
     this.vehicleMap = new Map();
     this.flockingBehaviors = new Map();
     this.viewportWidth = viewport.width;
+    this.viewportHeight = viewport.height;
     this.diveSeed = diveSeed;
 
     this.playerVehicle = new GameVehicle("player");
@@ -61,6 +100,10 @@ export class AIManager {
   }
 
   updatePlayer(player: Player) {
+    // NaN guard — a bad player position would poison the
+    // playerVehicle reference, propagating through every
+    // FleeFromPlayerBehavior and predator perception path.
+    if (!Number.isFinite(player.x) || !Number.isFinite(player.y)) return;
     this.playerVehicle.position.set(player.x, player.y, 0);
   }
 
@@ -203,7 +246,7 @@ export class AIManager {
 
   syncCreatures(creatures: Creature[]) {
     const flockers = creatures.filter(c => c.type !== "plankton");
-    
+
     for (const type of ["fish", "jellyfish"]) {
       if (!this.flockingBehaviors.has(type)) {
         // Per-dive, per-species flocking weights. Each species draws
@@ -211,25 +254,30 @@ export class AIManager {
         // seed picks a different blend — one dive's fish might be
         // tightly cohesive (cohesion=0.9) and loosely aligned (0.3),
         // the next dive's fish might fan out and align like a school.
+        const params = resolveFlockParams(type, this.diveSeed);
         const alignment = new AlignmentBehavior();
         const cohesion = new CohesionBehavior();
         const separation = new SeparationBehavior();
-        alignment.weight = resolveNumeric(
-          [0.4, 1.1],
-          this.diveSeed,
-          `flock:${type}:alignment`,
-        );
-        cohesion.weight = resolveNumeric(
-          [0.3, 1.0],
-          this.diveSeed,
-          `flock:${type}:cohesion`,
-        );
-        separation.weight = resolveNumeric(
-          [0.6, 1.4],
-          this.diveSeed,
-          `flock:${type}:separation`,
-        );
-        this.flockingBehaviors.set(type, { alignment, cohesion, separation });
+        alignment.weight = params.alignmentWeight;
+        cohesion.weight = params.cohesionWeight;
+        separation.weight = params.separationWeight;
+
+        // Gated registration: when the rolled skittishWeight is
+        // below 0.1, this species is "fearless" — don't wire the
+        // behavior at all. Avoids paying the per-frame cost for
+        // a no-op force contribution.
+        let fleeFromPlayer: FleeFromPlayerBehavior | null = null;
+        if (params.skittishWeight >= 0.1) {
+          fleeFromPlayer = new FleeFromPlayerBehavior(params.skittishRadius);
+          fleeFromPlayer.weight = params.skittishWeight;
+          fleeFromPlayer.playerRef = this.playerVehicle;
+        }
+        this.flockingBehaviors.set(type, {
+          alignment,
+          cohesion,
+          separation,
+          fleeFromPlayer,
+        });
       }
     }
 
@@ -239,44 +287,84 @@ export class AIManager {
         vehicle = new GameVehicle(c.id);
         vehicle.position.set(c.x, c.y, 0);
         vehicle.maxSpeed = c.speed * 60;
-        
+
         const behaviors = this.flockingBehaviors.get(c.type);
         if (behaviors) {
           vehicle.steering.add(behaviors.alignment);
           vehicle.steering.add(behaviors.cohesion);
           vehicle.steering.add(behaviors.separation);
+          if (behaviors.fleeFromPlayer) {
+            vehicle.steering.add(behaviors.fleeFromPlayer);
+          }
         }
-        
+
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
         vehicle.steering.add(wrap);
-        
+
         this.entityManager.add(vehicle);
         this.vehicleMap.set(c.id, vehicle);
       }
     }
-    
+
+    // Prune vehicles whose creature has retired off-screen. The
+    // previous predicate was inverted (only beacons were pruned —
+    // fish/jellyfish leaked indefinitely). Now we prune any vehicle
+    // that is not the player and has no matching creature this frame.
     const activeIds = new Set(creatures.map(c => c.id));
     for (const [id, vehicle] of this.vehicleMap.entries()) {
-      if (id !== "player" && !activeIds.has(id) && id.startsWith("beacon-")) {
-        this.entityManager.remove(vehicle);
-        this.vehicleMap.delete(id);
-      }
+      if (id === "player") continue;
+      if (id.startsWith("marauder-sub")) continue;
+      if (activeIds.has(id)) continue;
+      this.entityManager.remove(vehicle);
+      this.vehicleMap.delete(id);
     }
   }
 
   update(deltaTime: number) {
     this.currentTime += deltaTime;
-    // Tick every PredatorBrain so the StateMachine + memory advance
-    // before EntityManager integrates positions. Doing the brain tick
-    // first ensures any state-induced steering toggle is in place
-    // when the integration step runs.
+    // Publish the current-tick perception context onto every brain
+    // BEFORE it ticks, so canSeePlayer and the pirate cone test see
+    // a consistent occluder list. AIManager built this in
+    // `rebuildPerception` (called by advanceScene before update).
     for (const brain of this.predatorBrainMap.values()) {
+      brain.perceptionContext = this.perception;
       brain.tick(deltaTime, this.currentTime);
     }
     for (const brain of this.pirateBrainMap.values()) {
+      brain.perceptionContext = this.perception;
       brain.tick(deltaTime);
     }
     this.entityManager.update(deltaTime);
+  }
+
+  /**
+   * Rebuild the perception context for the current tick from the
+   * scene state and chunk-travel hint.
+   *
+   * Called once per frame by `advanceScene` BEFORE any per-entity
+   * detection check (predator canSeePlayer, pirate cone, GOAP bot).
+   * The result is published on `this.perception` for any caller to
+   * read — `advanceScene` forwards it onto the GOAP observation,
+   * predator + pirate brains read it through accessors below.
+   *
+   * `lockedRoom = true` adds the four viewport-edge wall segments;
+   * `false` leaves perception unbounded by walls (open / corridor
+   * chunks). The chunk lifecycle pushes the current chunk's travel
+   * slot in via this argument.
+   *
+   * `perceiverEntityId` excludes that entity's own leviathan entry
+   * from the occluder list — prevents a leviathan from occluding
+   * its own line-of-sight. Default: undefined (no exclusion).
+   */
+  rebuildPerception(scene: SceneState, lockedRoom = false, perceiverEntityId?: string): void {
+    this.perception = {
+      occluders: collectOccluders(
+        scene,
+        { width: this.viewportWidth, height: this.viewportHeight },
+        perceiverEntityId,
+        lockedRoom,
+      ),
+    };
   }
 
   /**
@@ -287,6 +375,50 @@ export class AIManager {
    * start of each lamp pressure pass.
    */
   public lastLampScatterPoints: { x: number; y: number }[] = [];
+
+  /**
+   * Bump every predator's MemorySystem record of the player when the
+   * player cavitates within audible range. Sound bypasses LoS — a
+   * cavitation event is heard even through debris, leviathans, or
+   * locked-room walls.
+   *
+   * The Yuka MemorySystem requires a live Vehicle reference (not
+   * coords); this method holds that reference (`this.playerVehicle`)
+   * and is the only code path that writes player-memory from non-
+   * perception sources. The emitter already guards NaN inputs and
+   * only emits when all inputs are finite, so callers are trusted.
+   *
+   * Creates the memory record on first contact — predators that
+   * have never seen the player still gain awareness from cavitation,
+   * matching the "sound bypasses LoS" intent.
+   *
+   * Returns the number of predator records bumped, for SFX gain.
+   */
+  applyCavitationBump(
+    eventX: number,
+    eventY: number,
+    audibleRadiusPx: number,
+    simTime: number,
+  ): number {
+    const radiusSq = audibleRadiusPx * audibleRadiusPx;
+    let bumped = 0;
+    for (const brain of this.predatorBrainMap.values()) {
+      const dx = brain.position.x - eventX;
+      const dy = brain.position.y - eventY;
+      if (dx * dx + dy * dy > radiusSq) continue;
+      // Create-or-update: predators that haven't sensed the player
+      // before still get awareness from cavitation.
+      if (!brain.memorySystem.hasRecord(this.playerVehicle)) {
+        brain.memorySystem.createRecord(this.playerVehicle);
+      }
+      const record = brain.memorySystem.getRecord(this.playerVehicle);
+      if (!record) continue;
+      record.timeLastSensed = simTime;
+      record.lastSensedPosition.copy(this.playerVehicle.position);
+      bumped += 1;
+    }
+    return bumped;
+  }
 
   /**
    * Push the player's lamp cone against every predator brain. Any

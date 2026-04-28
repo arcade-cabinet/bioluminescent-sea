@@ -24,6 +24,7 @@ function makeOwner(overrides: Partial<PlayerSubObservation> = {}): GoapBrainOwne
     dimensions,
     deltaTime: 1 / 60,
     timeLeft: 600,
+      perception: { occluders: [] },
     totalTime: 0,
     ...overrides,
   });

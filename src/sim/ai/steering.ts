@@ -293,3 +293,63 @@ export class StalkAndDashBehavior extends SteeringBehavior {
     return force;
   }
 }
+
+/**
+ * Player-aware flee. When the player is within `radius` of the
+ * creature, push the creature away with a smooth-falloff force.
+ *
+ * Used as a SHARED instance per species (not per-creature) — matches
+ * the AlignmentBehavior / CohesionBehavior / SeparationBehavior
+ * wiring in AIManager.syncCreatures. `calculate` is pure w.r.t.
+ * `this` beyond reading `radius` and `playerRef`.
+ *
+ * Force scales by `vehicle.maxSpeed` (not `vehicle.maxForce` which
+ * defaults to 1 and would produce invisible nudges) — same shape
+ * Yuka's WanderBehavior uses.
+ *
+ * NaN guards: if any of vehicle.position, player position, or radius
+ * is non-finite, returns force unchanged.
+ */
+export class FleeFromPlayerBehavior extends SteeringBehavior {
+  public radius: number;
+  public playerRef: Vehicle | null = null;
+
+  constructor(radiusPx: number) {
+    super();
+    this.radius = radiusPx;
+  }
+
+  calculate(vehicle: Vehicle, force: Vector3, _delta: number): Vector3 {
+    if (!this.playerRef) return force;
+    if (
+      !Number.isFinite(vehicle.position.x) ||
+      !Number.isFinite(vehicle.position.y) ||
+      !Number.isFinite(this.playerRef.position.x) ||
+      !Number.isFinite(this.playerRef.position.y) ||
+      !Number.isFinite(this.radius)
+    ) {
+      return force;
+    }
+
+    const dx = vehicle.position.x - this.playerRef.position.x;
+    const dy = vehicle.position.y - this.playerRef.position.y;
+    const distSq = dx * dx + dy * dy;
+    const r = this.radius;
+    if (distSq >= r * r) return force;
+
+    const dist = Math.sqrt(distSq);
+    if (dist === 0) {
+      // Coincident: no defined "away" direction. Leave force
+      // unchanged — the school's other steering will move the
+      // creature off-coincident next frame.
+      return force;
+    }
+
+    // Smooth falloff: 1 at center, 0 at edge.
+    const magnitude = 1 - dist / r;
+    const invDist = 1 / dist;
+    force.x += dx * invDist * magnitude * vehicle.maxSpeed;
+    force.y += dy * invDist * magnitude * vehicle.maxSpeed;
+    return force;
+  }
+}

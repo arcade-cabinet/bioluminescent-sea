@@ -41,6 +41,7 @@ function makeBot(
     deltaTime: 1 / 60,
     timeLeft: 600,
     totalTime: 0,
+    perception: { occluders: [] },
   });
   const brain = factory(owner);
   return new GoapInputProvider(brain, owner);
@@ -143,7 +144,10 @@ describe("per-mode browser integration (GOAP bot drives the live game)", () => {
       }
       expect(host.querySelector('[data-testid="gameover-screen"]')).not.toBeNull();
     },
-    20_000,
+    // 8s initial mount + 12s arena wait = 20s, but CI xvfb-run overhead
+    // can eat several more seconds before the first RAF fires. 35s gives
+    // enough headroom without masking a genuine hang.
+    35_000,
   );
 
   test(

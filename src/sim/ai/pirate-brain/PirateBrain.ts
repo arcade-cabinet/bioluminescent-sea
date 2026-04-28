@@ -28,15 +28,20 @@
 import {
   PursuitBehavior,
   SeparationBehavior,
-  Vector3,
   Vehicle,
   WanderBehavior,
 } from "yuka";
 import { WrapPlayBandBehavior } from "@/sim/ai/steering";
+import { perceives, type PerceptionContext, type PerceiverProfile } from "@/sim/ai/perception/perception";
 
 /** Cone geometry — mirrors the renderer's lantern wedge. */
 const CONE_LENGTH_PX = 220;
 const CONE_HALF_ANGLE = Math.PI / 5; // ~36°
+/** Pre-built profile so we don't allocate per cone-test. */
+const PIRATE_CONE_PROFILE: PerceiverProfile = {
+  radiusPx: CONE_LENGTH_PX,
+  coneHalfAngleRad: CONE_HALF_ANGLE,
+};
 /** Awareness ramps up at this rate while the player is in cone. */
 const AWARENESS_RAMP_PER_SECOND = 2.5;
 /** Decay rate while player is OUT of cone. Asymmetric so pursuit
@@ -57,8 +62,6 @@ interface PirateSteeringSlots {
   separation: SeparationBehavior;
   wrap: WrapPlayBandBehavior;
 }
-
-const _toPlayer = new Vector3();
 
 export class PirateBrain extends Vehicle {
   /** Reference to the shared player vehicle so pursuit can target it. */
@@ -139,15 +142,24 @@ export class PirateBrain extends Vehicle {
     }
   }
 
+  /**
+   * Perception context for the current tick. AIManager replaces it
+   * before every tick. Default empty context means unit tests that
+   * skip AIManager still get a valid radius+cone test (no LoS pass).
+   */
+  public perceptionContext: PerceptionContext = { occluders: [] };
+
   private _isPlayerInCone(): boolean {
     if (!this.playerRef) return false;
-    _toPlayer.copy(this.playerRef.position).sub(this.position);
-    const distSq = _toPlayer.x * _toPlayer.x + _toPlayer.y * _toPlayer.y;
-    if (distSq > CONE_LENGTH_PX * CONE_LENGTH_PX) return false;
-    const dist = Math.sqrt(distSq);
-    if (dist < 0.01) return true; // touching → in cone
-    _toPlayer.divideScalar(dist);
-    const dot = this.forward.dot(_toPlayer);
-    return dot >= Math.cos(CONE_HALF_ANGLE);
+    return perceives(
+      this.perceptionContext,
+      {
+        x: this.position.x,
+        y: this.position.y,
+        headingRad: Math.atan2(this.forward.y, this.forward.x),
+      },
+      PIRATE_CONE_PROFILE,
+      { x: this.playerRef.position.x, y: this.playerRef.position.y },
+    );
   }
 }

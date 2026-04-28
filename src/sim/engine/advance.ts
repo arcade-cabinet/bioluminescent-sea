@@ -62,6 +62,17 @@ export function resetAIManager() {
   aiManager = null;
 }
 
+/**
+ * Read the current AI manager's perception context. Production
+ * runtime (DiveScreen) and tests both use this to build a
+ * `PlayerSubObservation` with the same perception the AIManager
+ * just rebuilt. Returns an empty context if no advanceScene call
+ * has happened yet.
+ */
+export function getCurrentPerception(): import("@/sim/ai/perception/perception").PerceptionContext {
+  return aiManager ? aiManager.perception : { occluders: [] };
+}
+
 export function advanceScene(
   scene: SceneState,
   input: DiveInput,
@@ -98,6 +109,18 @@ export function advanceScene(
   ai.syncPredators(scene.predators);
   ai.syncPirates(scene.pirates);
   ai.syncCreatures(scene.creatures);
+  // Refresh perception BEFORE brains tick so canSeePlayer + cone
+  // tests run against an occluder list reflecting THIS frame's scene.
+  // Producers (predator canSeePlayer, pirate cone, GOAP profiles) all
+  // read `ai.perception` from here. `lockedRoom` defaults false until
+  // the chunk-lifecycle adapter forwards the active chunk's travel
+  // slot; Spec 1c lands the module + the wire, the locked-room hook
+  // follows when the first locked-room chunk archetype ships its
+  // perception case.
+  // Arena is the only mode whose chunks use the locked-room travel
+  // slot (collisionEndsDive + respawnThreats), so that flag is the
+  // right proxy for "add viewport-edge wall occluders this frame."
+  ai.rebuildPerception(scene, tuning.collisionEndsDive && tuning.respawnThreats);
   ai.update(deltaTime);
 
   // Lamp-pressure: predators inside the player's lamp cone take
@@ -199,13 +222,18 @@ export function advanceScene(
   const particles = scene.particles.map((particle) =>
     advanceParticle(particle, dimensions, totalTime, deltaTime)
   );
+  // lamp-flare extends scoop reach by 1.5× (collection-radius
+  // buff). The lamp-cone visual scales by 1.35× (lampBoost above) —
+  // the two are intentionally different: the cone is what the
+  // player sees, the scoop is the deeper collection volume.
   const collection = collectCreatures(
     creatures,
     player,
     totalTime,
     lastCollectTime,
     multiplier,
-    tuning.collectionOxygenScale
+    tuning.collectionOxygenScale,
+    isLampFlareActive ? 1.5 : 1,
   );
 
   const anomalyCollection = collectAnomalies(scene.anomalies as import("@/sim/entities/types").Anomaly[], player);

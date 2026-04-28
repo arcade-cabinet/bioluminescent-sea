@@ -1,6 +1,10 @@
-import { findNearestThreatDistance } from "@/sim/engine/collection";
-import type { Creature, Player } from "@/sim/entities/types";
+import type { Creature, Player, Predator } from "@/sim/entities/types";
 import type { GoapBrainOwner } from "../PlayerSubController";
+import {
+  PLAYER_PERCEPTION_PROFILE,
+  perceives,
+  type PerceptionContext,
+} from "../perception/perception";
 import { Goal } from "./Goal";
 import { GoalEvaluator } from "./GoalEvaluator";
 import { Think } from "./Think";
@@ -14,6 +18,16 @@ import { Think } from "./Think";
  * Profiles never mutate scene state. They read `owner.observation` and
  * write a DiveInput onto `owner.output`. The sim then advances normally
  * with that synthetic input.
+ *
+ * Perception: every helper filters scene contents through the
+ * `observation.perception` context BEFORE iterating. The bot reasons
+ * only about creatures and predators a real player could see at this
+ * tick — radius, cone (omnidirectional for the player), and LoS.
+ *
+ * Fallback: when `observation.perception` is undefined (test fixtures
+ * that don't set it up), helpers degrade to direct scene reads. This
+ * keeps the older per-mode integration tests green; production runtime
+ * always supplies perception via `AIManager.update`.
  */
 
 interface Vec2 {
@@ -25,33 +39,66 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function findNearestBeacon(player: Player, creatures: Creature[]): Vec2 | null {
+/**
+ * Filter targets the player can perceive. The perception context is
+ * always non-null (PlayerSubObservation requires it); an empty
+ * occluder list is the safe default for tests that don't care about
+ * LoS — only radius + cone are checked then.
+ */
+function visibleTargets<T extends { x: number; y: number }>(
+  perception: PerceptionContext,
+  player: Player,
+  targets: readonly T[],
+): readonly T[] {
+  const perceiver = { x: player.x, y: player.y, headingRad: player.angle };
+  return targets.filter((t) => perceives(perception, perceiver, PLAYER_PERCEPTION_PROFILE, t));
+}
+
+function findNearestPerceived<T extends { x: number; y: number }>(
+  player: Player,
+  visible: readonly T[],
+): Vec2 | null {
   let nearest: Vec2 | null = null;
   let bestDist = Infinity;
-  for (const c of creatures) {
-    const dx = c.x - player.x;
-    const dy = c.y - player.y;
+  for (const t of visible) {
+    const dx = t.x - player.x;
+    const dy = t.y - player.y;
     const d = Math.hypot(dx, dy);
     if (d < bestDist) {
       bestDist = d;
-      nearest = { x: c.x, y: c.y };
+      nearest = { x: t.x, y: t.y };
     }
   }
   return nearest;
 }
 
+function findNearestBeacon(owner: GoapBrainOwner): Vec2 | null {
+  const { scene, perception } = owner.observation;
+  const visible = visibleTargets(perception, scene.player, scene.creatures);
+  return findNearestPerceived(scene.player, visible as Creature[]);
+}
+
 function nearestPredator(owner: GoapBrainOwner): Vec2 | null {
-  const { player, predators } = owner.observation.scene;
-  let best: Vec2 | null = null;
-  let bestDist = Infinity;
-  for (const p of predators) {
-    const dx = p.x - player.x;
-    const dy = p.y - player.y;
+  const { scene, perception } = owner.observation;
+  const visible = visibleTargets(perception, scene.player, scene.predators);
+  return findNearestPerceived(scene.player, visible as Predator[]);
+}
+
+/**
+ * Distance to the nearest perceived predator, or Infinity if none. The
+ * pre-perception engine helper `findNearestThreatDistance` was
+ * omniscient — it iterated `scene.predators` directly. We replace its
+ * use with a perception-filtered version local to this module.
+ */
+function nearestPerceivedThreatDistance(owner: GoapBrainOwner): number {
+  const { scene, perception } = owner.observation;
+  const visible = visibleTargets(perception, scene.player, scene.predators);
+  let best = Infinity;
+  for (const p of visible) {
+    const dx = p.x - scene.player.x;
+    const dy = p.y - scene.player.y;
     const d = Math.hypot(dx, dy);
-    if (d < bestDist) {
-      bestDist = d;
-      best = { x: p.x, y: p.y };
-    }
+    if (d < best) best = d;
   }
   return best;
 }
@@ -68,8 +115,7 @@ class HoldStillGoal extends Goal<GoapBrainOwner> {
 
 class SeekBeaconGoal extends Goal<GoapBrainOwner> {
   override execute(): void {
-    const { scene } = this.owner.observation;
-    const target = findNearestBeacon(scene.player, scene.creatures);
+    const target = findNearestBeacon(this.owner);
     if (!target) {
       this.status = "completed";
       return;
@@ -140,7 +186,7 @@ class HoldStillEvaluator extends BrainEvaluator {
 class SeekBeaconEvaluator extends BrainEvaluator {
   override calculateDesirability(owner: GoapBrainOwner): number {
     const { scene, dimensions } = owner.observation;
-    const target = findNearestBeacon(scene.player, scene.creatures);
+    const target = findNearestBeacon(owner);
     if (!target) return 0;
     const w = dimensions.width || 1;
     const distance = Math.hypot(target.x - scene.player.x, target.y - scene.player.y);
@@ -153,10 +199,7 @@ class SeekBeaconEvaluator extends BrainEvaluator {
 
 class FleeEvaluator extends BrainEvaluator {
   override calculateDesirability(owner: GoapBrainOwner): number {
-    const distance = findNearestThreatDistance(
-      owner.observation.scene.player,
-      owner.observation.scene.predators,
-    );
+    const distance = nearestPerceivedThreatDistance(owner);
     if (distance === Infinity) return 0;
     return clamp(1.6 - distance / 140, 0, 1.6);
   }

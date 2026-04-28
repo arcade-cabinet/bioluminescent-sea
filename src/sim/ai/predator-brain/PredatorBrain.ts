@@ -81,6 +81,7 @@ import {
   STRIKE,
 } from "./states";
 import type { PredatorArchetypeProfile } from "./types";
+import { perceives, predatorProfile, type PerceptionContext } from "../perception/perception";
 
 const TELEGRAM_FLANK = "flank";
 
@@ -108,6 +109,15 @@ export class PredatorBrain extends Vehicle {
   /** Mirrored each tick from StateMachine for the renderer. */
   public currentAiState: PredatorAiState = "ambient";
   public currentStateProgress = 0;
+  /**
+   * Perception context for the current tick. Set by AIManager
+   * immediately before this brain ticks. Defaults to an empty context
+   * so a brain constructed in a unit test (no AIManager) still has
+   * a valid context to read from — the empty occluder list means
+   * `perceives()` runs the radius + cone test only, matching the
+   * pre-perception semantics of `canSeePlayer`.
+   */
+  public perceptionContext: PerceptionContext = { occluders: [] };
 
   /** The shared player vehicle (reference, not copy). */
   private playerRef: Vehicle | null = null;
@@ -239,7 +249,6 @@ export class PredatorBrain extends Vehicle {
   private slots: PredatorSteeringSlots;
 
   /** Allocated once + reused. Avoids per-frame allocation in `update`. */
-  private readonly _toPlayer = new Vector3();
 
   constructor(
     id: string,
@@ -518,16 +527,22 @@ export class PredatorBrain extends Vehicle {
 
   canSeePlayer(): boolean {
     if (!this.playerRef) return false;
-    const distance = this.playerRef.position.distanceTo(this.position);
-    if (distance > this.effectiveDetectionRadius()) return false;
-    // Cone test: dot of forward vs to-player must exceed the half-angle
-    this._toPlayer
-      .copy(this.playerRef.position)
-      .sub(this.position)
-      .normalize();
-    const dot = this.forward.dot(this._toPlayer);
-    const halfAngle = this.profile.fovRadians * 0.5;
-    return dot >= Math.cos(halfAngle);
+    // Delegates to the unified perception module. Radius + cone +
+    // LoS through the occluder set (debris, leviathans, locked-room
+    // walls). The perception context is published by AIManager every
+    // tick BEFORE this brain ticks; in unit tests with no AIManager,
+    // the default empty context skips the LoS pass — same answer the
+    // pre-perception inline math would have produced.
+    return perceives(
+      this.perceptionContext,
+      {
+        x: this.position.x,
+        y: this.position.y,
+        headingRad: Math.atan2(this.forward.y, this.forward.x),
+      },
+      predatorProfile(this.effectiveDetectionRadius(), this.profile.fovRadians),
+      { x: this.playerRef.position.x, y: this.playerRef.position.y },
+    );
   }
 
   hasMemoryOfPlayer(): boolean {
