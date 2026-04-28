@@ -730,8 +730,14 @@ function UpgradeRow({ def, level, currency, onBuy }: UpgradeRowProps) {
         )}
       </AnimatePresence>
       <div className="flex items-start gap-3">
+        {/* Icon brightness ghosts at level 0 so the player can scan
+         *  the band and see at a glance which upgrades they've already
+         *  invested in. Purchased rows (level >= 1) keep full mint
+         *  glow; unpurchased rows drop to 60% so they recede. */}
         <div
-          className="flex size-10 shrink-0 items-center justify-center text-glow"
+          className={`flex size-10 shrink-0 items-center justify-center text-glow transition-opacity ${
+            level === 0 ? "opacity-60" : "opacity-100"
+          }`}
           style={{ filter: "url(#bs-soft-glow)" }}
         >
           <Icon className="size-5" />
