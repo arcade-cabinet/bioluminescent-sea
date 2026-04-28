@@ -32,9 +32,11 @@ The iteration-1 polish loop cleared every finding. The surface
 area has materially changed (carousel contrast, seed-picker
 affordance, HUD landmark direction glyph, abyssal ambient split,
 13-landmark catalogue, named-species spawn). Time for a fresh
-visual-assessment pass.
+visual-assessment pass — broken into shippable pieces.
 
-- [ ] Capture iteration-2 screenshots (landing, mode-card carousel, seed-picker on/off today's seed, dive at each of the 5 zones, drydock with mixed upgrade levels) and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings — eyes-on review, not just capture. Output will seed subsequent loop iterations.
+- [x] Fix stale e2e tagline assertion in `e2e/golden-path.spec.ts` (asserted the old "sink into an abyssal trench" copy; landing now reads "Pilot a submarine into the deep ocean"). (PR pending)
+- [ ] Build a Playwright capture spec under `e2e/capture-iteration-2.spec.ts` that drives the dev preview through landing → mode carousel (each card) → seed-picker (today + reroll states) → dive at each of the 5 zones → drydock (mixed upgrade levels) and writes pngs to `docs/screenshots/iteration-2/`. No assertions — pure capture; assessment is a separate iteration.
+- [ ] Eyes-on review the iteration-2 capture set and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings, severity-ordered. Each finding becomes a queue item below.
 
 ## Done
 

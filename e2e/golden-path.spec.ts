@@ -14,9 +14,11 @@ test.describe("Bioluminescent Sea — golden path", () => {
     await expect(page.getByRole("heading", { name: /bioluminescent sea/i })).toBeVisible();
     // Tagline is hidden on short viewports (mobile landscape) to keep the
     // mode triptych above the fold — the title carries the brand on its own.
+    // Copy switched to plain English in the post-taxonomy era — match the
+    // current "Pilot a submarine into the deep ocean…" tagline.
     const isShortViewport = testInfo.project.name === "mobile-landscape";
     if (!isShortViewport) {
-      await expect(page.getByText(/sink into an abyssal trench/i)).toBeVisible();
+      await expect(page.getByText(/pilot a submarine into the deep ocean/i)).toBeVisible();
     }
 
     // The three mode cards make the dive intent legible at first paint.
