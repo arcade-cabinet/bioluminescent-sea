@@ -35,6 +35,11 @@ export interface DiveInput {
    * Sustained sprint at speed produces cavitation events.
    */
   sprint?: boolean;
+  /**
+   * True when the player is attempting to fire a torpedo this frame.
+   * The runtime checks cooldown and oxygen before actually launching.
+   */
+  fire?: boolean;
 }
 
 /**

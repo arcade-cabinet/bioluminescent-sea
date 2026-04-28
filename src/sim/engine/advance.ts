@@ -30,6 +30,11 @@ import type {
   SceneState,
   ViewportDimensions,
 } from "@/sim/dive/types";
+import {
+  createTorpedoLauncher,
+  advanceTorpedo,
+  type Torpedo,
+} from "@/sim/player/torpedo";
 
 import type { SubUpgrades } from "@/sim/meta/upgrades";
 
@@ -58,9 +63,14 @@ export function createInitialScene(
 }
 
 let aiManager: AIManager | null = null;
+let torpedoLauncher: ReturnType<typeof createTorpedoLauncher> | null = null;
 
 export function resetAIManager() {
   aiManager = null;
+}
+
+export function resetTorpedoLauncher() {
+  torpedoLauncher = null;
 }
 
 /**
@@ -91,6 +101,9 @@ export function advanceScene(
   if (!aiManager) {
     aiManager = new AIManager(dimensions, seed);
   }
+  if (!torpedoLauncher) {
+    torpedoLauncher = createTorpedoLauncher();
+  }
   const ai = aiManager;
 
   const player = advancePlayer(
@@ -101,6 +114,28 @@ export function advanceScene(
     deltaTime,
     !tuning.freeLateralMovement,
   );
+
+  // Torpedo firing and stepping
+  const TORPEDO_OXYGEN_COST = 5; // seconds
+  let newTorpedo: Torpedo | null = null;
+  if (input.fire && timeLeft > TORPEDO_OXYGEN_COST + 1) {
+    newTorpedo = torpedoLauncher(player, player.angle, totalTime);
+    if (newTorpedo) {
+      timeLeft -= TORPEDO_OXYGEN_COST;
+    }
+  }
+
+  // Advance existing torpedoes and filter expired
+  const steppedTorpedoes: Torpedo[] = [];
+  for (const t of scene.torpedoes ?? []) {
+    if (totalTime < t.expiresAt) {
+      const stepped = advanceTorpedo(t, deltaTime);
+      if (stepped) steppedTorpedoes.push(stepped);
+    }
+  }
+  if (newTorpedo) {
+    steppedTorpedoes.push(newTorpedo);
+  }
 
   ai.updatePlayer(player);
   // Biome-driven aggression: deeper biomes turn the dial up.
@@ -413,7 +448,7 @@ export function advanceScene(
     depthTravelMeters: nextDepthTravelMeters,
     objectiveQueue: scene.objectiveQueue,
     clearedChunks: nextClearedChunks,
-    torpedoes: [], // Will be populated below
+    torpedoes: steppedTorpedoes,
   };
 
   // Objective progress advance. First apply per-frame increments

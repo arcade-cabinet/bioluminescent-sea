@@ -4,6 +4,11 @@ export interface InputPosition {
   x: number;
   y: number;
   isActive: boolean;
+  /**
+   * True when the player triggered a fire action this frame.
+   * Detected via double-tap or dedicated fire zone.
+   */
+  fire?: boolean;
 }
 
 /**
@@ -25,6 +30,8 @@ export interface InputPosition {
 export function useTouchInput(containerRef: React.RefObject<HTMLElement | null>) {
   const [isActive, setIsActive] = useState(false);
   const positionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTapTimeRef = useRef(0);
+  const fireThisFrameRef = useRef(false);
 
   const getRelativePosition = useCallback(
     (clientX: number, clientY: number) => {
@@ -45,6 +52,11 @@ export function useTouchInput(containerRef: React.RefObject<HTMLElement | null>)
 
     const handlePointerDown = (e: PointerEvent) => {
       positionRef.current = getRelativePosition(e.clientX, e.clientY);
+      // Double-tap detection for torpedo fire
+      const now = Date.now();
+      const isDoubleTap = now - lastTapTimeRef.current < 300;
+      lastTapTimeRef.current = now;
+      fireThisFrameRef.current = isDoubleTap;
       setIsActive(true);
       try {
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -79,9 +91,12 @@ export function useTouchInput(containerRef: React.RefObject<HTMLElement | null>)
   // Expose a stable object-shape for the game loop. The x/y are live
   // from the ref on every access, but the returned object identity is
   // stable across renders so downstream useCallback deps don't flip.
-  const inputRef = useRef<InputPosition>({ x: 0, y: 0, isActive: false });
+  const inputRef = useRef<InputPosition>({ x: 0, y: 0, isActive: false, fire: false });
   inputRef.current.x = positionRef.current.x;
   inputRef.current.y = positionRef.current.y;
   inputRef.current.isActive = isActive;
+  inputRef.current.fire = fireThisFrameRef.current;
+  // Reset fire so it only triggers once per tap
+  fireThisFrameRef.current = false;
   return inputRef.current;
 }
