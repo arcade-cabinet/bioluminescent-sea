@@ -1,0 +1,9 @@
+{
+  "id": "gulper-eel",
+  "type": "fish",
+  "baseScore": 140,
+  "oxygenBonusSeconds": 10,
+  "glowColor": "#f43f5e",
+  "color": "#1e1b4b",
+  "sizeMeters": { "min": 0.6, "max": 1.5 }
+}

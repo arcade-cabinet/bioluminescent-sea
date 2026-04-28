@@ -1,0 +1,9 @@
+{
+  "id": "comb-jelly",
+  "type": "jellyfish",
+  "baseScore": 75,
+  "oxygenBonusSeconds": 9,
+  "glowColor": "#f0abfc",
+  "color": "#fbcfe8",
+  "sizeMeters": { "min": 0.1, "max": 0.2 }
+}

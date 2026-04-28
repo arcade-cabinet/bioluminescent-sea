@@ -1,0 +1,9 @@
+{
+  "id": "sardine-shoal",
+  "type": "fish",
+  "baseScore": 35,
+  "oxygenBonusSeconds": 4,
+  "glowColor": "#a3e635",
+  "color": "#d9f99d",
+  "sizeMeters": { "min": 0.15, "max": 0.25 }
+}

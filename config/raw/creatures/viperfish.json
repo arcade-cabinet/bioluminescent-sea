@@ -1,0 +1,9 @@
+{
+  "id": "viperfish",
+  "type": "fish",
+  "baseScore": 150,
+  "oxygenBonusSeconds": 9,
+  "glowColor": "#22d3ee",
+  "color": "#020617",
+  "sizeMeters": { "min": 0.2, "max": 0.35 }
+}

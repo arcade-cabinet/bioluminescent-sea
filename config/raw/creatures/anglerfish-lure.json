@@ -1,0 +1,9 @@
+{
+  "id": "anglerfish-lure",
+  "type": "fish",
+  "baseScore": 130,
+  "oxygenBonusSeconds": 9,
+  "glowColor": "#fde047",
+  "color": "#0f172a",
+  "sizeMeters": { "min": 0.2, "max": 0.5 }
+}

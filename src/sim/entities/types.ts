@@ -189,11 +189,17 @@ import { COMPILED_CREATURES } from "../../../config/compiled/content";
  * Creature gameplay tables derived from authored content under
  * `config/raw/creatures/*.json` (compiled into `COMPILED_CREATURES`).
  * Editing the JSON drives gameplay; do not hand-edit the maps below.
+ *
+ * Only the canonical archetype entries (those whose `id` matches the
+ * `type`, e.g. `fish.json` → `id: "fish"`) populate the profile maps.
+ * Additional named species (lanternfish, anglerfish, etc.) author
+ * presence in the catalogue without clobbering the visual archetype
+ * tables — chunk-spawn pulls those by name from biome ecology arrays.
  */
 const CREATURE_PROFILES: Record<
   CreatureType,
   { color: string; glow: string; points: number; oxygenBonusSeconds: number }
-> = COMPILED_CREATURES.reduce(
+> = COMPILED_CREATURES.filter((entry) => entry.id === entry.type).reduce(
   (acc, entry) => {
     acc[entry.type as CreatureType] = {
       color: entry.color,
@@ -209,9 +215,9 @@ const CREATURE_PROFILES: Record<
   >,
 );
 
-export const CREATURE_TYPES: CreatureType[] = COMPILED_CREATURES.map(
-  (c) => c.type as CreatureType,
-);
+export const CREATURE_TYPES: CreatureType[] = COMPILED_CREATURES.filter(
+  (c) => c.id === c.type,
+).map((c) => c.type as CreatureType);
 
 export const CREATURE_COLORS: Record<CreatureType, { color: string; glow: string }> =
   Object.fromEntries(

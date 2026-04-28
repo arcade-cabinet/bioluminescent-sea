@@ -1,0 +1,9 @@
+{
+  "id": "glass-squid",
+  "type": "jellyfish",
+  "baseScore": 110,
+  "oxygenBonusSeconds": 10,
+  "glowColor": "#a5f3fc",
+  "color": "#cffafe",
+  "sizeMeters": { "min": 0.15, "max": 0.3 }
+}

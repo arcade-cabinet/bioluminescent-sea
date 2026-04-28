@@ -1,0 +1,9 @@
+{
+  "id": "hadal-anglerfish",
+  "type": "fish",
+  "baseScore": 280,
+  "oxygenBonusSeconds": 14,
+  "glowColor": "#fde047",
+  "color": "#020617",
+  "sizeMeters": { "min": 0.3, "max": 0.6 }
+}

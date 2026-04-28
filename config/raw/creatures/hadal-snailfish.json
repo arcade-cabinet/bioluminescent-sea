@@ -1,0 +1,9 @@
+{
+  "id": "hadal-snailfish",
+  "type": "fish",
+  "baseScore": 240,
+  "oxygenBonusSeconds": 12,
+  "glowColor": "#fef3c7",
+  "color": "#fef9c3",
+  "sizeMeters": { "min": 0.15, "max": 0.3 }
+}
