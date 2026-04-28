@@ -63,13 +63,13 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   exploration: {
     id: "exploration",
     label: "Exploration",
-    // The player commands a submersible. Old taglines treated the
-    // player as the shelf itself ("drift the photic shelf"); rewritten
-    // to make the sub the subject and the shelf its environment.
-    tagline: "Glide the photic shelf in your sub. Chart the reef at your own pace.",
+    // Plain-English copy: tell the player exactly what they will do.
+    // Old taglines used scene-jargon ("photic shelf", "contested reefs")
+    // that meant nothing to a first-timer. New rule: the tagline names
+    // the goal, the verb, and the failure state.
+    tagline: "Take your time. Collect glowing creatures, avoid predators, go deep.",
     description:
-      "Pilot the submersible through the upper trench. Long oxygen, soft currents, free movement past bioluminescent gardens — the chart is yours to read.",
-    // Soft variant of --color-glow used for the meditative mode tile.
+      "A relaxed dive. You move freely in any direction and have plenty of oxygen. Tap or drag to steer your sub. Touch glowing creatures to score; avoid the dark shapes that hunt you. Surface whenever you want.",
     accentHex: "#a4d8c5",
     accentVar: "var(--color-glow-soft, #a4d8c5)",
     glyph: "◐",
@@ -78,9 +78,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   descent: {
     id: "descent",
     label: "Descent",
-    tagline: "Plunge straight down. Hold the line, reach the floor.",
+    tagline: "Sink straight down. Steer left and right. See how deep you can go.",
     description:
-      "The classic sounding. Lateral current holds you on a fixed heading; you choose only how fast to sink. Pressure grows the deeper you go. Touch the trench floor to surface.",
+      "Your sub falls automatically. You only choose left or right. Collect glowing creatures on the way down, dodge predators, and keep going as long as your oxygen holds. The deeper you go, the higher you score.",
     accentHex: "#6be6c1",
     accentVar: "var(--color-glow)",
     glyph: "↓",
@@ -89,9 +89,9 @@ export const MODE_METADATA: Record<SessionMode, SessionModeMetadata> = {
   arena: {
     id: "arena",
     label: "Arena",
-    tagline: "Push through contested reefs. Clear each pocket to advance.",
+    tagline: "Fight through one room at a time. One hit and you're out.",
     description:
-      "Predator shoals gather in pockets between reef walls. Thin them out and the current releases you — swim toward any edge and the next pocket closes around you. Every contact ends the dive.",
+      "You're locked into a small area. Clear out the predators inside, then move on to the next. One hit ends the dive — there are no second chances. The deeper you push, the more you score.",
     accentHex: "#ff6b6b",
     accentVar: "var(--color-warn)",
     glyph: "⌖",

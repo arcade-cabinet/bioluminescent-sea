@@ -7,32 +7,36 @@ export function describeDiveObjective(
   nearestBeaconDistance = Number.POSITIVE_INFINITY,
   biome: BiomeId = "photic-gate"
 ): string {
-  if (remainingCreatures === 0) return "All beacons charted. Surface with the living map.";
-  if (nearestThreatDistance < 120) return "Predator silhouette closing. Glide out of its cone.";
-  if (nearestBeaconDistance < 95) return "Sonar ping is tight. Sweep the lamp through this bloom.";
-  if (nearestBeaconDistance < 180) return "Route marker ahead. Follow the beacon chain deeper.";
-  if (timeLeft <= 15) return "Oxygen low. Chain the brightest beacons before ascent.";
+  // Urgent banners come first — plain language, no lore jargon.
+  if (remainingCreatures === 0) return "Every creature collected. Surface to finish the dive.";
+  if (nearestThreatDistance < 120) return "Predator nearby. Move away.";
+  if (nearestBeaconDistance < 95) return "Glowing creature close. Touch it to collect.";
+  if (nearestBeaconDistance < 180) return "Glowing creature ahead — head toward it.";
+  if (timeLeft <= 15) return "Oxygen low. Surface soon or grab a glowing creature for a refill.";
 
-  // Biome-specific ambient objective when nothing more urgent is true.
+  // Ambient biome banners — these name the current depth zone in
+  // plain English. The deepest tier is open-ended: descent has no
+  // floor, so the copy never promises one. Past the named zones the
+  // ocean keeps going and the score keeps climbing.
   switch (biome) {
     case "photic-gate":
-      return "Drift through the plankton gate. Let the light teach you the current.";
+      return "Sunlit shallows. Plenty of oxygen up here — get a feel for the controls.";
     case "twilight-shelf":
-      return "The shelf is listening. Cross its lantern shadows without making a wake.";
+      return "The light is fading. Predators hunt in the dim layers — keep moving.";
     case "midnight-column":
-      return "Read the column by its blooms. Anglers wait in the quiet between them.";
+      return "True dark now. Watch for shapes between the glow trails.";
     case "abyssal-trench":
-      return "You are in the Living Map. Follow the whalefall before the lanterns find you.";
+      return "Deep water. Oxygen burns faster down here. Every collect helps.";
     case "stygian-abyss":
     default:
-      return "You have gone too far. There is only the abyss.";
+      return "Uncharted depths. The ocean keeps going — so does your score.";
   }
 }
 
 export function getPressureLabel(oxygenRatio: number, nearestThreatDistance: number): string {
   if (nearestThreatDistance < 85) return "Critical";
-  if (oxygenRatio < 0.25) return "Ascent";
-  if (nearestThreatDistance < 160) return "Hunted";
+  if (oxygenRatio < 0.25) return "Low oxygen";
+  if (nearestThreatDistance < 160) return "Predator near";
 
   return "Calm";
 }
