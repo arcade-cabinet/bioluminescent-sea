@@ -103,20 +103,20 @@ export function getDiveCompletionCelebration(summary: DiveRunSummary): DiveCompl
   const oxygenRatio = summary.durationSeconds > 0 ? summary.timeLeft / summary.durationSeconds : 0;
   const rating =
     summary.completionPercent >= 100 && oxygenRatio >= 0.34
-      ? "Radiant Descent"
+      ? "Clean dive"
       : summary.completionPercent >= 100 && oxygenRatio >= 0.18
-        ? "Safe Touchdown"
+        ? "Made it"
         : summary.completionPercent >= 100
-          ? "Narrow Arrival"
-          : "Aborted Descent";
-  const title = summary.completionPercent >= 100 ? "Trench Floor Reached" : "Dive Logged";
+          ? "Just made it"
+          : "Surfaced early";
+  const title = summary.completionPercent >= 100 ? "Target depth reached" : "Dive logged";
   const message =
     summary.completionPercent >= 100
-      ? `You survived the journey to the abyssal floor, navigating all the way to ${TRENCH_FLOOR_METERS}m.`
-      : `You made it ${summary.depthMeters}m before having to resurface.`;
+      ? `You hit your target depth of ${summary.depthMeters}m and surfaced safely.`
+      : `You made it to ${summary.depthMeters}m before having to surface.`;
   const replayPrompt =
     oxygenRatio >= 0.34
-      ? "Replay for faster chains and a calmer return."
+      ? "Replay for faster chains and a deeper run."
       : "Replay to bank more oxygen before the final stretch.";
 
   return {
