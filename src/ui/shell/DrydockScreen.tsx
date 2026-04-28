@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Anchor, BatteryCharging, Lightbulb, Wrench } from "lucide-react";
+import { Anchor, BatteryCharging, Lightbulb, RotateCcw, Wrench } from "lucide-react";
 import { useEffect, useRef, useState, type ComponentType } from "react";
+import type { SessionMode } from "@/sim";
 import { getUpgradeCost, MAX_UPGRADE_LEVEL, type SubUpgrades } from "@/sim/meta/upgrades";
+import { codenameFromSeed } from "@/sim/rng";
 import { getPersonalBests } from "@/lib/personalBests";
 import {
   getAchievementProgress,
@@ -25,6 +27,12 @@ interface DrydockScreenProps {
   upgrades: SubUpgrades;
   onBuy: (type: keyof SubUpgrades) => void;
   onBack: () => void;
+  /**
+   * Replay a logged dive on the same seed + mode. Optional: when
+   * absent, history rows render as static log entries (no replay
+   * affordance). Wired up in production from Game.tsx.
+   */
+  onReplayDive?: (seed: number, mode: SessionMode) => void;
 }
 
 interface UpgradeRowDef {
@@ -67,7 +75,13 @@ const UPGRADE_ROWS: UpgradeRowDef[] = [
  * surface end of the dive). Upgrades read as ink-on-water rows, no
  * boxy cards.
  */
-export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScreenProps) {
+export function DrydockScreen({
+  currency,
+  upgrades,
+  onBuy,
+  onBack,
+  onReplayDive,
+}: DrydockScreenProps) {
   return (
     <motion.div
       data-testid="drydock-screen"
@@ -125,7 +139,7 @@ export function DrydockScreen({ currency, upgrades, onBuy, onBack }: DrydockScre
 
         <DiveAnalyticsPanel />
 
-        <DiveHistoryPanel />
+        <DiveHistoryPanel onReplay={onReplayDive} />
 
         <div className="mt-4 flex justify-center">
           <Button variant="ghost" onClick={onBack} data-testid="drydock-back-button">
@@ -498,7 +512,11 @@ function AnalyticsCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DiveHistoryPanel() {
+interface DiveHistoryPanelProps {
+  onReplay?: (seed: number, mode: SessionMode) => void;
+}
+
+function DiveHistoryPanel({ onReplay }: DiveHistoryPanelProps) {
   const entries = getDiveHistory().slice(0, 10);
   if (entries.length === 0) return null;
   const now = Date.now();
@@ -520,83 +538,148 @@ function DiveHistoryPanel() {
           className="bs-numeral text-sm text-fg-muted"
           style={{ filter: "url(#bs-soft-glow)" }}
         >
-          last {entries.length}
+          {onReplay ? "tap to replay · " : ""}last {entries.length}
         </span>
       </header>
       <ul className="flex flex-col gap-1">
-        {entries.map((entry, idx) => {
-          const tone = entry.completed ? "#6be6c1" : "var(--color-fg-muted)";
-          return (
-            <li
-              key={`${entry.recordedAt}-${idx}`}
-              data-testid={`history-row-${idx}`}
-              data-completed={entry.completed}
-              className="flex items-baseline gap-3 py-1"
-            >
-              <span
-                aria-hidden="true"
-                className="select-none text-base"
-                style={{ color: tone, width: "1.2rem" }}
-              >
-                {entry.completed ? "◆" : "◇"}
-              </span>
-              <div className="flex flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span
-                  className="text-sm font-medium"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    color: tone,
-                  }}
-                >
-                  {entry.score}
-                </span>
-                <span
-                  className="text-xs text-fg-muted"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  {entry.depthMeters}m · {formatElapsed(entry.elapsedSeconds)}
-                </span>
-                <span
-                  className="bs-label text-[0.55rem] tracking-[0.16em] text-fg-muted"
-                >
-                  {entry.mode.toUpperCase()}
-                </span>
-                {entry.bestsSet.length > 0 && (
-                  <span
-                    aria-label="new best"
-                    className="bs-label text-[0.55rem] font-semibold tracking-[0.16em]"
-                    style={{
-                      color: "#fef9c3",
-                      filter: "url(#bs-warm-glow)",
-                    }}
-                  >
-                    NEW BEST
-                  </span>
-                )}
-                {entry.achievementsUnlocked.length > 0 && (
-                  <span
-                    aria-label="achievements unlocked"
-                    className="text-[0.7rem]"
-                    style={{ color: "#fef9c3", filter: "url(#bs-warm-glow)" }}
-                  >
-                    {"★".repeat(Math.min(entry.achievementsUnlocked.length, 3))}
-                    {entry.achievementsUnlocked.length > 3
-                      ? `+${entry.achievementsUnlocked.length - 3}`
-                      : ""}
-                  </span>
-                )}
-              </div>
-              <span
-                className="text-[0.65rem] text-fg-muted"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {formatRelativeTime(entry.recordedAt, now)}
-              </span>
-            </li>
-          );
-        })}
+        {entries.map((entry, idx) => (
+          <DiveHistoryRow
+            key={`${entry.recordedAt}-${idx}`}
+            entry={entry}
+            idx={idx}
+            now={now}
+            onReplay={onReplay}
+          />
+        ))}
       </ul>
     </section>
+  );
+}
+
+interface DiveHistoryRowProps {
+  entry: ReturnType<typeof getDiveHistory>[number];
+  idx: number;
+  now: number;
+  onReplay?: (seed: number, mode: SessionMode) => void;
+}
+
+/**
+ * Single Drydock history row. Renders as a `<button>` when `onReplay`
+ * is wired so the row carries the replay affordance directly — tap
+ * the row → start a new dive on the same seed + mode. Falls back to
+ * a static `<li>` when no replay handler is provided (preserves the
+ * test-only render path that just exercises the panel layout).
+ */
+function DiveHistoryRow({ entry, idx, now, onReplay }: DiveHistoryRowProps) {
+  const tone = entry.completed ? "#6be6c1" : "var(--color-fg-muted)";
+  const codename = codenameFromSeed(entry.seed);
+
+  const meta = (
+    <>
+      <span
+        aria-hidden="true"
+        className="select-none text-base"
+        style={{ color: tone, width: "1.2rem" }}
+      >
+        {entry.completed ? "◆" : "◇"}
+      </span>
+      <div className="flex flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+        <span
+          className="text-sm font-medium"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: tone,
+          }}
+        >
+          {entry.score}
+        </span>
+        <span
+          className="text-xs text-fg-muted"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          {entry.depthMeters}m · {formatElapsed(entry.elapsedSeconds)}
+        </span>
+        <span
+          className="bs-label text-[0.55rem] tracking-[0.16em] text-fg-muted"
+        >
+          {entry.mode.toUpperCase()}
+        </span>
+        <span
+          data-testid={`history-codename-${idx}`}
+          className="bs-display text-[0.7rem] italic text-glow/80"
+          style={{
+            fontFamily: "var(--font-display)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {codename}
+        </span>
+        {entry.bestsSet.length > 0 && (
+          <span
+            aria-label="new best"
+            className="bs-label text-[0.55rem] font-semibold tracking-[0.16em]"
+            style={{
+              color: "#fef9c3",
+              filter: "url(#bs-warm-glow)",
+            }}
+          >
+            NEW BEST
+          </span>
+        )}
+        {entry.achievementsUnlocked.length > 0 && (
+          <span
+            aria-label="achievements unlocked"
+            className="text-[0.7rem]"
+            style={{ color: "#fef9c3", filter: "url(#bs-warm-glow)" }}
+          >
+            {"★".repeat(Math.min(entry.achievementsUnlocked.length, 3))}
+            {entry.achievementsUnlocked.length > 3
+              ? `+${entry.achievementsUnlocked.length - 3}`
+              : ""}
+          </span>
+        )}
+      </div>
+      <span
+        className="text-[0.65rem] text-fg-muted"
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        {formatRelativeTime(entry.recordedAt, now)}
+      </span>
+    </>
+  );
+
+  if (!onReplay) {
+    return (
+      <li
+        data-testid={`history-row-${idx}`}
+        data-completed={entry.completed}
+        className="flex items-baseline gap-3 py-1"
+      >
+        {meta}
+      </li>
+    );
+  }
+
+  return (
+    <li
+      data-testid={`history-row-${idx}`}
+      data-completed={entry.completed}
+      className="flex"
+    >
+      <button
+        type="button"
+        data-testid={`history-replay-${idx}`}
+        onClick={() => onReplay(entry.seed, entry.mode as SessionMode)}
+        aria-label={`Replay ${codename} (${entry.mode})`}
+        className="group flex w-full items-baseline gap-3 rounded-sm py-1.5 px-2 -mx-2 text-left transition-colors duration-150 hover:bg-glow/5 focus-visible:bg-glow/10 focus-visible:outline-none"
+      >
+        {meta}
+        <RotateCcw
+          aria-hidden="true"
+          className="h-3.5 w-3.5 shrink-0 self-center text-fg-muted transition-colors duration-150 group-hover:text-glow group-focus-visible:text-glow"
+        />
+      </button>
+    </li>
   );
 }
 
