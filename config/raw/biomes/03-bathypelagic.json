@@ -1,0 +1,20 @@
+{
+  "id": "bathypelagic",
+  "label": "Midnight Zone",
+  "scientificName": "Bathypelagic",
+  "description": "Zero sunlight. Every glow is a creature. Pressure climbs and the water turns near-freezing. Anglerfish dangle their lures in the dark, gulpers swallow prey whole, dragonfish ambush from below.",
+  "depthStartMeters": 1500,
+  "depthEndMeters": 3000,
+  "tintHex": "#3a1d5a",
+  "lightLevel": 0.0,
+  "waterClarity": 0.95,
+  "creatureDensity": 1.0,
+  "predatorDensity": 0.75,
+  "pirateDensity": 0.4,
+  "ecology": {
+    "collectibles": ["anglerfish-lure", "gulper-eel", "glass-squid", "viperfish"],
+    "predators": ["sixgill-shark", "giant-squid", "dragonfish"],
+    "ambient": ["bioluminescent-burst", "ink-cloud", "marine-snow"],
+    "lightSources": "bioluminescence-only"
+  }
+}

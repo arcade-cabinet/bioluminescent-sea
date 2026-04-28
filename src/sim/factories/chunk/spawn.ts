@@ -26,27 +26,37 @@ import type { BiomeId } from "@/sim/factories/region/types";
  * returns one variant per spawn (chunk-seeded RNG), so even within a
  * biome a chunk can show 2-3 species shoaling together.
  */
+/**
+ * Per-zone species palettes. Each pelagic zone gets visually distinct
+ * creatures keyed to its real-world ecology:
+ *
+ *   epipelagic    — sun-bright greens/cyans, surface-fish palette.
+ *   mesopelagic   — chrome silvers + violets, lanternfish hues.
+ *   bathypelagic  — black bodies with hot bioluminescence (anglers).
+ *   abyssopelagic — sparse crimsons + embers, ancient + rare life.
+ *   hadopelagic   — alien violets + vent-glow oranges, near-black.
+ */
 const SPECIES_VARIANTS: Record<
   BiomeId,
   Record<CreatureType, ReadonlyArray<{ color: string; glow: string }>>
 > = {
-  "photic-gate": {
+  epipelagic: {
     fish: [
-      { color: "#a8d8c5", glow: "#6be6c1" },     // mint kelp glowfish
+      { color: "#a8d8c5", glow: "#6be6c1" },     // sardine school
       { color: "#c8e6a0", glow: "#9ce86b" },     // chartreuse reef-darter
     ],
     jellyfish: [
-      { color: "#b3e8ff", glow: "#7dd3fc" },     // sky moon-jelly
-      { color: "#c4e8d0", glow: "#86efac" },     // pale spring-medusa
+      { color: "#b3e8ff", glow: "#7dd3fc" },     // moon jellyfish
+      { color: "#c4e8d0", glow: "#86efac" },     // sea-grass medusa
     ],
     plankton: [
-      { color: "#d8f3ff", glow: "#a5f3fc" },     // pale-cyan diatoms
+      { color: "#d8f3ff", glow: "#a5f3fc" },     // diatom drift
     ],
   },
-  "twilight-shelf": {
+  mesopelagic: {
     fish: [
       { color: "#9bb8d8", glow: "#7dd3fc" },     // chrome lanternfish
-      { color: "#a896d8", glow: "#c4b5fd" },     // violet flashlight-fish
+      { color: "#a896d8", glow: "#c4b5fd" },     // violet hatchetfish
     ],
     jellyfish: [
       { color: "#a0d0e0", glow: "#67e8f9" },     // glow comb-jelly
@@ -56,23 +66,23 @@ const SPECIES_VARIANTS: Record<
       { color: "#b8d4e8", glow: "#7dd3fc" },     // lit-blue krill
     ],
   },
-  "midnight-column": {
+  bathypelagic: {
     fish: [
       { color: "#5a3a2a", glow: "#fbbf24" },     // amber dragonfish
-      { color: "#3a2840", glow: "#a78bfa" },     // shadow lanternjaw
+      { color: "#3a2840", glow: "#a78bfa" },     // shadow viperfish
     ],
     jellyfish: [
-      { color: "#3a2030", glow: "#f472b6" },     // blood-bell siphonophore
+      { color: "#3a2030", glow: "#f472b6" },     // siphonophore strand
       { color: "#243450", glow: "#60a5fa" },     // sapphire pyrosome
     ],
     plankton: [
-      { color: "#604838", glow: "#fcd34d" },     // amber star-plankton
+      { color: "#604838", glow: "#fcd34d" },     // anglerfish-lure mote
     ],
   },
-  "abyssal-trench": {
+  abyssopelagic: {
     fish: [
-      { color: "#5a2620", glow: "#ff6b6b" },     // crimson vent-fish
-      { color: "#3a1a30", glow: "#fb7185" },     // ember chimera
+      { color: "#5a2620", glow: "#ff6b6b" },     // crimson chimera
+      { color: "#3a1a30", glow: "#fb7185" },     // ember gulper-eel
     ],
     jellyfish: [
       { color: "#48202a", glow: "#fb923c" },     // forge-jelly
@@ -82,16 +92,16 @@ const SPECIES_VARIANTS: Record<
       { color: "#5a2a20", glow: "#fbbf24" },     // ember plankton
     ],
   },
-  "stygian-abyss": {
+  hadopelagic: {
     fish: [
-      { color: "#1a0a14", glow: "#7c3aed" },     // void anglerjaw
-      { color: "#0a0418", glow: "#a78bfa" },     // ghost lanternjaw
+      { color: "#1a0a14", glow: "#7c3aed" },     // hadal anglerfish
+      { color: "#0a0418", glow: "#a78bfa" },     // hadal snailfish
     ],
     jellyfish: [
-      { color: "#1a0a18", glow: "#a855f7" },     // shadowbell
+      { color: "#1a0a18", glow: "#a855f7" },     // vent-glow medusa
     ],
     plankton: [
-      { color: "#0a0418", glow: "#c4b5fd" },     // ghost-mote
+      { color: "#0a0418", glow: "#c4b5fd" },     // chemosynthetic mote
     ],
   },
 };
@@ -184,7 +194,9 @@ export function spawnPredatorsForChunk(
   pattern: ThreatPattern = "scattered",
 ): Predator[] {
   const biome = biomeById(chunk.biome);
-  const isStygian = chunk.biome === "stygian-abyss";
+  // Hadal predators are guaranteed even when density math rolls 0 —
+  // the deepest zone should never feel empty. (Old name: stygian.)
+  const isHadal = chunk.biome === "hadopelagic";
   // Multiplier on biome.predatorDensity is seed-derived per chunk so
   // dives feel different even at the same depth band. Authored
   // envelope [4, 8] keeps things in the same density family but avoids
@@ -206,7 +218,7 @@ export function spawnPredatorsForChunk(
   const swarmCap = pattern === "shoal-press" ? 24 : pattern === "swarm" ? 16 : 10;
   const count = clamp(baseCount * patternScale, 0, swarmCap);
 
-  if (count === 0 && !isStygian) return [];
+  if (count === 0 && !isHadal) return [];
 
   // Reuse the predator RNG stream so the count-pick above and the
   // placement draws below come from the same deterministic sequence.
@@ -330,9 +342,10 @@ export function spawnPredatorsForChunk(
     }
   }
 
-  // Spawn Leviathan in Stygian Abyss (50% chance per chunk) — independent
-  // of pattern; the leviathan is a named boss, not a wave member.
-  if (isStygian && rng.next() > 0.5) {
+  // Spawn Leviathan in the Hadal zone (50% chance per chunk) —
+  // independent of pattern; the leviathan is a named boss, not a
+  // wave member.
+  if (isHadal && rng.next() > 0.5) {
     results.push({
       angle: round(rng.range(-Math.PI, Math.PI), 3),
       id: `leviathan-c${chunk.index}`,

@@ -1,0 +1,20 @@
+{
+  "id": "mesopelagic",
+  "label": "Twilight Zone",
+  "scientificName": "Mesopelagic",
+  "description": "Light is fading fast. Only blue wavelengths penetrate this far. Most of the glow you see is now bioluminescence, not the sun. Marine snow drifts down constantly — particles of dead surface life feeding the depths.",
+  "depthStartMeters": 500,
+  "depthEndMeters": 1500,
+  "tintHex": "#1e6a78",
+  "lightLevel": 0.4,
+  "waterClarity": 0.85,
+  "creatureDensity": 1.1,
+  "predatorDensity": 0.6,
+  "pirateDensity": 0.2,
+  "ecology": {
+    "collectibles": ["lanternfish", "hatchetfish", "comb-jelly"],
+    "predators": ["swordfish", "humboldt-squid"],
+    "ambient": ["marine-snow", "siphonophore-strand", "vertical-migration-column"],
+    "lightSources": "fading-blue + bioluminescence"
+  }
+}

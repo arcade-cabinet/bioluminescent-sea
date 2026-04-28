@@ -15,51 +15,54 @@ describe("BIOMES", () => {
     }
   });
 
-  it("exposes four biomes in the expected order", () => {
+  it("exposes the five proper pelagic depth zones in surface→hadal order", () => {
     expect(BIOMES.map((b) => b.id)).toEqual([
-      "photic-gate",
-      "twilight-shelf",
-      "midnight-column",
-      "abyssal-trench",
+      "epipelagic",
+      "mesopelagic",
+      "bathypelagic",
+      "abyssopelagic",
+      "hadopelagic",
     ]);
   });
 });
 
 describe("biomeAtDepth", () => {
-  it("returns the first biome at the surface", () => {
-    expect(biomeAtDepth(0).id).toBe("photic-gate");
-    expect(biomeAtDepth(399).id).toBe("photic-gate");
+  it("returns the surface zone at depth 0", () => {
+    expect(biomeAtDepth(0).id).toBe("epipelagic");
+    expect(biomeAtDepth(499).id).toBe("epipelagic");
   });
 
-  it("snaps on boundaries toward the deeper biome", () => {
-    expect(biomeAtDepth(800).id).toBe("twilight-shelf");
-    expect(biomeAtDepth(2400).id).toBe("midnight-column");
-    expect(biomeAtDepth(4800).id).toBe("abyssal-trench");
+  it("snaps on boundaries toward the deeper zone", () => {
+    expect(biomeAtDepth(500).id).toBe("mesopelagic");
+    expect(biomeAtDepth(1500).id).toBe("bathypelagic");
+    expect(biomeAtDepth(3000).id).toBe("abyssopelagic");
+    expect(biomeAtDepth(5000).id).toBe("hadopelagic");
   });
 
-  it("clamps past the deepest end to stygian-abyss", () => {
-    expect(biomeAtDepth(9999).id).toBe("stygian-abyss");
+  it("clamps past the deepest end to the hadal zone", () => {
+    // The hadal extends to 11000m (Challenger Deep ~10994m). Past
+    // that the function returns the deepest zone rather than null —
+    // descent has no floor.
+    expect(biomeAtDepth(99999).id).toBe("hadopelagic");
   });
 });
 
 describe("biomeById", () => {
   it("returns the biome matching the id", () => {
-    expect(biomeById("midnight-column").label).toBe("Midnight Column");
+    expect(biomeById("bathypelagic").label).toBe("Midnight Zone");
+    expect(biomeById("hadopelagic").scientificName).toBe("Hadopelagic");
   });
 });
 
 describe("nextBiome", () => {
-  it("chains in order", () => {
-    expect(nextBiome("photic-gate")?.id).toBe("twilight-shelf");
-    expect(nextBiome("twilight-shelf")?.id).toBe("midnight-column");
-    expect(nextBiome("midnight-column")?.id).toBe("abyssal-trench");
+  it("chains in order from surface to hadal", () => {
+    expect(nextBiome("epipelagic")?.id).toBe("mesopelagic");
+    expect(nextBiome("mesopelagic")?.id).toBe("bathypelagic");
+    expect(nextBiome("bathypelagic")?.id).toBe("abyssopelagic");
+    expect(nextBiome("abyssopelagic")?.id).toBe("hadopelagic");
   });
 
-  it("returns stygian-abyss after abyssal trench", () => {
-    expect(nextBiome("abyssal-trench")?.id).toBe("stygian-abyss");
-  });
-
-  it("returns null after stygian-abyss", () => {
-    expect(nextBiome("stygian-abyss")).toBeNull();
+  it("returns null after the hadal — there is no zone deeper", () => {
+    expect(nextBiome("hadopelagic")).toBeNull();
   });
 });

@@ -25,7 +25,7 @@ function summary(overrides: Partial<DiveRunSummary> = {}): DiveRunSummary {
     stats: {
       predatorsKilled: 2,
       buffsCollected: 3,
-      biomesTraversed: ["photic-gate", "twilight-shelf"],
+      biomesTraversed: ["epipelagic", "mesopelagic"],
       maxChain: 4,
       impactsTaken: 1,
       adrenalineTriggers: 1,

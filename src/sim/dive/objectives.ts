@@ -5,7 +5,7 @@ export function describeDiveObjective(
   timeLeft: number,
   nearestThreatDistance: number,
   nearestBeaconDistance = Number.POSITIVE_INFINITY,
-  biome: BiomeId = "photic-gate"
+  biome: BiomeId = "epipelagic"
 ): string {
   // Urgent banners come first — plain language, no lore jargon.
   if (remainingCreatures === 0) return "Every creature collected. Surface to finish the dive.";
@@ -14,22 +14,22 @@ export function describeDiveObjective(
   if (nearestBeaconDistance < 180) return "Glowing creature ahead — head toward it.";
   if (timeLeft <= 15) return "Oxygen low. Surface soon or grab a glowing creature for a refill.";
 
-  // Ambient biome banners — these name the current depth zone in
-  // plain English. The deepest tier is open-ended: descent has no
-  // floor, so the copy never promises one. Past the named zones the
-  // ocean keeps going and the score keeps climbing.
+  // Ambient biome banners — names each pelagic depth zone in plain
+  // English using its real ecology as the hook. The deepest tier is
+  // open-ended (the hadal extends past every known dive); the copy
+  // never promises a floor, the score keeps climbing as you descend.
   switch (biome) {
-    case "photic-gate":
-      return "Sunlit shallows. Plenty of oxygen up here — get a feel for the controls.";
-    case "twilight-shelf":
-      return "The light is fading. Predators hunt in the dim layers — keep moving.";
-    case "midnight-column":
-      return "True dark now. Watch for shapes between the glow trails.";
-    case "abyssal-trench":
-      return "Deep water. Oxygen burns faster down here. Every collect helps.";
-    case "stygian-abyss":
+    case "epipelagic":
+      return "Sunlight zone. Kelp drifts above, plankton clouds the water — plenty of oxygen up here.";
+    case "mesopelagic":
+      return "Twilight zone. Sunlight is fading — most of the glow you see now is alive.";
+    case "bathypelagic":
+      return "Midnight zone. Pure dark. Anglerfish hold their lures still in the column.";
+    case "abyssopelagic":
+      return "The abyss. Almost nothing lives down here — and what does, has come for a reason.";
+    case "hadopelagic":
     default:
-      return "Uncharted depths. The ocean keeps going — so does your score.";
+      return "The hadal. Pressure crushes most submarines this deep. Vent-glow stabs up from below.";
   }
 }
 

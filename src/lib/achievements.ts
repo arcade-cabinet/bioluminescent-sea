@@ -87,37 +87,43 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
     test: ({ postBests }) => postBests.maxChain >= 10,
   },
 
-  // ---- Exploration ----
+  // ---- Exploration (depth ladder, by oceanographic zone) ----
   {
-    id: "kelp-gate-opened",
-    title: "Photic Pioneer",
-    description: "Reach 600 m.",
-    test: ({ postBests }) => postBests.depthMeters >= 600,
+    id: "twilight-zone-reached",
+    title: "Past the Sunlight",
+    description: "Reach the Twilight Zone (500 m).",
+    test: ({ postBests }) => postBests.depthMeters >= 500,
   },
   {
-    id: "twilight-traveler",
-    title: "Twilight Traveler",
-    description: "Reach 1500 m.",
+    id: "midnight-zone-reached",
+    title: "Into the Midnight",
+    description: "Reach the Midnight Zone (1500 m).",
     test: ({ postBests }) => postBests.depthMeters >= 1500,
   },
   {
-    id: "midnight-resident",
-    title: "Midnight Resident",
-    description: "Reach 2400 m.",
-    test: ({ postBests }) => postBests.depthMeters >= 2400,
+    id: "abyss-reached",
+    title: "Into the Abyss",
+    description: "Reach the Abyss (3000 m).",
+    test: ({ postBests }) => postBests.depthMeters >= 3000,
   },
   {
-    id: "abyss-cartographer",
-    title: "Abyss Cartographer",
-    description: "Reach 3200 m.",
-    test: ({ postBests }) => postBests.depthMeters >= 3200,
+    id: "hadal-reached",
+    title: "Into the Hadal",
+    description: "Reach the Hadal Zone (5000 m).",
+    test: ({ postBests }) => postBests.depthMeters >= 5000,
   },
   {
-    id: "biome-tour",
-    title: "Trench Tour",
-    description: "Visit 4 biomes in a single dive.",
+    id: "challenger-deep",
+    title: "Challenger Deep",
+    description: "Reach 11000 m — the deepest point in any real ocean.",
+    test: ({ postBests }) => postBests.depthMeters >= 11000,
+  },
+  {
+    id: "five-zones",
+    title: "Full Column",
+    description: "Pass through all five depth zones in a single dive.",
     test: ({ summary }) =>
-      (summary.stats?.biomesTraversed.length ?? 0) >= 4,
+      (summary.stats?.biomesTraversed.length ?? 0) >= 5,
   },
 
   // ---- Endurance ----

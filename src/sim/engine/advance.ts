@@ -499,11 +499,11 @@ export function advanceScene(
 function biomeAggressionForDepth(depthMeters: number): number {
   const biome = biomeAtDepth(depthMeters);
   switch (biome.id) {
-    case "photic-gate": return 1.0;
-    case "twilight-shelf": return 1.15;
-    case "midnight-column": return 1.3;
-    case "abyssal-trench": return 1.45;
-    case "stygian-abyss": return 1.6;
+    case "epipelagic": return 1.0;
+    case "mesopelagic": return 1.15;
+    case "bathypelagic": return 1.3;
+    case "abyssopelagic": return 1.45;
+    case "hadopelagic": return 1.6;
     default: return 1.0;
   }
 }

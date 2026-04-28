@@ -1,39 +1,43 @@
 import { CODENAME_SEED_MASK } from "./codename";
 
+// Pre-dive flavor lines. Voice: a plain-English note from someone
+// who has been down on this seed before. No lore-jargon — the player
+// should read these and learn something concrete about what's
+// down there (or what to watch for) without needing a glossary.
 const OPENERS: readonly string[] = [
-  "Guild reports say",
-  "The charter warns",
-  "Prior divers note",
-  "Dispatch logs read",
-  "The cartographer's ledger says",
-  "Earlier soundings claim",
-  "Radio silence below suggests",
-  "The beacon manifest hints",
+  "Earlier divers report",
+  "The dive log notes",
+  "Sonar readings show",
+  "Last week's sounding said",
+  "Prior runs found",
+  "The oceanographer's report mentions",
+  "Surface charts indicate",
+  "Recent telemetry shows",
 ];
 
 const BODIES: readonly string[] = [
-  "the trench runs long and the lanterns grow uneven.",
-  "beacon chains scatter where the shelf drops away.",
-  "pirate wakes have been sighted threading the midnight column.",
-  "predator silhouettes pass the lantern rig more often than usual.",
-  "oxygen trims shorter than the chart suggests — do not linger.",
-  "bioluminescence clusters near the twilight boundary.",
-  "the light falls off earlier than any sounding yet filed.",
-  "beacons hold their chain if you keep the route tight.",
-  "a second light tends to answer near the landmark anemones.",
-  "the current thins before the abyssal gate — breathe easy there.",
-  "glow-plankton rise early along this seam.",
-  "deep routes here are short on margin and long on landmarks.",
+  "thick plankton clouds along the sunlight zone — easy collecting up top.",
+  "anglerfish hold the midnight zone in unusually high numbers.",
+  "predators run the twilight zone faster here than the chart predicts.",
+  "marine snow falls heavy through the twilight column — easier to hide in.",
+  "oxygen runs short below the twilight zone on this seed.",
+  "the abyss is sparse here — you'll see predators coming from far off.",
+  "vent-glow stabs up from the hadal floor — bright enough to disorient.",
+  "kelp forests block long sight-lines near the surface.",
+  "giant squid passages cross the bathypelagic — keep moving.",
+  "a whale fall sits in the abyss on this route — dense bioluminescence around it.",
+  "hydrothermal vents punch up into the hadal — heat, life, and predators.",
+  "this seed runs deep — push for the abyss if your oxygen holds.",
 ];
 
 const CLOSERS: readonly string[] = [
-  "Surface breathing easier.",
-  "Trace the glow. Come home.",
-  "Keep the lanterns close.",
-  "Read the trench.",
+  "Good hunting.",
+  "Watch the dark.",
+  "Keep your light on.",
+  "Mind your oxygen.",
   "One breath at a time.",
-  "Watch the chain.",
-  "Chart what holds.",
+  "Chain the pickups.",
+  "Surface when you're ready.",
 ];
 
 export interface TrenchBlurb {

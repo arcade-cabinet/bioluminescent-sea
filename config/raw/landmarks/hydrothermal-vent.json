@@ -1,0 +1,7 @@
+{
+  "id": "hydrothermal-vent",
+  "label": "Hydrothermal Vent",
+  "depthMeters": 6500,
+  "biome": "hadopelagic",
+  "flavor": "A black smoker chimney venting superheated water. Tube worms cluster at its base. The only ecosystem in the ocean that doesn't depend on the sun."
+}

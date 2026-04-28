@@ -1,0 +1,20 @@
+{
+  "id": "hadopelagic",
+  "label": "The Hadal",
+  "scientificName": "Hadopelagic",
+  "description": "The deepest waters in the ocean — only found inside hadal trenches. Pressure here would crush a steel sub. Life adapts in unrecognizable ways: snailfish that hold the depth record, supergiant amphipods, things that have never had a name. Vivid bursts of vent-glow stab up from below.",
+  "depthStartMeters": 5000,
+  "depthEndMeters": 11000,
+  "tintHex": "#0a0512",
+  "lightLevel": 0.0,
+  "waterClarity": 1.0,
+  "creatureDensity": 0.3,
+  "predatorDensity": 0.5,
+  "pirateDensity": 0,
+  "ecology": {
+    "collectibles": ["hadal-snailfish", "supergiant-amphipod", "hadal-anglerfish"],
+    "predators": ["abyssal-eel", "giant-amphipod-swarm"],
+    "ambient": ["vent-glow", "chemosynthetic-bloom", "alien-burst"],
+    "lightSources": "vent-glow + rare-bioluminescence"
+  }
+}

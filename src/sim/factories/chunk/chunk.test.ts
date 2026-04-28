@@ -44,14 +44,15 @@ describe("chunkAt", () => {
     expect(c.yBottomMeters - c.yTopMeters).toBe(CHUNK_HEIGHT_METERS);
   });
 
-  it("assigns biome photic-gate for surface chunks", () => {
-    // Index 0 midpoint = 200m, inside photic-gate (0-800m).
-    expect(chunkAt(0, 42).biome).toBe("photic-gate");
+  it("assigns biome epipelagic for surface chunks", () => {
+    // Index 0 midpoint = 200m, inside epipelagic (0-500m).
+    expect(chunkAt(0, 42).biome).toBe("epipelagic");
   });
 
-  it("assigns biome abyssal-trench for trench-floor chunks", () => {
-    // Index 14 midpoint = 5800m, inside abyssal-trench (4800-6400m).
-    expect(chunkAt(14, 42).biome).toBe("abyssal-trench");
+  it("assigns biome hadopelagic for the deepest chunks", () => {
+    // Index 30 midpoint = 12200m — past the hadal floor (5000-11000m
+    // authored), so biomeAtDepth clamps to the deepest zone.
+    expect(chunkAt(30, 42).biome).toBe("hadopelagic");
   });
 });
 

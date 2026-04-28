@@ -14,19 +14,19 @@ describe("getDiveTelemetry biome", () => {
   });
 
   it("biome advances as depthMeters crosses the boundaries", () => {
-    // Depth is now scene.depthTravelMeters (world-meters descended).
-    // Surface scene reports 0m (photic-gate); deep scene reports a
-    // value past the twilight-shelf boundary (400m).
+    // Depth is scene.depthTravelMeters (world-meters descended).
+    // Surface scene reports 0m (epipelagic); deep scene at 2000m
+    // sits inside bathypelagic (1500-3000m).
     const shallow = getDiveTelemetry(createInitialScene(viewport), 600, 600);
     const deep = getDiveTelemetry(
-      { ...createInitialScene(viewport), depthTravelMeters: 3000 },
+      { ...createInitialScene(viewport), depthTravelMeters: 2000 },
       600,
       600
     );
 
     expect(deep.depthMeters).toBeGreaterThan(shallow.depthMeters);
-    expect(shallow.biomeId).toBe("photic-gate");
-    expect(deep.biomeId).toBe("midnight-column");
+    expect(shallow.biomeId).toBe("epipelagic");
+    expect(deep.biomeId).toBe("bathypelagic");
   });
 
   it("objective copy varies with biome in ambient mode", () => {

@@ -9,9 +9,23 @@ domain: product
 
 ## Identity
 
-*Bioluminescent Sea* is an **open-world underwater roguelike**. The player descends into an infinite, procedurally generated abyss where almost nothing is visible, and everything they can see is alive. The game balances slow observation with high-stakes survival.
+*Bioluminescent Sea* is an **open-world underwater roguelike**. The player pilots a submarine down through the ocean's real depth zones — sunlight, twilight, midnight, abyss, and hadal — collecting bioluminescent creatures and dodging predators. Almost everything visible is alive; almost everything alive glows.
 
-The progression model relies on collecting "Lux" (bioluminescence score) to purchase persistent upgrades in the Drydock, enabling deeper and deeper plunges into the terrifying Stygian Abyss, populated by massive Leviathans and dynamic power-up Anomalies.
+The progression model collects "Lux" (a bioluminescence-based score) to purchase persistent upgrades in the Drydock, extending each dive deeper. The deepest zone, the Hadal, contains the rarest creatures — and the largest predators.
+
+## Depth zones
+
+Five real oceanographic depth zones, surface to seafloor. Each carries distinct creature and predator archetypes, ambient palette, and water character. The ocean is open-ended: descent has no floor, the deepest zone (hadopelagic) extends past every real-world dive. Authored in `config/raw/biomes/*.json`.
+
+| Zone | ID | Range | Light | Defining ecology |
+|------|------|------|------|------|
+| Sunlight Zone | epipelagic | 0–500 m | sunlit | kelp, sardines, jellyfish, barracuda |
+| Twilight Zone | mesopelagic | 500–1500 m | fading blue | lanternfish, hatchetfish, marine snow, swordfish |
+| Midnight Zone | bathypelagic | 1500–3000 m | bioluminescence only | anglerfish, gulpers, viperfish, giant squid |
+| The Abyss | abyssopelagic | 3000–5000 m | rare bioluminescence | dumbo octopus, deep jellyfish, chimaera, isopods |
+| The Hadal | hadopelagic | 5000–11000+ m | vent glow | hadal snailfish, supergiant amphipods, alien-deep predators |
+
+Each zone's `ecology` block authored in JSON drives actor archetype selection at chunk-spawn time. Adding a new collectible/predator means adding an actor archetype tagged for the relevant zone(s) — no engine branches.
 
 ## Dive modes
 
@@ -19,9 +33,9 @@ Three modes — **Exploration**, **Descent**, **Arena** — compose from the sam
 
 | Mode        | Lateral | Vertical | Collision rule   | Completion   | Feel                                                                        |
 | ----------- | ------- | -------- | ---------------- | ------------ | --------------------------------------------------------------------------- |
-| Exploration | free    | free     | oxygen penalty   | infinite     | Drift the photic shelf. No deadlines, soft currents, chart the reef.        |
-| Descent     | locked  | free     | oxygen penalty   | depth-goal   | A straight plunge. Lateral current pins you; pick your sink rate; reach the floor. |
-| Arena       | free    | free     | **ends the dive**| infinite     | Push through contested reef pockets. Clear each shoal to unlock the next.   |
+| Exploration | free    | free     | oxygen penalty   | infinite     | Take your time. Drift past glowing creatures, dodge predators, go as deep as you want. |
+| Descent     | locked  | free     | oxygen penalty   | depth-goal   | The sub falls automatically — you only steer left or right. See how deep you can go. |
+| Arena       | free    | free     | **ends the dive**| infinite     | Locked into one room at a time. Clear out the predators to advance. One hit and you're out. |
 
 Arena's clear-to-advance behaviour lives on the **chunk archetype** (`travel: "locked-room"` in `src/sim/factories/chunk/slots.ts`), not the dive slot. The dive is infinite — the only way out is a collision.
 
@@ -29,9 +43,9 @@ Adding a fourth mode is one record in `MODE_SLOTS` plus one `SessionModeMetadata
 
 ## Player journey
 
-1. **Land.** The title card reads "Bioluminescent Sea" in Cormorant Garamond mint-on-navy, subtitle *"Sink into an abyssal trench. Trace glowing routes past landmark creatures. Surface breathing easier than when you started."* Three mode cards (Exploration / Descent / Arena) are the primary surface; a Drydock chip in the corner shows the current Lux balance.
-2. **Pick a mode, chart a route.** Tapping a mode card opens a centered Radix dialog over the still-visible landing — the trench is behind the paper. The dialog defaults to the day's Daily seed; the player can reroll or type a three-word codename.
-3. **Descend.** The submersible is centered. The world dynamically chunks and spawns entities through the actor factory; the `photic-gate` descends into the `twilight-shelf`, the `midnight-column`, the `abyssal-trench`, and eventually the infinite `stygian-abyss`. God rays attenuate, caustics fade, and atmospheric desaturation deepens as the sub drops — the water gets literally heavier.
+1. **Land.** The title card reads "Bioluminescent Sea" in Cormorant Garamond mint-on-navy, subtitle *"Pilot a submarine into the deep ocean. Collect glowing creatures, dodge predators, and see how far down you can go."* Three mode cards (Exploration / Descent / Arena) are the primary surface; a Drydock chip in the corner shows the current Lux balance.
+2. **Pick a mode, choose a dive.** Tapping a mode card opens a centered Radix dialog over the still-visible landing — the ocean is behind the paper. The dialog defaults to the day's Daily codename; the player can reroll or type a three-word codename of their own.
+3. **Descend.** The submersible is centered. The world dynamically chunks and spawns entities through the actor factory; the `epipelagic` (Sunlight Zone) descends into the `mesopelagic` (Twilight), the `bathypelagic` (Midnight), the `abyssopelagic` (Abyss), and finally the open-ended `hadopelagic` (Hadal). God rays attenuate, caustics fade, and atmospheric desaturation deepens as the sub drops — the water gets literally heavier.
 4. **Collect.** Approaching glowing creatures collects them for Lux. Approaching glowing Anomalies grants Overdrive or Repel buffs.
 5. **Avoid.** Yuka-driven Predators stalk and dash. Pirates wander. Enemy subs hunt. Deep below, Leviathans command massive chunks of the screen. Collision behaviour depends on the mode's slot.
 6. **Surface.** When oxygen reaches zero (or the dive fails via collision in Arena), the sub surfaces to a "Dive Logged" screen showing Score / Best / Depth / Lux earned. Lux is deposited immediately; the landing's Drydock chip updates.
@@ -77,9 +91,9 @@ showing nothing.
 
 Early builds of the scene read as "shapes on navy" — the backdrop was flat, the marine-snow alone couldn't carry the water. The fluidic layer (`src/render/layers/water.ts`) stacks three cues that together sell the water as *water*:
 
-1. **God rays** via `GodrayFilter` (pixi-filters). Volumetric-looking shafts that fade out past the twilight shelf — surface light doesn't reach the abyss. Stronger at 0m, invisible by 600m.
+1. **God rays** via `GodrayFilter` (pixi-filters). Volumetric-looking shafts that fade out past the twilight zone — surface light doesn't reach the abyss. Stronger at 0m, invisible by 600m.
 2. **Procedural caustics**. A coarse grid of thresholded noise peaks, tinted to the current biome's glow, additively blended. Cheap, cheap, cheap — no shader compile — but gives the characteristic filamentous brightness that marine snow alone can't. Fades between 300m and 900m so it reads as "surface light hitting the column" and dies with depth.
-3. **Atmospheric desaturation** via `AdjustmentFilter`. Saturation and gamma ride down as depth grows. Models how colour fades underwater — by the Stygian Abyss, everything neutralises toward the mint glow.
+3. **Atmospheric desaturation** via `AdjustmentFilter`. Saturation and gamma ride down as depth grows. Models how colour fades underwater — by the Hadal Zone, everything neutralises toward the mint glow.
 
 These sit on top of the backdrop gradient and under the marine-snow parallax. The snow itself drifts on a curl-noise-feel field (orthogonal sinusoids + seed offset) so neighbours flow in related-but-not-identical paths — the subtle "fluid" read, not straight-down dust.
 
