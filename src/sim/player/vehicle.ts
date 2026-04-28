@@ -41,10 +41,30 @@ const JOYSTICK_DEADZONE = 0.1;
 /** Force scalar on full-magnitude thrust. */
 const THRUST_FORCE_SCALAR = 800;
 
+/**
+ * Caps deltaTime in applyThrust so a backgrounded-tab return with a
+ * huge dt can't produce a velocity spike larger than one frame's
+ * worth of thrust. Yuka does the same internally.
+ */
+const MAX_DELTA_TIME = 0.1;
+
 export function createPlayerVehicle(
   config: PlayerVehicleConfig,
   start: { x: number; y: number },
 ): GameVehicle {
+  // Validate config — mass=0 would divide-by-zero into velocity.
+  if (
+    !(config.mass > 0) ||
+    !(config.cruiseMaxSpeed > 0) ||
+    !(config.sprintMultiplier > 0) ||
+    !(config.drag >= 0) ||
+    !Number.isFinite(start.x) ||
+    !Number.isFinite(start.y)
+  ) {
+    throw new Error(
+      `createPlayerVehicle: invalid config or start position: ${JSON.stringify({ config, start })}`,
+    );
+  }
   const v = new GameVehicle("player");
   v.position.set(start.x, start.y, 0);
   v.velocity.set(0, 0, 0);
@@ -60,8 +80,7 @@ export function applyThrust(
   input: ThrustInput,
   deltaTime: number,
 ): void {
-  // NaN/Infinity guards — security HIGH. Reject silently; vehicle
-  // state remains valid for the next frame.
+  // NaN/Infinity guard — bad input leaves vehicle untouched.
   if (
     !Number.isFinite(input.tx) ||
     !Number.isFinite(input.ty) ||
@@ -70,26 +89,30 @@ export function applyThrust(
     return;
   }
 
-  // Speed clamp follows sprint state. The clamp is applied after the
-  // velocity update so a held sprint immediately unlocks the higher
-  // ceiling, while releasing sprint lets drag pull velocity back below
-  // cruise naturally.
+  // Cap dt so a backgrounded-tab return doesn't produce a single-frame
+  // velocity spike. Drag will absorb anything in-band over multiple
+  // frames; this just bounds the per-frame overshoot.
+  const dt = Math.min(deltaTime, MAX_DELTA_TIME);
+
   vehicle.maxSpeed = input.sprint
     ? config.cruiseMaxSpeed * config.sprintMultiplier
     : config.cruiseMaxSpeed;
 
   const magnitude = Math.hypot(input.tx, input.ty);
   if (magnitude >= JOYSTICK_DEADZONE) {
-    // Apply thrust as an acceleration. Magnitude scales the force; the
-    // direction is the unit input vector.
-    const accel = (THRUST_FORCE_SCALAR / config.mass) * deltaTime;
-    vehicle.velocity.x += (input.tx / magnitude) * magnitude * accel;
-    vehicle.velocity.y += (input.ty / magnitude) * magnitude * accel;
+    // Joystick input contract: tx/ty form a vector with magnitude in
+    // [0, 1]. Above-deadzone magnitude scales force linearly with
+    // throw — a half-throw gives half acceleration. Callers (joystick
+    // hook, keyboard hook) MUST clamp the vector to unit-or-less
+    // before passing it in.
+    const accel = (THRUST_FORCE_SCALAR / config.mass) * dt;
+    vehicle.velocity.x += input.tx * accel;
+    vehicle.velocity.y += input.ty * accel;
   }
 
   // Drag — exponential decay. Always applied so input release leaves
   // the sub coasting then settling, matching submarine inertia.
-  const dragFactor = Math.max(0, 1 - config.drag * deltaTime);
+  const dragFactor = Math.max(0, 1 - config.drag * dt);
   vehicle.velocity.x *= dragFactor;
   vehicle.velocity.y *= dragFactor;
 

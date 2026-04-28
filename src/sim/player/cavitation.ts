@@ -23,11 +23,6 @@ const COOLDOWN_SECONDS = 0.6;
  */
 const CAVITATION_SPEED_FRACTION = 0.95;
 
-export interface CavitationEmitterConfig {
-  cruiseMaxSpeed: number;
-  sprintMaxSpeed: number;
-}
-
 export interface CavitationEvent {
   /** Sim-time the event fired. */
   simT: number;
@@ -41,8 +36,9 @@ export interface CavitationEvent {
 export interface CavitationEmitter {
   /**
    * Tick the emitter. Returns a fresh event when one fires this
-   * frame; null otherwise. Position is provided by the caller (the
-   * runtime knows the player's current position).
+   * frame; null otherwise. Position is required — the runtime knows
+   * the player's current position, and a default of (0,0) would be
+   * a silent wrong value at world origin.
    */
   step(
     velocityX: number,
@@ -50,19 +46,21 @@ export interface CavitationEmitter {
     sprinting: boolean,
     deltaTime: number,
     simTime: number,
-    posX?: number,
-    posY?: number,
+    posX: number,
+    posY: number,
   ): CavitationEvent | null;
 }
 
-export function createCavitationEmitter(config: CavitationEmitterConfig): CavitationEmitter {
+export function createCavitationEmitter(
+  cruiseMaxSpeed: number,
+  sprintMaxSpeed: number,
+): CavitationEmitter {
   let secondsAboveThreshold = 0;
   let cooldownUntil = -1;
 
   return {
-    step(velocityX, velocityY, sprinting, deltaTime, simTime, posX = 0, posY = 0) {
-      // NaN/Infinity guards — security HIGH. Bad input leaves state
-      // intact and produces no event.
+    step(velocityX, velocityY, sprinting, deltaTime, simTime, posX, posY) {
+      // NaN/Infinity guards — bad input leaves state intact, no event.
       if (
         !Number.isFinite(velocityX) ||
         !Number.isFinite(velocityY) ||
@@ -73,7 +71,7 @@ export function createCavitationEmitter(config: CavitationEmitterConfig): Cavita
       }
 
       const speed = Math.hypot(velocityX, velocityY);
-      const speedThreshold = config.cruiseMaxSpeed * CAVITATION_SPEED_FRACTION;
+      const speedThreshold = cruiseMaxSpeed * CAVITATION_SPEED_FRACTION;
       const isCavitating = sprinting && speed >= speedThreshold;
 
       if (!isCavitating) {
@@ -87,9 +85,9 @@ export function createCavitationEmitter(config: CavitationEmitterConfig): Cavita
       if (secondsAboveThreshold < MIN_SECONDS_TO_EMIT) return null;
 
       // Fire one event, set cooldown.
-      const cruiseToSprint = config.sprintMaxSpeed - config.cruiseMaxSpeed;
+      const cruiseToSprint = sprintMaxSpeed - cruiseMaxSpeed;
       const intensity = cruiseToSprint > 0
-        ? Math.max(0, Math.min(1, (speed - config.cruiseMaxSpeed) / cruiseToSprint))
+        ? Math.max(0, Math.min(1, (speed - cruiseMaxSpeed) / cruiseToSprint))
         : 0;
 
       cooldownUntil = simTime + COOLDOWN_SECONDS;
