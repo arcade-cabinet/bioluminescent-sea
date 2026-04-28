@@ -18,7 +18,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] **MEDIUM fix**: mode card carousel `>` arrow + pagination dots are too low-contrast — new players miss that there are three modes. (PR #243)
 - [x] **MEDIUM fix**: TODAY'S CHART vs REROLL in seed picker have ambiguous affordance (toggle vs action). Use distinct visual treatment. (PR #245)
 - [x] **LOW fix**: mobile DRYDOCK chip needs more safe-area padding. (PR #247)
-- [ ] **LOW fix**: Drydock level-0 upgrade rows should ghost slightly so unpurchased upgrades read at a glance.
+- [x] **LOW fix**: Drydock level-0 upgrade rows should ghost slightly so unpurchased upgrades read at a glance. (PR #249)
 - [ ] **NOTE / verify**: Drydock lifetime band shows `BEST SCORE 0` and `DEEPEST 0m` with 23 dives logged. Either fixture state or a real PersonalBests writer bug — add an integration test that asserts both are > 0 after a completed dive.
 - [ ] Increase `OCEAN_FLOOR_METERS` reach: currently the deepest landmark is at 10500 m and the floor is 11000 m — add a mid-hadopelagic landmark around 8000 m so the player has a beat between the cold seep at 5500 m and the hadal trench at 10500 m
 - [ ] The HUD shows "next landmark + metres-to-go" but the *direction* hint (still null because landmarks are below) is silently dropped. Consider rendering a small ↓ glyph next to the metres-to-go so the spatial relationship is unambiguous
