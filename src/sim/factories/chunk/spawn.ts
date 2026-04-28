@@ -28,13 +28,18 @@ import type { BiomeId } from "@/sim/factories/region/types";
  */
 /**
  * Per-zone species palettes. Each pelagic zone gets visually distinct
- * creatures keyed to its real-world ecology:
+ * creatures keyed to its authored ecology
+ * (`config/raw/biomes/<zone>.json#ecology.collectibles`). Comments
+ * name the actual authored species — colours are pulled from each
+ * species' authored JSON in `config/raw/creatures/`. Drift between
+ * spawn-side comments and authored ecology is asserted away by
+ * `chunk/spawn.test.ts`.
  *
- *   epipelagic    — sun-bright greens/cyans, surface-fish palette.
- *   mesopelagic   — chrome silvers + violets, lanternfish hues.
- *   bathypelagic  — black bodies with hot bioluminescence (anglers).
- *   abyssopelagic — sparse crimsons + embers, ancient + rare life.
- *   hadopelagic   — alien violets + vent-glow oranges, near-black.
+ *   epipelagic    — sardine-shoal, moon-jelly, flying-fish
+ *   mesopelagic   — lanternfish, hatchetfish, comb-jelly
+ *   bathypelagic  — anglerfish-lure, gulper-eel, glass-squid, viperfish
+ *   abyssopelagic — dumbo-octopus, deep-jelly, gulper-eel
+ *   hadopelagic   — hadal-snailfish, supergiant-amphipod, hadal-anglerfish
  */
 const SPECIES_VARIANTS: Record<
   BiomeId,
@@ -42,25 +47,23 @@ const SPECIES_VARIANTS: Record<
 > = {
   epipelagic: {
     fish: [
-      { color: "#a8d8c5", glow: "#6be6c1" },     // sardine school
-      { color: "#c8e6a0", glow: "#9ce86b" },     // chartreuse reef-darter
+      { color: "#d9f99d", glow: "#a3e635" },     // sardine-shoal
+      { color: "#bae6fd", glow: "#38bdf8" },     // flying-fish
     ],
     jellyfish: [
-      { color: "#b3e8ff", glow: "#7dd3fc" },     // moon jellyfish
-      { color: "#c4e8d0", glow: "#86efac" },     // sea-grass medusa
+      { color: "#bae6fd", glow: "#e0f2fe" },     // moon-jelly
     ],
     plankton: [
-      { color: "#d8f3ff", glow: "#a5f3fc" },     // diatom drift
+      { color: "#d8f3ff", glow: "#a5f3fc" },     // surface diatom drift
     ],
   },
   mesopelagic: {
     fish: [
-      { color: "#9bb8d8", glow: "#7dd3fc" },     // chrome lanternfish
-      { color: "#a896d8", glow: "#c4b5fd" },     // violet hatchetfish
+      { color: "#1e293b", glow: "#fbbf24" },     // lanternfish
+      { color: "#94a3b8", glow: "#cbd5f5" },     // hatchetfish
     ],
     jellyfish: [
-      { color: "#a0d0e0", glow: "#67e8f9" },     // glow comb-jelly
-      { color: "#b08fd8", glow: "#a78bfa" },     // amethyst bell
+      { color: "#fbcfe8", glow: "#f0abfc" },     // comb-jelly
     ],
     plankton: [
       { color: "#b8d4e8", glow: "#7dd3fc" },     // lit-blue krill
@@ -68,40 +71,39 @@ const SPECIES_VARIANTS: Record<
   },
   bathypelagic: {
     fish: [
-      { color: "#5a3a2a", glow: "#fbbf24" },     // amber dragonfish
-      { color: "#3a2840", glow: "#a78bfa" },     // shadow viperfish
+      { color: "#0f172a", glow: "#fde047" },     // anglerfish-lure
+      { color: "#1e1b4b", glow: "#f43f5e" },     // gulper-eel
+      { color: "#020617", glow: "#22d3ee" },     // viperfish
     ],
     jellyfish: [
-      { color: "#3a2030", glow: "#f472b6" },     // siphonophore strand
-      { color: "#243450", glow: "#60a5fa" },     // sapphire pyrosome
+      { color: "#cffafe", glow: "#a5f3fc" },     // glass-squid
     ],
     plankton: [
-      { color: "#604838", glow: "#fcd34d" },     // anglerfish-lure mote
+      { color: "#604838", glow: "#fcd34d" },     // marine-snow drift
     ],
   },
   abyssopelagic: {
     fish: [
-      { color: "#5a2620", glow: "#ff6b6b" },     // crimson chimera
-      { color: "#3a1a30", glow: "#fb7185" },     // ember gulper-eel
+      { color: "#1e1b4b", glow: "#f43f5e" },     // gulper-eel (extends downward)
     ],
     jellyfish: [
-      { color: "#48202a", glow: "#fb923c" },     // forge-jelly
-      { color: "#2a1a30", glow: "#f87171" },     // red-glow tube-jelly
+      { color: "#9f1239", glow: "#fda4af" },     // dumbo-octopus
+      { color: "#312e81", glow: "#c4b5fd" },     // deep-jelly
     ],
     plankton: [
-      { color: "#5a2a20", glow: "#fbbf24" },     // ember plankton
+      { color: "#5a2a20", glow: "#fbbf24" },     // marine-snow ember
     ],
   },
   hadopelagic: {
     fish: [
-      { color: "#1a0a14", glow: "#7c3aed" },     // hadal anglerfish
-      { color: "#0a0418", glow: "#a78bfa" },     // hadal snailfish
+      { color: "#020617", glow: "#fde047" },     // hadal-anglerfish
+      { color: "#fef9c3", glow: "#fef3c7" },     // hadal-snailfish
     ],
     jellyfish: [
-      { color: "#1a0a18", glow: "#a855f7" },     // vent-glow medusa
+      { color: "#1a0a18", glow: "#a855f7" },     // vent-glow medusa (ambient)
     ],
     plankton: [
-      { color: "#0a0418", glow: "#c4b5fd" },     // chemosynthetic mote
+      { color: "#7c2d12", glow: "#fdba74" },     // supergiant-amphipod
     ],
   },
 };
