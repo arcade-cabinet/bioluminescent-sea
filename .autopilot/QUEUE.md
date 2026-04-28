@@ -17,7 +17,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [?] **CRITICAL fix → demoted**: shallow-water "washed-out white" finding could not be reproduced from code review. At 52m the surfaceRect alpha is ~0.05 mint and GodrayFilter gain ~0.20; AdjustmentFilter doesn't attenuate until 2400m. A pink wash is more consistent with either (a) a screenshot captured during the 1.4s biome-sweep cinematic at dive start (band alpha up to 0.55 in biome tint), or (b) the low-O₂ red vignette firing (oxygenRatio < 0.18 paints `#ff3a2a` edges that compound with the mint base). The proposed "cap GodrayFilter gain" fix targets the wrong subsystem. Re-capture under controlled conditions before re-promoting.
 - [x] **MEDIUM fix**: mode card carousel `>` arrow + pagination dots are too low-contrast — new players miss that there are three modes. (PR #243)
 - [x] **MEDIUM fix**: TODAY'S CHART vs REROLL in seed picker have ambiguous affordance (toggle vs action). Use distinct visual treatment. (PR #245)
-- [ ] **LOW fix**: mobile DRYDOCK chip needs more safe-area padding.
+- [x] **LOW fix**: mobile DRYDOCK chip needs more safe-area padding. (PR #247)
 - [ ] **LOW fix**: Drydock level-0 upgrade rows should ghost slightly so unpurchased upgrades read at a glance.
 - [ ] **NOTE / verify**: Drydock lifetime band shows `BEST SCORE 0` and `DEEPEST 0m` with 23 dives logged. Either fixture state or a real PersonalBests writer bug — add an integration test that asserts both are > 0 after a completed dive.
 - [ ] Increase `OCEAN_FLOOR_METERS` reach: currently the deepest landmark is at 10500 m and the floor is 11000 m — add a mid-hadopelagic landmark around 8000 m so the player has a beat between the cold seep at 5500 m and the hadal trench at 10500 m
