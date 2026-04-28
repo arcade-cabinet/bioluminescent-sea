@@ -187,6 +187,13 @@ export function DiveScreen({
   // moved.
   const lastImpactTimeRef = useRef(0);
   const timeModifierRef = useRef(0);
+  // Wall-clock anchor for the devFastDive oxygen-burn override. Only
+  // read when `fastDiveScale > 1`; production paths still drain oxygen
+  // off accumulated sim time.
+  const wallClockStartRef = useRef(0);
+  if (wallClockStartRef.current === 0 && typeof performance !== "undefined") {
+    wallClockStartRef.current = performance.now();
+  }
   const bridgeRef = useRef<RenderBridge | null>(null);
   const ambientRef = useRef<ReturnType<typeof createAmbient> | null>(null);
   const previousBiomeRef = useRef<string | null>(null);
@@ -422,8 +429,16 @@ export function DiveScreen({
       // ?devFastDive=N scales how fast the oxygen budget burns. Production
       // is always 1; the Playwright oxygen-depletion spec passes ?devFastDive=80
       // so a 600s budget collapses in seconds. Entity sim continues at real
-      // time — only the oxygen countdown is sped up.
-      const oxygenElapsed = effectiveTotalTime * fastDiveScale;
+      // time — only the oxygen countdown is sped up. When fastDive is
+      // active, drive the oxygen burn from wall-clock instead of accumulated
+      // sim deltaTime: the per-frame `Math.min(dt, 0.1)` cap in useGameLoop
+      // (legitimately there to prevent huge skips after tab unfocus) compresses
+      // sim time on CI runners where xvfb-run + Chromium throttle RAF as low
+      // as ~0.67 Hz, which makes the test flake even at 80×.
+      const oxygenElapsed =
+        fastDiveScale > 1
+          ? ((performance.now() - wallClockStartRef.current) / 1000) * fastDiveScale
+          : effectiveTotalTime * fastDiveScale;
       const getAdjustedTimeLeft = () =>
         Math.max(
           0,
