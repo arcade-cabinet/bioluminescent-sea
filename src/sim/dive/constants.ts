@@ -9,15 +9,19 @@ export const STREAK_WINDOW_SECONDS = 3.5;
 /**
  * Passive descent speed in world-meters per second. The sub drifts
  * downward continuously; the player does not drive descent manually.
- * Tuned so a full 600s dive from surface reaches roughly the abyssal
- * floor (~6400m): 6400 / 600 ≈ 10.6 m/s. Rounded to 11 m/s.
+ * Tuned so a full 600s dive from surface reaches roughly the legacy
+ * trench-floor depth (~6400m, mid-hadopelagic): 6400 / 600 ≈ 10.6
+ * m/s. Rounded to 11 m/s. Free-roam modes continue past this point
+ * until the seafloor at OCEAN_FLOOR_METERS.
  */
 export const DESCENT_SPEED_METERS_PER_SECOND = 11;
 
 /**
- * Target trench floor. A dive that reaches this depth completes the
- * Living Map (ties to `getDiveCompletionCelebration`). The content
- * pipeline's abyssal-trench biome ends here.
+ * Legacy "trench floor" — kept as the depth-goal cap for any mode
+ * that doesn't supply its own `targetDepthMeters`. Sits inside the
+ * hadopelagic zone, well above the deepest authored point. The
+ * Living Map celebration also ties to this depth via
+ * `getDiveCompletionCelebration`.
  */
 export const TRENCH_FLOOR_METERS = 6400;
 

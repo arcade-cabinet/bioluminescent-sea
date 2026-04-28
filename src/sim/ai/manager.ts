@@ -68,11 +68,11 @@ export class AIManager {
    * Push the current biome's aggression multiplier into every
    * predator brain. Called once per tick from the runtime with the
    * player's depth-derived multiplier:
-   *   - photic-gate    1.0 (baseline)
-   *   - twilight-shelf 1.15
-   *   - midnight-column 1.3
-   *   - abyssal-trench 1.45
-   *   - stygian-abyss  1.6
+   *   - epipelagic    1.0 (baseline)
+   *   - mesopelagic   1.15
+   *   - bathypelagic  1.3
+   *   - abyssopelagic 1.45
+   *   - hadopelagic   1.6
    * Each brain then uses its `effective*` accessors so detection
    * radius, charge windup, and strike speed scale together.
    */

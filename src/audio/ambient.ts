@@ -9,10 +9,11 @@ import { isMuted, onMuteChange } from "./mixer";
  * mood is legible even on cold start.
  *
  * Voicings:
- *   photic-gate     — lydian open fifth (airy, surface warmth)
- *   twilight-shelf  — suspended fourth (unresolved)
- *   midnight-column — minor ninth (bruise, deep color)
- *   abyssal-trench  — minor second cluster (dissonant warn)
+ *   epipelagic    — lydian open fifth (airy, surface warmth)
+ *   mesopelagic   — suspended fourth (unresolved)
+ *   bathypelagic  — minor ninth (bruise, deep color)
+ *   abyssopelagic — minor second cluster (dissonant warn)
+ *   hadopelagic   — minor second + tritone drone (alien-deep)
  *
  * Cutoff modulation: `depthMeters` → filter frequency, shallower
  * means brighter. At 3200m the cutoff sits around 400 Hz.

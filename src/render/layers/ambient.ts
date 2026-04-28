@@ -10,15 +10,17 @@ import { Container, Graphics } from "pixi.js";
  * cross biome boundaries instead of just a tint shift.
  *
  * Per biome:
- *   photic-shelf  — kelp ribbons swaying in current, distant coral
+ *   epipelagic    — kelp ribbons swaying in current, distant coral
  *                   outcrops glinting under the surface god-rays
- *   twilight-shelf — distant jellyfish swarms (cluster of glowing
- *                   bells), drifting whale-fall silhouette near floor
- *   midnight-column — anglerfish lures pulsing in the deep dark,
+ *   mesopelagic   — distant jellyfish swarms (cluster of glowing
+ *                   bells), drifting marine snow column
+ *   bathypelagic  — anglerfish lures pulsing in the deep dark,
  *                   tentacle silhouettes hinting at things larger
  *                   than the sub
- *   abyssal-trench — volcanic vent glow, hydrothermal column shimmer,
- *                   rocky outcrop silhouettes, sunken ship hull
+ *   abyssopelagic — whale-fall silhouettes, dumbo octopus drifting
+ *                   past, deep-jelly trails
+ *   hadopelagic   — volcanic vent glow, hydrothermal column shimmer,
+ *                   rocky outcrop silhouettes, hadal-trench geometry
  *
  * Everything is authored as Graphics (no textures) so it renders at
  * native canvas resolution and ships in the same bundle. Procedural
