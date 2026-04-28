@@ -218,6 +218,20 @@ export function HUD({
               {typeof nearestLandmarkDistance === "number" &&
                 Number.isFinite(nearestLandmarkDistance) && (
                   <span style={{ marginLeft: "0.5rem", color: "var(--color-fg-muted)" }}>
+                    {/* The route landmark is always strictly deeper than
+                     *  the current depth (sourced from
+                     *  `nextLandmarkAtDepth`), so the relationship is
+                     *  unambiguous: dive further down to reach it. The
+                     *  ↓ glyph makes that spatial relationship readable
+                     *  at a glance instead of leaving the player to
+                     *  infer it from the depth counter. */}
+                    <span
+                      aria-hidden="true"
+                      data-testid="hud-landmark-direction"
+                      style={{ marginRight: "0.2rem" }}
+                    >
+                      ↓
+                    </span>
                     {Math.round(nearestLandmarkDistance)}m
                   </span>
                 )}
