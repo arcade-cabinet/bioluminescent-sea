@@ -22,6 +22,15 @@ const GAME_ARGS = [
 
 export default defineConfig({
   testDir: "./e2e",
+  // The iteration-2 capture spec is opt-in only — it's pure capture
+  // (no assertions) and slow (12 tests × 2 viewports under serial
+  // mode + reduced-motion emulation). Running it in the default CI
+  // matrix pushed the Playwright job past its 15min timeout, so
+  // capture specs are excluded here and invoked explicitly via:
+  //
+  //   pnpm exec playwright test e2e/capture-iteration-2.spec.ts \
+  //     --project desktop --project mobile-portrait
+  testIgnore: ["**/capture-*.spec.ts"],
   fullyParallel: true,
   forbidOnly: IS_CI,
   retries: IS_CI ? 1 : 0,
