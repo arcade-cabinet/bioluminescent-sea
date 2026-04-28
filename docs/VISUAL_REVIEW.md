@@ -17,12 +17,13 @@ Stored in `docs/screenshots/` and committed to git. Two viewports:
 
 | Slot | Desktop (1280×720) | Mobile portrait (390×844) |
 | ---- | ------------------ | ------------------------- |
-| landing         | `landing.desktop.png`              | `landing.mobile.png`              |
-| photic-gate     | `photic-gate.desktop.png`          | `photic-gate.mobile.png`          |
-| twilight-shelf  | `twilight-shelf.desktop.png`       | `twilight-shelf.mobile.png`       |
-| midnight-column | `midnight-column.desktop.png`      | `midnight-column.mobile.png`      |
-| abyssal-trench  | `abyssal-trench.desktop.png`       | `abyssal-trench.mobile.png`       |
-| game-over       | `game-over.desktop.png`            | `game-over.mobile.png`            |
+| landing       | `landing.desktop.png`        | `landing.mobile.png`        |
+| epipelagic    | `epipelagic.desktop.png`     | `epipelagic.mobile.png`     |
+| mesopelagic   | `mesopelagic.desktop.png`    | `mesopelagic.mobile.png`    |
+| bathypelagic  | `bathypelagic.desktop.png`   | `bathypelagic.mobile.png`   |
+| abyssopelagic | `abyssopelagic.desktop.png`  | `abyssopelagic.mobile.png`  |
+| hadopelagic   | `hadopelagic.desktop.png`    | `hadopelagic.mobile.png`    |
+| game-over     | `game-over.desktop.png`      | `game-over.mobile.png`      |
 
 All captured against the seed `kelpish-vellum-benthos` for
 reproducibility.

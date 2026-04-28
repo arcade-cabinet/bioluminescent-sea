@@ -22,9 +22,9 @@ export function resolveRegionForChunk(
 ): { id: RegionArchetypeId; slots: RegionSlots } {
   // Resolve by the chunk's vertical midpoint so a boundary-straddling
   // chunk inherits the region that contains most of it. Using the
-  // shallow edge would pull a 400m-tall chunk spanning 500m-900m into
-  // the 300m-600m twilight-shelf region even though 300m of it is in
-  // the midnight column.
+  // shallow edge would pull a 400m-tall chunk spanning 1400m-1800m
+  // into the 500m-1500m mesopelagic region even though 300m of it is
+  // in the bathypelagic.
   const midpoint = (chunk.yTopMeters + chunk.yBottomMeters) * 0.5;
   for (const id of regionSequence) {
     const archetype = getRegionArchetype(id);

@@ -558,7 +558,7 @@ export function mountFx(parent: Container): FxController {
 
       // Leviathan presence vignette — four edge bands that ramp
       // alpha with proximity, breathing on a slow sine. Color is
-      // dusky violet (0x3a1d5a — same as midnight-column tint) so
+      // dusky violet (0x3a1d5a — same as bathypelagic tint) so
       // it reads as ambient dread, not a damage flash. Visible only
       // when `leviathanProximity > 0.05` to avoid burning fill rate
       // on empty frames.

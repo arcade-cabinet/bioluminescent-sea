@@ -21,8 +21,8 @@ import type { BiomeId } from "@/sim/factories/region/types";
  * Biome-keyed species palettes. Same `CreatureType` (the renderer's
  * shape selector) gets a different colour scheme per biome so each
  * depth band reads as its own ecology — silver-green kelp glowfish
- * in the photic gate, deep-amber dragonfish in the midnight column,
- * crimson vent-fish in the abyssal trench. The `pick` function
+ * in the epipelagic, deep-amber dragonfish in the bathypelagic,
+ * crimson vent-fish in the hadopelagic. The `pick` function
  * returns one variant per spawn (chunk-seeded RNG), so even within a
  * biome a chunk can show 2-3 species shoaling together.
  */

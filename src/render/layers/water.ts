@@ -9,7 +9,7 @@ import { AdjustmentFilter, GodrayFilter } from "pixi-filters";
  *      full-screen rect inside this container so the shafts paint
  *      across the whole viewport with configurable angle + density.
  *      The shafts attenuate as depth grows (surface light doesn't
- *      reach the abyss) so they fade out past the twilight shelf.
+ *      reach the abyss) so they fade out past the twilight zone.
  *
  *   2. Procedural caustics — a low-alpha full-screen Graphics drawn on
  *      a curl-noise-driven pulse pattern, additively blended. Cheap

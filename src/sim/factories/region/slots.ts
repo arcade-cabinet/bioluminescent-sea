@@ -16,7 +16,7 @@ export interface RegionSlots {
   /**
    * The chunk archetype pool for this region. The chunk factory picks
    * from this pool weighted by each entry's `weight`. Populating this
-   * per-region is how we author "the twilight shelf is mostly open
+   * per-region is how we author "the twilight zone is mostly open
    * drift with occasional beacon groves" vs "the arena hall is all
    * locked rooms."
    */
