@@ -61,7 +61,11 @@ export function SeedPickerOverlay({
     >
       <DialogContent
         data-testid="seed-picker-overlay"
-        className="sm:max-w-lg"
+        // Desktop gains additional breathing room (max-w-xl ~ 576 px,
+        // bumped p-9) — the previous max-w-lg + p-7 left ~50 % of the
+        // dimmed page empty above and below the card on >= 1024 px
+        // viewports. (Iter-2 finding #7.)
+        className="sm:max-w-lg lg:max-w-xl lg:p-9"
         // The landing's animated hero stays visible behind the blur — the
         // dialog is meant to feel like a chart rolled out over the trench.
       >
