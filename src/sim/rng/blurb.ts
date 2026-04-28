@@ -28,6 +28,12 @@ const BODIES: readonly string[] = [
   "a whale fall sits in the abyss on this route — dense bioluminescence around it.",
   "hydrothermal vents punch up into the hadal — heat, life, and predators.",
   "this seed runs deep — push for the abyss if your oxygen holds.",
+  "a sargassum drift floats along the surface — flying fish break from underneath.",
+  "the continental shelf drops off sharply here; tuna and rays patrol the lip.",
+  "vertical migration is timed wrong on this seed — the deep is awake all day.",
+  "a bone field stretches across the abyssal plain — quiet, lit by worms.",
+  "a cold seep bubbles methane near the hadal edge; tube worms and nothing else.",
+  "the hadal trench runs deep here — snailfish glide near-still in the dark.",
 ];
 
 const CLOSERS: readonly string[] = [
