@@ -313,6 +313,7 @@ export class AIManager {
     const activeIds = new Set(creatures.map(c => c.id));
     for (const [id, vehicle] of this.vehicleMap.entries()) {
       if (id === "player") continue;
+      if (id.startsWith("marauder-sub")) continue;
       if (activeIds.has(id)) continue;
       this.entityManager.remove(vehicle);
       this.vehicleMap.delete(id);
