@@ -15,8 +15,10 @@ import { createCavitationEmitter, type CavitationEvent } from "../cavitation";
 
 const CRUISE = 200;
 const SPRINT_MAX = 400; // 2× cruise
-const MIN_SECONDS_TO_EMIT = 0.3;
-const COOLDOWN_SECONDS = 0.6;
+// Note: MIN_SECONDS_TO_EMIT (0.3s) and COOLDOWN_SECONDS (0.6s) are
+// the contract values asserted by the threshold + cooldown tests
+// below — kept inline so each test reads as a self-contained
+// assertion rather than a constant lookup.
 
 describe("createCavitationEmitter — threshold and emission", () => {
   test("below threshold for any duration → no event", () => {

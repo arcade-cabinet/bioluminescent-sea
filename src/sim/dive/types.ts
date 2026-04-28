@@ -17,6 +17,23 @@ export interface DiveInput {
   x: number;
   y: number;
   isActive: boolean;
+  /**
+   * When true, x/y are interpreted as a normalised thrust vector
+   * (magnitude 0..1) rather than a target point. The runtime picks
+   * the interpretation by reading this field. Optional — back-compat
+   * with GOAP target-based callers.
+   */
+  thrust?: boolean;
+  /**
+   * Heading angle in radians the sub should face. Optional —
+   * when absent, the sub aligns with velocity direction.
+   */
+  aim?: number;
+  /**
+   * Sprint hold flag. Active → maxSpeed = cruise × sprintMultiplier.
+   * Sustained sprint at speed produces cavitation events.
+   */
+  sprint?: boolean;
 }
 
 /**

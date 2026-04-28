@@ -16,6 +16,14 @@ import type { PerceptionContext } from "./perception/perception";
 
 const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
 
+/**
+ * Cavitation bumps cap at this many predators per event so a sprint-
+ * spam scenario in a dense arena chunk can't cost O(n) memory writes
+ * per frame. The cap is generous — production chunks ship far fewer
+ * predators than this — but bounds pathological cases.
+ */
+const MAX_PREDATOR_BUMPS_PER_CAVITATION = 16;
+
 export class AIManager {
   public entityManager: EntityManager;
   public time: Time;
@@ -334,6 +342,52 @@ export class AIManager {
    * start of each lamp pressure pass.
    */
   public lastLampScatterPoints: { x: number; y: number }[] = [];
+
+  /**
+   * Bump every predator's MemorySystem record of the player when the
+   * player cavitates within audible range. Sound bypasses LoS — a
+   * cavitation event is heard even through debris, leviathans, or
+   * locked-room walls.
+   *
+   * The Yuka MemorySystem requires a live Vehicle reference, not
+   * coords; this method holds that reference (`this.playerVehicle`)
+   * and is the only code path that should write player-memory from
+   * non-perception sources. Capped at MAX_PREDATOR_BUMPS per call
+   * so a sprint-spam scenario in a dense arena chunk can't cost
+   * O(n) memory writes per frame (security MED).
+   *
+   * Returns the number of predator records actually bumped, for
+   * SFX gain shaping in the runtime layer.
+   */
+  applyCavitationBump(
+    eventX: number,
+    eventY: number,
+    audibleRadiusPx: number,
+    simTime: number,
+  ): number {
+    if (
+      !Number.isFinite(eventX) ||
+      !Number.isFinite(eventY) ||
+      !Number.isFinite(audibleRadiusPx) ||
+      !Number.isFinite(simTime)
+    ) {
+      return 0;
+    }
+    const radiusSq = audibleRadiusPx * audibleRadiusPx;
+    let bumped = 0;
+    for (const brain of this.predatorBrainMap.values()) {
+      if (bumped >= MAX_PREDATOR_BUMPS_PER_CAVITATION) break;
+      const dx = brain.position.x - eventX;
+      const dy = brain.position.y - eventY;
+      if (dx * dx + dy * dy > radiusSq) continue;
+      const record = brain.memorySystem.getRecord(this.playerVehicle);
+      if (!record) continue;
+      record.timeLastSensed = simTime;
+      record.lastSensedPosition.copy(this.playerVehicle.position);
+      bumped += 1;
+    }
+    return bumped;
+  }
 
   /**
    * Push the player's lamp cone against every predator brain. Any
