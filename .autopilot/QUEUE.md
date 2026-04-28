@@ -26,6 +26,16 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] Add an achievement for passing every named landmark in a single dive (12 currently — would require tracking landmarks-passed in run stats) (PR #260 — Complete Chart, scales to 13 with mud-volcano added)
 - [x] Ambient render layer's per-biome description was updated in PR #228 but the actual painted ambient may still match the old 4-biome assumption. Verify `src/render/layers/ambient.ts` paints distinct ambient for all 5 zones, not just 4. (PR #262 — split abyssal-plain vs hadal-geology painters; abyssopelagic now paints whale-fall/dumbo/deep-jelly, hadopelagic keeps vents/outcrops/wreck)
 
+## Iteration-2 — discovery
+
+The iteration-1 polish loop cleared every finding. The surface
+area has materially changed (carousel contrast, seed-picker
+affordance, HUD landmark direction glyph, abyssal ambient split,
+13-landmark catalogue, named-species spawn). Time for a fresh
+visual-assessment pass.
+
+- [ ] Capture iteration-2 screenshots (landing, mode-card carousel, seed-picker on/off today's seed, dive at each of the 5 zones, drydock with mixed upgrade levels) and write `docs/screenshots/iteration-2/ASSESSMENT.md` with the next batch of polish findings — eyes-on review, not just capture. Output will seed subsequent loop iterations.
+
 ## Done
 
 - [x] Seafloor symmetry — bottom mirrors top (PR #227)

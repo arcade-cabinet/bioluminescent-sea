@@ -1,6 +1,6 @@
 ---
 title: State
-updated: 2026-04-27
+updated: 2026-04-28
 status: current
 domain: context
 ---
@@ -44,36 +44,66 @@ branches outside slot files. Recent stack:
 - Plain-English copy across landing, mode cards, seed picker, dive
   banners, completion screen.
 
-## Recently merged (post-taxonomy era)
+## Recently merged (iteration-1 polish era)
 
 Counting from the date of the proper-depth-zone-taxonomy ship:
 
-- **PR #226** — proper oceanographic depth zone taxonomy (5
-  pelagic zones, ecology atlas, plain-English copy across all
-  surfaces).
-- **PR #227** — seafloor symmetry: `seafloorBehavior` slot, free-
-  roam clamp at `OCEAN_FLOOR_METERS = 11000m`.
-- **PR #228** — post-taxonomy comment sweep + GOAP-bot integration
-  test for the seafloor clamp through the runtime path.
-- **PR #229** — drive HUD landmarks from authored content.
-- **PR #230** — landmark catalogue 6 → 12 (sargassum drift,
-  continental shelf, vertical migration, bone field, cold seep,
-  hadal trench).
-- **PR #231** — trench blurbs reference the new landmarks (12 →
-  18 variants).
+Foundation → iteration-0 (post-taxonomy):
+- **PR #226** — proper oceanographic depth zone taxonomy.
+- **PR #227** — seafloor symmetry: `OCEAN_FLOOR_METERS = 11000m`.
+- **PR #228** — post-taxonomy sweep + GOAP seafloor balance test.
+- **PR #229** — HUD landmarks driven by authored content.
+- **PR #230** — landmark catalogue 6 → 12.
+- **PR #231** — trench blurbs reference new landmarks.
 - **PR #232** — plain-English dive-completion copy.
-- **PR #233** — seed autopilot queue.
-- **PR #234** — finish stale-biome comment sweep across
-  fx/water/chunk/region/entities/advance/DrydockScreen/VISUAL_REVIEW.
-- **PR #235** — visual assessment of iteration-0 + iteration-1
-  screenshots (six findings recorded).
-- **PR #236** — autopilot loop-runner spec.
+- **PR #233/234/235/236** — autopilot queue + runner + stale-biome
+  sweep + iteration-1 visual assessment.
+
+Iteration-1 polish loop (autopilot, all 14 findings cleared):
+- **PR #237** — refresh STATE.md to post-taxonomy era.
+- **PR #238** — wire authored creature JSON into entity profile
+  tables (`config/raw/creatures/*.json` now drives gameplay).
+- **PR #240** — author 13 named species JSONs matching every
+  biome's `ecology.collectibles` (sardine-shoal, lanternfish,
+  anglerfish-lure, gulper-eel, dumbo-octopus, hadal-snailfish, …).
+- **PR #242** — demote unreproducible shallow-water washout
+  finding (trust-but-verify).
+- **PR #243** — mode-card carousel arrows + pagination dots gain
+  readable contrast (pill bg + ring + larger glyphs).
+- **PR #245** — seed-picker Today's Chart vs Reroll affordance:
+  Today's gains an active state (filled check + ring) so the
+  toggle-vs-action split reads at a glance.
+- **PR #247** — landing Drydock chip respects
+  `env(safe-area-inset-{left,right})` so phones with notches
+  don't clip.
+- **PR #249** — Drydock level-0 upgrade icons ghost to 60 %
+  opacity so unpurchased upgrades read at a glance.
+- **PR #251** — integration test: \`recordDive\` preserves both
+  score and depth (guards against the "BEST 0 / DEEPEST 0m"
+  regression vector).
+- **PR #253** — Subduction Mud Volcano landmark at 8000 m
+  closes the gap between Cold Seep and Hadal Trench. 12 → 13.
+- **PR #255** — HUD landmark chip renders a ↓ glyph next to
+  metres-to-go so the spatial relationship is unambiguous.
+- **PR #257** — chunk-spawn `SPECIES_VARIANTS` colours and
+  comments aligned with authored ecology + structural contract
+  test ("every \`ecology.collectibles\` entry has a creature JSON").
+- **PR #259** — Stop hook now also gates on
+  `.autopilot/QUEUE.md`, not just `docs/PRODUCTION.md`.
+- **PR #260** — Complete Chart achievement (pass every authored
+  landmark in a single dive). \`landmarksPassed\` joins
+  `DiveRunStats`; \`advanceRunStats\` accumulates via
+  \`lastPassedLandmark\`.
+- **PR #262** — ambient render layer paints distinct content for
+  all 5 zones (abyssopelagic gets whale-fall + dumbo-octopus +
+  deep-jelly trails; hadopelagic keeps vents + outcrops + wreck).
 
 ## Metrics
 
-- Tests: **332 passing** across 29 files.
+- Tests: **336 passing** across 30 files.
 - Typecheck: clean across app + node + sim composite projects.
 - Lint: clean (Biome).
+- Authored content: 5 biomes, 18 creatures, 13 landmarks.
 - Build: TBD — verify on next iteration.
 - Open PRs: track via `gh pr list`.
 
@@ -84,14 +114,13 @@ The actionable queue lives in
 that an automated loop reads is
 [.autopilot/RUNNER.md](../.autopilot/RUNNER.md).
 
-Highlights of what's open:
-
-- Findings from the iteration-1 visual assessment, each with a
-  spec in `docs/screenshots/iteration-1/ASSESSMENT.md`.
-- Wire authored creature JSON into actor archetype spawn (the
-  largest unresolved content-pipeline gap).
-- Per-zone creature JSON authoring matching each biome's ecology
-  block.
+The iteration-1 polish loop completed — every finding from
+`docs/screenshots/iteration-1/ASSESSMENT.md` has shipped or been
+demoted with explanation. The next iteration should be a fresh
+visual-assessment pass (iteration-2) to surface the *next* batch
+of polish work, since the surface area has materially changed
+since iteration-1 (carousel contrast, seed-picker affordance,
+HUD landmark direction glyph, abyssal ambient split).
 
 ## Decisions log
 
