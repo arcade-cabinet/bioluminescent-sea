@@ -70,7 +70,10 @@ jobs:
   e2e:
     name: Playwright e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 19 specs × 4 viewports at workers=1 in CI. The 15-min cap was
+    # tripping intermittently on cold runs; 25 gives the job headroom
+    # without changing the median runtime.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e # v6.0.3
