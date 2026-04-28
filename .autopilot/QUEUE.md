@@ -10,7 +10,7 @@ Treat each item as a self-contained PR. Every item must end with
 ## Active
 
 - [x] Wire authored `config/raw/creatures/*.json` into actor-archetype spawn weights so the JSON actually drives gameplay, not just docs (PR #238)
-- [ ] Add 3–5 new creature JSONs per pelagic zone reflecting the authored ecology (lanternfish, hatchetfish, anglerfish, gulper-eel, dumbo-octopus, hadal-snailfish) — even if they reuse existing visual archetypes, the *names* land
+- [x] Add 3–5 new creature JSONs per pelagic zone reflecting the authored ecology (lanternfish, hatchetfish, anglerfish, gulper-eel, dumbo-octopus, hadal-snailfish) — even if they reuse existing visual archetypes, the *names* land (PR #240)
 - [x] Audit the Drydock screen copy for stale lore-jargon — Drydock player-facing copy was already clean, but stale biome-id references in code/doc comments across fx/water/chunk/region/entities/advance/DrydockScreen/VISUAL_REVIEW were swept (PR #234)
 - [x] Refresh `docs/STATE.md` to reflect the post-taxonomy era; `docs/RELEASE.md` was already accurate (PR pending)
 - [x] Visually assess the existing screenshot bundle — done in this PR; findings recorded in `docs/screenshots/iteration-1/ASSESSMENT.md`. Action items below were extracted from that pass.
