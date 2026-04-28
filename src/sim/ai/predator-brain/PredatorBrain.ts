@@ -157,9 +157,9 @@ export class PredatorBrain extends Vehicle {
    * fuzzy desirability. Set every tick by AIManager from the
    * current player depth.
    *
-   * 1.0 = surface, 1.6 = stygian abyss. Tuned so a player descending
-   * into the trench notices a sharp tonal shift — the deeper biomes
-   * don't just look more dangerous, they ACT more dangerous.
+   * 1.0 = surface (epipelagic), 1.6 = the hadal. Tuned so a player
+   * descending notices a sharp tonal shift — the deeper biomes don't
+   * just look more dangerous, they ACT more dangerous.
    */
   public biomeAggression = 1;
 

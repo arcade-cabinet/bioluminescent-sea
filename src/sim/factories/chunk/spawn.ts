@@ -360,9 +360,9 @@ export function spawnPredatorsForChunk(
 
   // Stamp the biome tint on every spawned predator in this chunk so
   // the renderer can paint species accents (gills, fins, eye halo)
-  // in a colour matching the depth band — a twilight-shelf eel
-  // carries cool teal, an abyssal-trench predator warm-red. Pure
-  // visual; AI is unaffected.
+  // in a colour matching the depth band — a mesopelagic eel carries
+  // cool teal, a hadopelagic predator warm vent-orange. Pure visual;
+  // AI is unaffected.
   return results.map((p) => ({ ...p, biomeTintHex: biome.tintHex }));
 }
 

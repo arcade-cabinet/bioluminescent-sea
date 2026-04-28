@@ -4,15 +4,12 @@ import type { Chunk } from "@/sim/factories/region/types";
 
 /**
  * Vertical extent of a single chunk in world-meters. Tuned so the
- * four biomes (photic 0–800, twilight 800–2400, midnight 2400–4800,
- * abyssal 4800–6400) decompose into a sensible count of chunks. A
- * 400m chunk puts:
- *   - photic-gate    across 2 chunks
- *   - twilight-shelf across 4 chunks
- *   - midnight-column across 6 chunks
- *   - abyssal-trench across 4 chunks
- * for 16 chunks total at the trench floor. Small enough to retire
- * off-screen quickly, large enough that spawn cost is amortized.
+ * five pelagic zones (epipelagic 0–500, mesopelagic 500–1500,
+ * bathypelagic 1500–3000, abyssopelagic 3000–5000, hadopelagic
+ * 5000–11000) decompose into a sensible count of chunks. A 400m
+ * chunk puts the deepest zone across 15 chunks and the upper four
+ * across 12 — small enough to retire off-screen quickly, large
+ * enough that spawn cost is amortized.
  */
 export const CHUNK_HEIGHT_METERS = 400;
 

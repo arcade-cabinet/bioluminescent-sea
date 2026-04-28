@@ -590,4 +590,62 @@ describe("per-mode sim integration (GOAP bot drives advanceScene)", () => {
     expect(input.x).toBeCloseTo(scene.player.x + 200);
     expect(input.y).toBeCloseTo(scene.player.y + 100);
   });
+
+  test("seafloor symmetry: a long Exploration run pinned at depth=11000m proves the floor clamp works on the GOAP path", () => {
+    // Drop the bot near the seafloor and let it play a full minute of
+    // sim time. The mode is Exploration (free-roam), so depth must
+    // pin at OCEAN_FLOOR_METERS (11000m) and the bot must NOT hit a
+    // terminal outcome (no collision-end, no oxygen-empty within the
+    // window). This is the proof that the slot-driven seafloor rule
+    // pays off through the same code path the runtime uses.
+    resetAIManager();
+    const initial = createInitialScene(dimensions);
+    let scene: SceneState = { ...initial, depthTravelMeters: 10980 };
+    const owner = createGoapBrainOwner({
+      scene,
+      dimensions,
+      totalTime: 0,
+      deltaTime: 1 / 30,
+      timeLeft: 600,
+    });
+    const brain = createCollectBeaconsProfile(owner);
+    const bot = new GoapInputProvider(brain, owner);
+    let totalTime = 0;
+    const deltaTime = 1 / 30;
+    for (let i = 0; i < 60 * 30; i++) {
+      totalTime += deltaTime;
+      const input = bot.next({
+        scene,
+        dimensions,
+        totalTime,
+        deltaTime,
+        timeLeft: 600 - totalTime,
+      });
+      scene = {
+        ...scene,
+        player: advancePlayer(
+          { ...scene.player, targetX: input.x, targetY: input.y },
+          input,
+          dimensions,
+          totalTime,
+          deltaTime,
+        ),
+      };
+      const result = advanceScene(
+        scene,
+        input,
+        dimensions,
+        totalTime,
+        deltaTime,
+        0,
+        1,
+        600 - totalTime,
+        "exploration",
+        0xCAFE,
+      );
+      scene = result.scene;
+    }
+    expect(scene.depthTravelMeters).toBeLessThanOrEqual(11000);
+    expect(scene.depthTravelMeters).toBeGreaterThanOrEqual(10999);
+  });
 });

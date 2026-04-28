@@ -1035,9 +1035,9 @@ function drawPredatorStateful(g: Graphics, p: Predator, totalTime: number): void
 
   // Biome accent: blend the canonical warm-red (0xff6b6b) 60/40
   // toward the spawn biome's tint. Predators in cool biomes
-  // (twilight-shelf teal, midnight-column violet) carry a cooler
-  // accent; predators in abyssal-trench retain the warm-red. The
-  // blend keeps the silhouette readable at a glance — too far
+  // (mesopelagic teal, bathypelagic violet) carry a cooler accent;
+  // predators in abyssopelagic/hadopelagic retain the warm-red.
+  // The blend keeps the silhouette readable at a glance — too far
   // toward biome and the predator melts into the depth tint.
   const biomeBlended = p.biomeTintHex
     ? blendHexColors(0xff6b6b, parseHex(p.biomeTintHex), 0.4)
