@@ -1,0 +1,9 @@
+{
+  "id": "dumbo-octopus",
+  "type": "jellyfish",
+  "baseScore": 200,
+  "oxygenBonusSeconds": 12,
+  "glowColor": "#fda4af",
+  "color": "#9f1239",
+  "sizeMeters": { "min": 0.2, "max": 0.4 }
+}

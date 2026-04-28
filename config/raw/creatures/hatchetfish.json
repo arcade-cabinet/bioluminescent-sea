@@ -1,0 +1,9 @@
+{
+  "id": "hatchetfish",
+  "type": "fish",
+  "baseScore": 80,
+  "oxygenBonusSeconds": 7,
+  "glowColor": "#cbd5f5",
+  "color": "#94a3b8",
+  "sizeMeters": { "min": 0.05, "max": 0.12 }
+}

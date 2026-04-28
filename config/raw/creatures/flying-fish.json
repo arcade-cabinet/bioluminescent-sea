@@ -1,0 +1,9 @@
+{
+  "id": "flying-fish",
+  "type": "fish",
+  "baseScore": 55,
+  "oxygenBonusSeconds": 5,
+  "glowColor": "#38bdf8",
+  "color": "#bae6fd",
+  "sizeMeters": { "min": 0.25, "max": 0.4 }
+}

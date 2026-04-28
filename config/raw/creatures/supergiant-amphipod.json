@@ -1,0 +1,9 @@
+{
+  "id": "supergiant-amphipod",
+  "type": "plankton",
+  "baseScore": 220,
+  "oxygenBonusSeconds": 11,
+  "glowColor": "#fdba74",
+  "color": "#7c2d12",
+  "sizeMeters": { "min": 0.2, "max": 0.34 }
+}

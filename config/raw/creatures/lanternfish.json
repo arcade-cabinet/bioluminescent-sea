@@ -1,0 +1,9 @@
+{
+  "id": "lanternfish",
+  "type": "fish",
+  "baseScore": 70,
+  "oxygenBonusSeconds": 7,
+  "glowColor": "#fbbf24",
+  "color": "#1e293b",
+  "sizeMeters": { "min": 0.05, "max": 0.15 }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "moon-jelly",
+  "type": "jellyfish",
+  "baseScore": 40,
+  "oxygenBonusSeconds": 6,
+  "glowColor": "#e0f2fe",
+  "color": "#bae6fd",
+  "sizeMeters": { "min": 0.3, "max": 0.6 }
+}
