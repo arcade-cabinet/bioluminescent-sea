@@ -22,7 +22,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] **NOTE / verify**: Drydock lifetime band shows `BEST SCORE 0` and `DEEPEST 0m` with 23 dives logged. Verified: writer is correct (`Math.max(previous, summary)`); original screenshot was fixture state. Added integration test guarding against future regressions. (PR #251)
 - [x] Increase `OCEAN_FLOOR_METERS` reach: currently the deepest landmark is at 10500 m and the floor is 11000 m — add a mid-hadopelagic landmark around 8000 m so the player has a beat between the cold seep at 5500 m and the hadal trench at 10500 m (PR #253 — Subduction Mud Volcano)
 - [x] The HUD shows "next landmark + metres-to-go" but the *direction* hint (still null because landmarks are below) is silently dropped. Consider rendering a small ↓ glyph next to the metres-to-go so the spatial relationship is unambiguous (PR #255)
-- [ ] Verify the chunk-spawn species table actually reflects every authored zone's `ecology.collectibles` array — eyeball + tighten if there's drift
+- [x] Verify the chunk-spawn species table actually reflects every authored zone's `ecology.collectibles` array — eyeball + tighten if there's drift (PR #257 — comments + colours aligned, structural contract test added)
 - [ ] Add an achievement for passing every named landmark in a single dive (12 currently — would require tracking landmarks-passed in run stats)
 - [ ] Ambient render layer's per-biome description was updated in PR #228 but the actual painted ambient may still match the old 4-biome assumption. Verify `src/render/layers/ambient.ts` paints distinct ambient for all 5 zones, not just 4.
 
