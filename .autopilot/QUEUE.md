@@ -20,7 +20,7 @@ Treat each item as a self-contained PR. Every item must end with
 - [x] **LOW fix**: mobile DRYDOCK chip needs more safe-area padding. (PR #247)
 - [x] **LOW fix**: Drydock level-0 upgrade rows should ghost slightly so unpurchased upgrades read at a glance. (PR #249)
 - [x] **NOTE / verify**: Drydock lifetime band shows `BEST SCORE 0` and `DEEPEST 0m` with 23 dives logged. Verified: writer is correct (`Math.max(previous, summary)`); original screenshot was fixture state. Added integration test guarding against future regressions. (PR #251)
-- [ ] Increase `OCEAN_FLOOR_METERS` reach: currently the deepest landmark is at 10500 m and the floor is 11000 m — add a mid-hadopelagic landmark around 8000 m so the player has a beat between the cold seep at 5500 m and the hadal trench at 10500 m
+- [x] Increase `OCEAN_FLOOR_METERS` reach: currently the deepest landmark is at 10500 m and the floor is 11000 m — add a mid-hadopelagic landmark around 8000 m so the player has a beat between the cold seep at 5500 m and the hadal trench at 10500 m (PR #253 — Subduction Mud Volcano)
 - [ ] The HUD shows "next landmark + metres-to-go" but the *direction* hint (still null because landmarks are below) is silently dropped. Consider rendering a small ↓ glyph next to the metres-to-go so the spatial relationship is unambiguous
 - [ ] Verify the chunk-spawn species table actually reflects every authored zone's `ecology.collectibles` array — eyeball + tighten if there's drift
 - [ ] Add an achievement for passing every named landmark in a single dive (12 currently — would require tracking landmarks-passed in run stats)
