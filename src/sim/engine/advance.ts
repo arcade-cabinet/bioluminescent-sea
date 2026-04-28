@@ -219,10 +219,10 @@ export function advanceScene(
   const particles = scene.particles.map((particle) =>
     advanceParticle(particle, dimensions, totalTime, deltaTime)
   );
-  // lamp-flare extends collection reach (the documented "extends
-  // collection radius" buff effect). Half-angle stays fixed — the
-  // scoop's identity is its arc shape, not its radius.
-  const collectionReachScale = isLampFlareActive ? 1.5 : 1;
+  // lamp-flare extends scoop reach by 1.5× (collection-radius
+  // buff). The lamp-cone visual scales by 1.35× (lampBoost above) —
+  // the two are intentionally different: the cone is what the
+  // player sees, the scoop is the deeper collection volume.
   const collection = collectCreatures(
     creatures,
     player,
@@ -230,7 +230,7 @@ export function advanceScene(
     lastCollectTime,
     multiplier,
     tuning.collectionOxygenScale,
-    collectionReachScale,
+    isLampFlareActive ? 1.5 : 1,
   );
 
   const anomalyCollection = collectAnomalies(scene.anomalies as import("@/sim/entities/types").Anomaly[], player);

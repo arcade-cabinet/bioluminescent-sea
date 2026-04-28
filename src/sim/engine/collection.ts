@@ -36,11 +36,20 @@ export function collectAnomalies(
 }
 /**
  * Front-mounted scoop arc — apex at player, centerline at player.angle,
- * `halfAngleRad` to each side, `reachPx` as the radius. Closed boundary:
- * a target at exactly reach AND/OR exactly halfAngleRad is IN (modulo
- * float epsilon). A target at zero distance from the player is IN
- * regardless of heading — a creature on top of the player has no
- * defined direction. Non-finite player or target coords → false.
+ * `halfAngleRad` to each side, `reachPx` as the radius.
+ *
+ * Boundary semantics: approximately closed. `dot >= Math.cos(halfAngle)`
+ * uses `>=`, but `Math.cos` and the normalised dot are float
+ * approximations — a target geometrically on the exact boundary may
+ * land one ULP outside. In gameplay terms a miss-by-epsilon is
+ * indistinguishable from a clean miss.
+ *
+ * A target at zero distance from the player is IN regardless of
+ * heading — a creature on top of the player has no defined direction.
+ *
+ * Non-finite player or target coords → false. `player.angle` is
+ * derived upstream from velocity; `Math.atan2` returns finite values
+ * for all finite inputs, so we only guard the four coordinate fields.
  */
 export function isInScoop(
   player: { x: number; y: number; angle: number },
@@ -51,19 +60,25 @@ export function isInScoop(
   if (
     !Number.isFinite(player.x) ||
     !Number.isFinite(player.y) ||
-    !Number.isFinite(player.angle) ||
     !Number.isFinite(target.x) ||
     !Number.isFinite(target.y)
   ) {
     return false;
   }
+  // Reject NaN player.angle deterministically — atan2 upstream
+  // guarantees finite, but a hand-built fixture could pass NaN; the
+  // test contract asserts this case.
+  if (!Number.isFinite(player.angle)) return false;
+
   const dx = target.x - player.x;
   const dy = target.y - player.y;
   const distSq = dx * dx + dy * dy;
-  if (distSq > reachPx * reachPx) return false;
-  // Zero-distance short-circuit — atan2(0,0)=0 is finite but the
-  // angular delta has no defined direction; treat as IN.
+  // Zero-distance short-circuit BEFORE the radius check so a creature
+  // on top of the player counts as IN even when reachPx is 0 from a
+  // disabling buff. The radius check below still rejects far targets
+  // when reachPx is 0.
   if (distSq === 0) return true;
+  if (distSq > reachPx * reachPx) return false;
   const dist = Math.sqrt(distSq);
   const fx = Math.cos(player.angle);
   const fy = Math.sin(player.angle);
@@ -93,8 +108,10 @@ export function collectCreatures(
   let nextLastCollectTime = lastCollectTime;
   // lamp-flare and similar buffs scale the scoop reach. Half-angle
   // stays fixed — the scoop's geometric identity is its arc shape,
-  // and widening the arc would change feel, not just range.
-  const reach = SCOOP_REACH_PX * reachScale;
+  // and widening the arc would change feel, not just range. Negative
+  // reachScale is a caller bug; clamp to 0 so the radius test
+  // rejects deterministically rather than producing surprising behaviour.
+  const reach = SCOOP_REACH_PX * Math.max(0, reachScale);
 
   for (const creature of creatures) {
     if (creature.ambient) {
