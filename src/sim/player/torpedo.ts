@@ -39,73 +39,72 @@ export const TORPEDO_LIFESPAN_SECONDS = 1.5;
 /** Minimum sim-seconds between fires. */
 export const TORPEDO_COOLDOWN_SECONDS = 0.6;
 
-let nextId = 0;
-
-export interface TorpedoLauncher {
-  /**
-   * Attempt to fire a torpedo at the given aim direction. Returns the
-   * new Torpedo or null when rejected (cooldown active or non-finite
-   * input). Internal cooldown advances ONLY on a successful fire.
-   */
-  fire(
-    player: { x: number; y: number },
-    aimRad: number,
-    simTime: number,
-  ): Torpedo | null;
-}
+/**
+ * Closure-backed torpedo launcher. Returned function attempts a fire
+ * and returns the new Torpedo or null when rejected (cooldown active
+ * or non-finite input). All state — `lastFireTime`, `nextId` — is
+ * scoped to this closure, so multiple launcher instances are
+ * independently deterministic and tests cannot collide via module-
+ * level counters.
+ */
+export type TorpedoLauncher = (
+  player: { x: number; y: number },
+  aimRad: number,
+  simTime: number,
+) => Torpedo | null;
 
 export function createTorpedoLauncher(): TorpedoLauncher {
   let lastFireTime = -Infinity;
+  let nextId = 0;
 
-  return {
-    fire(player, aimRad, simTime) {
-      // Internal NaN guard — rejected before any state mutation.
-      if (
-        !Number.isFinite(player.x) ||
-        !Number.isFinite(player.y) ||
-        !Number.isFinite(aimRad) ||
-        !Number.isFinite(simTime)
-      ) {
-        return null;
-      }
-      // Cooldown gate.
-      if (simTime - lastFireTime < TORPEDO_COOLDOWN_SECONDS) {
-        return null;
-      }
+  return (player, aimRad, simTime) => {
+    // Internal NaN guard — rejected before any state mutation.
+    if (
+      !Number.isFinite(player.x) ||
+      !Number.isFinite(player.y) ||
+      !Number.isFinite(aimRad) ||
+      !Number.isFinite(simTime)
+    ) {
+      return null;
+    }
+    // Cooldown gate.
+    if (simTime - lastFireTime < TORPEDO_COOLDOWN_SECONDS) {
+      return null;
+    }
 
-      lastFireTime = simTime;
-      nextId += 1;
-      return {
-        id: `torpedo-${nextId}`,
-        x: player.x,
-        y: player.y,
-        vx: Math.cos(aimRad) * TORPEDO_SPEED_PX_PER_SEC,
-        vy: Math.sin(aimRad) * TORPEDO_SPEED_PX_PER_SEC,
-        launchedAt: simTime,
-        expiresAt: simTime + TORPEDO_LIFESPAN_SECONDS,
-      };
-    },
+    lastFireTime = simTime;
+    nextId += 1;
+    return {
+      id: `torpedo-${nextId}`,
+      x: player.x,
+      y: player.y,
+      vx: Math.cos(aimRad) * TORPEDO_SPEED_PX_PER_SEC,
+      vy: Math.sin(aimRad) * TORPEDO_SPEED_PX_PER_SEC,
+      launchedAt: simTime,
+      expiresAt: simTime + TORPEDO_LIFESPAN_SECONDS,
+    };
   };
 }
 
 /**
- * Advance a torpedo one frame. Returns null when the torpedo has
- * expired (its `expiresAt` is in the past). Position is integrated
- * by velocity × dt — no drag, no homing.
+ * Advance a torpedo one frame: position += velocity × dt. No drag,
+ * no homing. Caller owns lifecycle: filter expired torpedoes by
+ * comparing `simTime >= torpedo.expiresAt` BEFORE calling this.
  *
- * Caller pattern:
- *   const stepped = stepTorpedo(t, simTime, dt);
- *   if (stepped === null) // remove from scene
- *   else // collide-test against predators, apply damage, etc.
- *
- * Implementation note: the function takes simTime explicitly (not
- * inferred from torpedo.launchedAt + dt counters) so it can compare
- * against expiresAt without coupling to a clock the caller doesn't
- * own. dt is the per-frame step.
+ * Returns null on non-finite input or non-finite torpedo state
+ * (defensive — a runtime mutation that NaNs the velocity would
+ * otherwise produce silently broken positions).
  */
-export function stepTorpedo(torpedo: Torpedo, simTime: number, dt = 1 / 30): Torpedo | null {
-  if (!Number.isFinite(simTime) || !Number.isFinite(dt)) return null;
-  if (simTime >= torpedo.expiresAt) return null;
+export function advanceTorpedo(torpedo: Torpedo, dt: number): Torpedo | null {
+  if (
+    !Number.isFinite(dt) ||
+    !Number.isFinite(torpedo.x) ||
+    !Number.isFinite(torpedo.y) ||
+    !Number.isFinite(torpedo.vx) ||
+    !Number.isFinite(torpedo.vy)
+  ) {
+    return null;
+  }
   return {
     ...torpedo,
     x: torpedo.x + torpedo.vx * dt,
