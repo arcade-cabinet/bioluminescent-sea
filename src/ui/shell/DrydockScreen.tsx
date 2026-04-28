@@ -381,7 +381,7 @@ function AchievementsPanel() {
  * fresh install (no entries yet).
  *
  * The list is intentionally compact — players use it to spot
- * patterns ("I keep dying in the midnight column") not to study
+ * patterns ("I keep dying in the midnight zone") not to study
  * each row in detail. Tap-to-replay-seed is reserved for a future
  * iteration.
  */

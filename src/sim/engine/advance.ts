@@ -92,7 +92,7 @@ export function advanceScene(
 
   ai.updatePlayer(player);
   // Biome-driven aggression: deeper biomes turn the dial up.
-  // photic-gate=1.0 → stygian-abyss=1.6. Lookup is by current
+  // epipelagic=1.0 → hadopelagic=1.6. Lookup is by current
   // depthTravel, NOT player.y (which is screen-space).
   ai.setBiomeAggression(biomeAggressionForDepth(scene.depthTravelMeters));
   ai.syncPredators(scene.predators);
@@ -493,14 +493,14 @@ export function advanceScene(
 }
 
 /**
- * Map descended depth to the biome aggression multiplier consumed
- * by AIManager.setBiomeAggression. The five biome bands are:
+ * Map descended depth to the biome aggression multiplier consumed by
+ * `AIManager.setBiomeAggression`. The five pelagic bands are:
  *
- *   0–800m       photic-gate      1.00  (surface, calm)
- *   800–2400m    twilight-shelf   1.15
- *   2400–4800m   midnight-column  1.30
- *   4800–6400m   abyssal-trench   1.45
- *   >6400m       stygian-abyss    1.60
+ *   0–500m       epipelagic     1.00  (surface, calm)
+ *   500–1500m    mesopelagic    1.15
+ *   1500–3000m   bathypelagic   1.30
+ *   3000–5000m   abyssopelagic  1.45
+ *   5000–11000m  hadopelagic    1.60
  *
  * Biome-keyed (not interpolated) so the player feels a clean tonal
  * shift each time they cross a band boundary, matching the existing

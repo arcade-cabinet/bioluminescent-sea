@@ -96,8 +96,8 @@ export interface Predator {
   /**
    * Hex tint of the biome this predator was spawned into. Drives the
    * renderer's accent stroke (gills, fins, eye glow halo) so a
-   * twilight-shelf predator carries cool teal accents while an
-   * abyssal-trench predator carries warm-red. Pure visual — does
+   * mesopelagic predator carries cool teal accents while a
+   * hadopelagic predator carries warm-red. Pure visual — does
    * not affect AI. Optional so tests / fixtures can omit it.
    */
   biomeTintHex?: string;
