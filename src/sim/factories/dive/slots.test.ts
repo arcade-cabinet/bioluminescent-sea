@@ -38,7 +38,7 @@ describe("dive mode slot system", () => {
     expect(depths.size).toBeGreaterThan(10);
   });
 
-  test("exploration: drift the photic shelf — free movement, soft threats", () => {
+  test("exploration: free movement, soft threats, free-roam at the seafloor", () => {
     const slots = resolveModeSlots("exploration", SAMPLE_SEED);
     expect(slots.verticalMovement).toBe("free");
     expect(slots.lateralMovement).toBe("free");
@@ -51,6 +51,7 @@ describe("dive mode slot system", () => {
     expect(slots.predatorSpeedScale).toBeGreaterThanOrEqual(predLo);
     expect(slots.predatorSpeedScale).toBeLessThanOrEqual(predHi);
     expect(slots.collectionOxygenScale).toBeGreaterThan(1);
+    expect(slots.seafloorBehavior).toBe("free-roam");
   });
 
   test("descent: lateral-locked plunge toward a seed-derived depth goal", () => {
@@ -66,6 +67,7 @@ describe("dive mode slot system", () => {
     expect(slots.collisionEndsDive).toBe(false);
     expect(slots.respawnThreats).toBe(true);
     expect(slots.difficultyScaling).toBe("logarithmic");
+    expect(slots.seafloorBehavior).toBe("win");
     // Duration envelope around GAME_DURATION.
     const [durLo, durHi] = envelope(MODE_TEMPLATES.descent.durationSeconds);
     expect(slots.durationSeconds).toBeGreaterThanOrEqual(durLo);
@@ -84,6 +86,7 @@ describe("dive mode slot system", () => {
     expect(slots.threatRadiusScale).toBeGreaterThan(1);
     expect(slots.predatorSpeedScale).toBeGreaterThan(1);
     expect(slots.respawnThreats).toBe(true);
+    expect(slots.seafloorBehavior).toBe("free-roam");
   });
 
   test("legacy DiveModeTuning is composed from resolved slots", () => {

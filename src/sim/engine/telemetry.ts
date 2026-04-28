@@ -2,7 +2,7 @@ import { clamp } from "@/sim/_shared/math";
 import { TOTAL_BEACONS } from "@/sim/entities/creatures";
 import { biomeAtDepth } from "@/sim/factories/region/biomes";
 import { findNearestBeaconVector, findNearestThreatDistance } from "./collection";
-import { GAME_DURATION, TRENCH_FLOOR_METERS } from "@/sim/dive/constants";
+import { GAME_DURATION, OCEAN_FLOOR_METERS, TRENCH_FLOOR_METERS } from "@/sim/dive/constants";
 import { describeDiveObjective, getPressureLabel } from "@/sim/dive/objectives";
 import { getDiveModeTuning } from "./mode";
 import type {
@@ -57,7 +57,8 @@ export function getDiveTelemetry(
       timeLeft,
       nearestThreatDistance,
       nearestBeacon.distance,
-      biome.id
+      biome.id,
+      depthMeters >= OCEAN_FLOOR_METERS - 1,
     ),
     oxygenRatio,
     pressureLabel: getPressureLabel(oxygenRatio, nearestThreatDistance),

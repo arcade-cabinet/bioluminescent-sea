@@ -278,6 +278,14 @@ export interface DiveModeTuning {
   respawnThreats: boolean;
   /** How much harder the game gets as depth increases. */
   difficultyScaling: "none" | "logarithmic" | "linear";
+  /**
+   * What happens at `OCEAN_FLOOR_METERS`. `free-roam` = clamp depth and
+   * keep moving laterally (the seafloor mirrors the surface). `win` =
+   * reaching the floor counts as completing the dive. Descent ends on
+   * its own `targetDepthMeters` first, so this only matters for
+   * infinite modes today.
+   */
+  seafloorBehavior: "win" | "free-roam";
 }
 
 export interface DiveThreatImpactResult {

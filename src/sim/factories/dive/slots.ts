@@ -39,6 +39,18 @@ export interface ModeSlots {
   targetDepthMeters: number | null;
   /** Hard cap on descent. Null = no ceiling. */
   depthCeilingMeters: number | null;
+  /**
+   * What happens when the player reaches the deepest authored zone
+   * (`OCEAN_FLOOR_METERS`).
+   *
+   * - `win`: reaching the floor counts as completing the dive (Descent's
+   *   `depth_goal` already handles its own win short of the floor; this
+   *   value is the contract for any future "dive to the floor" mode).
+   * - `free-roam`: depth clamps at the floor and the player keeps moving
+   *   laterally — the seafloor mirrors the surface. Score continues to
+   *   accumulate from creature pickups.
+   */
+  seafloorBehavior: "win" | "free-roam";
   /** What happens when the player surfaces past the trench rim. */
   scoringModel: "raw" | "depth-multiplied";
   /** Shape of the difficulty curve as depth grows. */
@@ -112,6 +124,7 @@ const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
     completionCondition: "infinite",
     targetDepthMeters: null,
     depthCeilingMeters: null,
+    seafloorBehavior: "free-roam",
     scoringModel: "raw",
     difficultyScaling: "none",
     respawnThreats: false,
@@ -135,6 +148,7 @@ const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
     completionCondition: "depth_goal",
     targetDepthMeters: [1200, 2400],
     depthCeilingMeters: null,
+    seafloorBehavior: "win",
     scoringModel: "depth-multiplied",
     difficultyScaling: "logarithmic",
     respawnThreats: true,
@@ -160,6 +174,7 @@ const MODE_TEMPLATES: Record<SessionMode, ModeSlotsTemplate> = {
     completionCondition: "infinite",
     targetDepthMeters: null,
     depthCeilingMeters: null,
+    seafloorBehavior: "free-roam",
     scoringModel: "raw",
     difficultyScaling: "logarithmic",
     respawnThreats: true,
@@ -198,6 +213,7 @@ export function resolveModeSlots(mode: SessionMode, seed: number): ModeSlots {
       t.depthCeilingMeters === null
         ? null
         : resolveNumeric(t.depthCeilingMeters, seed, `${mode}:depthCeiling`, true),
+    seafloorBehavior: t.seafloorBehavior,
     scoringModel: t.scoringModel,
     difficultyScaling: t.difficultyScaling,
     respawnThreats: t.respawnThreats,

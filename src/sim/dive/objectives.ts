@@ -5,7 +5,8 @@ export function describeDiveObjective(
   timeLeft: number,
   nearestThreatDistance: number,
   nearestBeaconDistance = Number.POSITIVE_INFINITY,
-  biome: BiomeId = "epipelagic"
+  biome: BiomeId = "epipelagic",
+  atSeafloor = false
 ): string {
   // Urgent banners come first — plain language, no lore jargon.
   if (remainingCreatures === 0) return "Every creature collected. Surface to finish the dive.";
@@ -13,6 +14,10 @@ export function describeDiveObjective(
   if (nearestBeaconDistance < 95) return "Glowing creature close. Touch it to collect.";
   if (nearestBeaconDistance < 180) return "Glowing creature ahead — head toward it.";
   if (timeLeft <= 15) return "Oxygen low. Surface soon or grab a glowing creature for a refill.";
+  // Seafloor symmetry: at the deepest authored zone the depth counter
+  // is pinned and the player is free-roaming the floor — mirror the
+  // surface in language, not just in mechanics.
+  if (atSeafloor) return "The seafloor. As far down as you can go. Roam free, keep collecting.";
 
   // Ambient biome banners — names each pelagic depth zone in plain
   // English using its real ecology as the hook. The deepest tier is

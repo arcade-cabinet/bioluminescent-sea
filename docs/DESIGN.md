@@ -15,7 +15,7 @@ The progression model collects "Lux" (a bioluminescence-based score) to purchase
 
 ## Depth zones
 
-Five real oceanographic depth zones, surface to seafloor. Each carries distinct creature and predator archetypes, ambient palette, and water character. The ocean is open-ended: descent has no floor, the deepest zone (hadopelagic) extends past every real-world dive. Authored in `config/raw/biomes/*.json`.
+Five real oceanographic depth zones, surface to seafloor. Each carries distinct creature and predator archetypes, ambient palette, and water character. The deepest zone (hadopelagic) extends to ~11000 m — the floor of every known ocean. Authored in `config/raw/biomes/*.json`.
 
 | Zone | ID | Range | Light | Defining ecology |
 |------|------|------|------|------|
@@ -26,6 +26,13 @@ Five real oceanographic depth zones, surface to seafloor. Each carries distinct 
 | The Hadal | hadopelagic | 5000–11000+ m | vent glow | hadal snailfish, supergiant amphipods, alien-deep predators |
 
 Each zone's `ecology` block authored in JSON drives actor archetype selection at chunk-spawn time. Adding a new collectible/predator means adding an actor archetype tagged for the relevant zone(s) — no engine branches.
+
+### Seafloor symmetry
+
+The seafloor mirrors the surface. At the deepest authored zone the depth counter pins at `OCEAN_FLOOR_METERS` (11000 m) and lateral movement continues — the player keeps drifting, dodging, collecting, scoring. The world doesn't end at the bottom, it just stops descending. This is governed by the `seafloorBehavior` slot on each mode:
+
+- **`free-roam`** (Exploration, Arena): clamp depth at the floor; the bottom is a place to be, not an end. Score keeps climbing from creature pickups.
+- **`win`** (Descent): reaching the floor counts as completing the dive. Today Descent ends on its own seed-derived `targetDepthMeters` first, so the win-on-floor branch is the contract for any future "all the way to Challenger Deep" mode.
 
 ## Dive modes
 
