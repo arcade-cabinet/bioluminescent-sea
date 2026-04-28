@@ -5,6 +5,7 @@ const baseFrame = {
   predatorKillsThisFrame: 0,
   anomalyPickupsThisFrame: 0,
   currentBiomeId: "photic-gate",
+  currentDepthMeters: 0,
   currentMultiplier: 1,
   collidedThisFrame: false,
   adrenalineRisingEdge: false,
@@ -18,6 +19,7 @@ describe("runStats — initial state", () => {
     expect(ZERO_STATS.maxChain).toBe(1);
     expect(ZERO_STATS.impactsTaken).toBe(0);
     expect(ZERO_STATS.adrenalineTriggers).toBe(0);
+    expect(ZERO_STATS.landmarksPassed).toEqual([]);
   });
 
   test("ensureRunStats returns ZERO_STATS for undefined input", () => {
@@ -129,6 +131,44 @@ describe("runStats — accumulators", () => {
       maxChain: 3,
       impactsTaken: 1,
       adrenalineTriggers: 1,
+      landmarksPassed: [],
     });
+  });
+
+  test("landmarksPassed appends each authored landmark crossed, deduped + descent-ordered", () => {
+    // Drive depth past the first two authored landmarks. The
+    // landmark catalogue is sorted shallow→deep so crossing
+    // sequential depth thresholds emits sequential ids.
+    let s = advanceRunStats(ZERO_STATS, baseFrame);
+    expect(s.landmarksPassed).toEqual([]);
+    // Past the shallowest authored landmark (sargassum-drift @ 40 m).
+    s = advanceRunStats(s, { ...baseFrame, currentDepthMeters: 50 });
+    expect(s.landmarksPassed.length).toBe(1);
+    // Same depth — no new landmark, identity preserved.
+    const before = s.landmarksPassed;
+    s = advanceRunStats(s, { ...baseFrame, currentDepthMeters: 60 });
+    expect(s.landmarksPassed).toBe(before);
+    // Past the second-shallowest landmark — list grows by one.
+    s = advanceRunStats(s, { ...baseFrame, currentDepthMeters: 220 });
+    expect(s.landmarksPassed.length).toBe(2);
+  });
+});
+
+describe("runStats — schema migration", () => {
+  test("ensureRunStats coerces a legacy stats object missing landmarksPassed", () => {
+    // Snapshots written before the field joined the schema must
+    // still be readable. ensureRunStats fills the empty array so
+    // callers can trust the field exists.
+    const legacy = {
+      predatorsKilled: 0,
+      buffsCollected: 0,
+      biomesTraversed: ["photic-gate"],
+      maxChain: 1,
+      impactsTaken: 0,
+      adrenalineTriggers: 0,
+      // no landmarksPassed
+    } as Parameters<typeof ensureRunStats>[0];
+    const coerced = ensureRunStats(legacy);
+    expect(coerced.landmarksPassed).toEqual([]);
   });
 });

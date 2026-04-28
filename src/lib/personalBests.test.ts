@@ -29,6 +29,7 @@ function summary(overrides: Partial<DiveRunSummary> = {}): DiveRunSummary {
       maxChain: 4,
       impactsTaken: 1,
       adrenalineTriggers: 1,
+      landmarksPassed: [],
     },
     ...overrides,
   };

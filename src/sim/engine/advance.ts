@@ -416,6 +416,7 @@ export function advanceScene(
     predatorKillsThisFrame: justKilled.size,
     anomalyPickupsThisFrame: anomalyCollection.collected.length,
     currentBiomeId: biomeAtDepth(Math.round(nextSceneBase.depthTravelMeters)).id,
+    currentDepthMeters: nextSceneBase.depthTravelMeters,
     currentMultiplier: collection.multiplier,
     collidedThisFrame: isCollision,
     adrenalineRisingEdge,

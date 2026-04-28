@@ -44,6 +44,10 @@ export interface DiveRunStats {
   /** Adrenaline auto-engage events — how many times the player was
    *  saved from saturation. */
   adrenalineTriggers: number;
+  /** Authored landmark IDs the dive crossed past (deduped, in
+   *  descent order). Read by the all-landmarks achievement to test
+   *  whether a single dive covered the full charted catalogue. */
+  landmarksPassed: string[];
 }
 
 export interface SceneState {
