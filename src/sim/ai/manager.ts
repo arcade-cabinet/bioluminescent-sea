@@ -3,6 +3,7 @@ import type { Player, Predator, Pirate, Creature } from "@/sim/entities/types";
 import { getArchetype } from "@/sim/factories/actor";
 import {
   EnemySubHuntBehavior,
+  FleeFromPlayerBehavior,
   GameVehicle,
   WrapPlayBandBehavior,
 } from "./steering";
@@ -15,6 +16,26 @@ import { collectOccluders } from "./perception/occluders";
 import type { PerceptionContext } from "./perception/perception";
 
 const MARAUDER_SUB_ARCHETYPE = getArchetype("marauder-sub");
+
+/**
+ * Per-species per-dive flock parameter rolls. Each call uses
+ * resolveNumeric with a unique tag so adding a new param doesn't
+ * shift the seed-derived values for existing ones.
+ *
+ * skittishWeight upper bound (0.7) is intentionally below the
+ * cohesion upper bound (1.0) so a high flee + low cohesion roll
+ * cannot prevent the school from re-forming after the player passes
+ * through (quality review #5).
+ */
+function resolveFlockParams(type: string, diveSeed: number) {
+  return {
+    alignmentWeight: resolveNumeric([0.4, 1.1], diveSeed, `flock:${type}:alignment`),
+    cohesionWeight: resolveNumeric([0.3, 1.0], diveSeed, `flock:${type}:cohesion`),
+    separationWeight: resolveNumeric([0.6, 1.4], diveSeed, `flock:${type}:separation`),
+    skittishRadius: resolveNumeric([80, 220], diveSeed, `flock:${type}:skittishRadius`),
+    skittishWeight: resolveNumeric([0.0, 0.7], diveSeed, `flock:${type}:skittishWeight`),
+  };
+}
 
 export class AIManager {
   public entityManager: EntityManager;
@@ -51,6 +72,9 @@ export class AIManager {
     alignment: AlignmentBehavior;
     cohesion: CohesionBehavior;
     separation: SeparationBehavior;
+    /** May be null when the rolled skittishWeight is below threshold
+     *  (gated registration — see syncCreatures comment). */
+    fleeFromPlayer: FleeFromPlayerBehavior | null;
   }>;
 
   /**
@@ -76,6 +100,10 @@ export class AIManager {
   }
 
   updatePlayer(player: Player) {
+    // NaN guard — a bad player position would poison the
+    // playerVehicle reference, propagating through every
+    // FleeFromPlayerBehavior and predator perception path.
+    if (!Number.isFinite(player.x) || !Number.isFinite(player.y)) return;
     this.playerVehicle.position.set(player.x, player.y, 0);
   }
 
@@ -218,7 +246,7 @@ export class AIManager {
 
   syncCreatures(creatures: Creature[]) {
     const flockers = creatures.filter(c => c.type !== "plankton");
-    
+
     for (const type of ["fish", "jellyfish"]) {
       if (!this.flockingBehaviors.has(type)) {
         // Per-dive, per-species flocking weights. Each species draws
@@ -226,25 +254,30 @@ export class AIManager {
         // seed picks a different blend — one dive's fish might be
         // tightly cohesive (cohesion=0.9) and loosely aligned (0.3),
         // the next dive's fish might fan out and align like a school.
+        const params = resolveFlockParams(type, this.diveSeed);
         const alignment = new AlignmentBehavior();
         const cohesion = new CohesionBehavior();
         const separation = new SeparationBehavior();
-        alignment.weight = resolveNumeric(
-          [0.4, 1.1],
-          this.diveSeed,
-          `flock:${type}:alignment`,
-        );
-        cohesion.weight = resolveNumeric(
-          [0.3, 1.0],
-          this.diveSeed,
-          `flock:${type}:cohesion`,
-        );
-        separation.weight = resolveNumeric(
-          [0.6, 1.4],
-          this.diveSeed,
-          `flock:${type}:separation`,
-        );
-        this.flockingBehaviors.set(type, { alignment, cohesion, separation });
+        alignment.weight = params.alignmentWeight;
+        cohesion.weight = params.cohesionWeight;
+        separation.weight = params.separationWeight;
+
+        // Gated registration: when the rolled skittishWeight is
+        // below 0.1, this species is "fearless" — don't wire the
+        // behavior at all. Avoids paying the per-frame cost for
+        // a no-op force contribution.
+        let fleeFromPlayer: FleeFromPlayerBehavior | null = null;
+        if (params.skittishWeight >= 0.1) {
+          fleeFromPlayer = new FleeFromPlayerBehavior(params.skittishRadius);
+          fleeFromPlayer.weight = params.skittishWeight;
+          fleeFromPlayer.playerRef = this.playerVehicle;
+        }
+        this.flockingBehaviors.set(type, {
+          alignment,
+          cohesion,
+          separation,
+          fleeFromPlayer,
+        });
       }
     }
 
@@ -254,28 +287,35 @@ export class AIManager {
         vehicle = new GameVehicle(c.id);
         vehicle.position.set(c.x, c.y, 0);
         vehicle.maxSpeed = c.speed * 60;
-        
+
         const behaviors = this.flockingBehaviors.get(c.type);
         if (behaviors) {
           vehicle.steering.add(behaviors.alignment);
           vehicle.steering.add(behaviors.cohesion);
           vehicle.steering.add(behaviors.separation);
+          if (behaviors.fleeFromPlayer) {
+            vehicle.steering.add(behaviors.fleeFromPlayer);
+          }
         }
-        
+
         const wrap = new WrapPlayBandBehavior(this.viewportWidth);
         vehicle.steering.add(wrap);
-        
+
         this.entityManager.add(vehicle);
         this.vehicleMap.set(c.id, vehicle);
       }
     }
-    
+
+    // Prune vehicles whose creature has retired off-screen. The
+    // previous predicate was inverted (only beacons were pruned —
+    // fish/jellyfish leaked indefinitely). Now we prune any vehicle
+    // that is not the player and has no matching creature this frame.
     const activeIds = new Set(creatures.map(c => c.id));
     for (const [id, vehicle] of this.vehicleMap.entries()) {
-      if (id !== "player" && !activeIds.has(id) && id.startsWith("beacon-")) {
-        this.entityManager.remove(vehicle);
-        this.vehicleMap.delete(id);
-      }
+      if (id === "player") continue;
+      if (activeIds.has(id)) continue;
+      this.entityManager.remove(vehicle);
+      this.vehicleMap.delete(id);
     }
   }
 
