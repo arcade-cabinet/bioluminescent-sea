@@ -518,6 +518,7 @@ export function advanceScene(
       y: a.y,
       type: a.type,
     })),
+    perception: ai.perception,
   };
 }
 

@@ -274,6 +274,12 @@ export interface SceneAdvanceResult {
     y: number;
     type: "repel" | "overdrive" | "lure" | "lamp-flare" | "breath";
   }[];
+  /**
+   * Perception context for GOAP bot observation. Mirrors the AIManager's
+   * current occluder list so the runtime can build observations without
+   * importing the AI module directly.
+   */
+  perception: import("@/sim/ai/perception/perception").PerceptionContext;
 }
 
 export interface DiveModeTuning {

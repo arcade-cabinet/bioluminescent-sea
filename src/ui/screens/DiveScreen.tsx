@@ -21,7 +21,6 @@ import { useDevFastDive } from "@/hooks/useDevFastDive";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { useResolvedInput } from "@/hooks/useResolvedInput";
 import type { PlayerInputProvider, PlayerSubObservation } from "@/sim/ai";
-import { getCurrentPerception } from "@/sim/engine/advance";
 import { createAmbient, disposeSfx, playSfx } from "@/audio";
 import {
   hapticAdrenaline,
@@ -525,7 +524,7 @@ export function DiveScreen({
           totalTime: effectiveTotalTime,
           deltaTime,
           timeLeft: newTimeLeft,
-          perception: getCurrentPerception(),
+          perception: result.perception,
         };
       }
       piratesRef.current = result.scene.pirates;
