@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.48.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.47.0...v0.48.0) (2026-04-28)
+
+
+### Features
+
+* **bs:** add mid-hadopelagic Subduction Mud Volcano landmark at 8000m ([#253](https://github.com/arcade-cabinet/bioluminescent-sea/issues/253)) ([4cf9bab](https://github.com/arcade-cabinet/bioluminescent-sea/commit/4cf9babd4969460a3a1b7015ff9365d59103156c))
+* **bs:** author 13 named species JSONs matching biome ecology ([#240](https://github.com/arcade-cabinet/bioluminescent-sea/issues/240)) ([cc63625](https://github.com/arcade-cabinet/bioluminescent-sea/commit/cc6362539a1aced96e533fcfb56e0c7e1198a9e6))
+* **bs:** blurb bodies reference the new landmarks ([#231](https://github.com/arcade-cabinet/bioluminescent-sea/issues/231)) ([dfe0d1c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/dfe0d1c5f88eda133cd78dc6b730f1e545d6d867))
+* **bs:** Complete Chart achievement — pass every landmark in one dive ([#260](https://github.com/arcade-cabinet/bioluminescent-sea/issues/260)) ([35626ad](https://github.com/arcade-cabinet/bioluminescent-sea/commit/35626ad96ef41c98b83729aa23fc3e5e1e39ebc6))
+* **bs:** drive HUD landmarks from authored content ([#229](https://github.com/arcade-cabinet/bioluminescent-sea/issues/229)) ([2c0959c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/2c0959c358da529ada465ce214a8cb046394fe70))
+* **bs:** expand landmark catalogue 6 → 12 ([#230](https://github.com/arcade-cabinet/bioluminescent-sea/issues/230)) ([d68a679](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d68a679ae71c4dc045f128961e00951932f8db04))
+* **bs:** iteration-2 capture spec + 12 captures ([#267](https://github.com/arcade-cabinet/bioluminescent-sea/issues/267)) ([3d314e6](https://github.com/arcade-cabinet/bioluminescent-sea/commit/3d314e696f0b0214714d670f427d2632499e38c7))
+* **bs:** iteration-2 visual assessment + 7 polish findings ([#274](https://github.com/arcade-cabinet/bioluminescent-sea/issues/274)) ([4596c45](https://github.com/arcade-cabinet/bioluminescent-sea/commit/4596c45a2b53bd08c6903318b9562a707457a0e0))
+* **bs:** proper oceanographic depth zone taxonomy ([#226](https://github.com/arcade-cabinet/bioluminescent-sea/issues/226)) ([a1f086d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/a1f086d1d67c892390626abe4321cbd244393ca9))
+* **bs:** replay seed from Drydock history ([#223](https://github.com/arcade-cabinet/bioluminescent-sea/issues/223)) ([d29252f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d29252f013755ac443a97db6365d507418ef21e7))
+* **bs:** seafloor symmetry — bottom mirrors top ([#227](https://github.com/arcade-cabinet/bioluminescent-sea/issues/227)) ([4fcd4f4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/4fcd4f4585fb2d996d9366f956dcea1ba3f47cfb))
+* **bs:** wire authored creature JSON into entity profile tables ([#238](https://github.com/arcade-cabinet/bioluminescent-sea/issues/238)) ([05c391e](https://github.com/arcade-cabinet/bioluminescent-sea/commit/05c391ea50630394b4f41aee1723e9f1e3bc1ae7))
+* pre-launch polish — perception, controls, scoop, combat, schools ([#277](https://github.com/arcade-cabinet/bioluminescent-sea/issues/277)) ([13630a8](https://github.com/arcade-cabinet/bioluminescent-sea/commit/13630a8f18b8bf5254d89246fbccef8df696df39))
+* torpedo combat + cavitation — player-POV e2e verified ([#278](https://github.com/arcade-cabinet/bioluminescent-sea/issues/278)) ([16d92a6](https://github.com/arcade-cabinet/bioluminescent-sea/commit/16d92a6f7ca8c47b2393389452061283123b5a2a))
+
+
+### Bug Fixes
+
+* **bs:** align e2e landing tagline assertion with current copy ([#265](https://github.com/arcade-cabinet/bioluminescent-sea/issues/265)) ([f9688be](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f9688be57b2e3fbed8afbfd518dc830a69d9c8b5))
+* **bs:** bump mode-card carousel arrows + dots to readable contrast ([#243](https://github.com/arcade-cabinet/bioluminescent-sea/issues/243)) ([ebc2a22](https://github.com/arcade-cabinet/bioluminescent-sea/commit/ebc2a229cb0f4b68ad8c072e0b3b0966a9e47609))
+* **bs:** differentiate seed-picker Today's Chart from Reroll affordance ([#245](https://github.com/arcade-cabinet/bioluminescent-sea/issues/245)) ([0cfbaa4](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0cfbaa43cb123341c312525a72b18b77f08702e1))
+* **bs:** drydock cost chips no longer scream warn-red ([#270](https://github.com/arcade-cabinet/bioluminescent-sea/issues/270)) ([f306f11](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f306f11f416a6c3838079709e0f6ac8ee8e06dfa))
+* **bs:** ghost level-0 upgrade icons in the Drydock ([#249](https://github.com/arcade-cabinet/bioluminescent-sea/issues/249)) ([d526e0d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/d526e0db26cef9dfdb7c0ee4e09df7e1517a305a))
+* **bs:** mobile carousel clip + drydock-chip collision ([#275](https://github.com/arcade-cabinet/bioluminescent-sea/issues/275)) ([155bf88](https://github.com/arcade-cabinet/bioluminescent-sea/commit/155bf885e84b0eda7c4527d99912c41d5dec5980))
+* **bs:** paint distinct ambient for all 5 zones, not 4 ([#262](https://github.com/arcade-cabinet/bioluminescent-sea/issues/262)) ([fb7d2df](https://github.com/arcade-cabinet/bioluminescent-sea/commit/fb7d2df0747700c7a3e1c0244146525980cea94e))
+* **bs:** plain-English completion copy ([#232](https://github.com/arcade-cabinet/bioluminescent-sea/issues/232)) ([f4d476f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/f4d476f839fef78c0fcb3e904c4e0f34ae764c09))
+* **bs:** render direction glyph next to landmark metres-to-go in HUD ([#255](https://github.com/arcade-cabinet/bioluminescent-sea/issues/255)) ([08d69c0](https://github.com/arcade-cabinet/bioluminescent-sea/commit/08d69c03b6904d4ffdd89b49c90eb529cc94cc1f))
+* **bs:** rewrite player-facing copy in plain English ([#225](https://github.com/arcade-cabinet/bioluminescent-sea/issues/225)) ([0f8de5a](https://github.com/arcade-cabinet/bioluminescent-sea/commit/0f8de5a60bd9610d5515b104156b1d76db088f25))
+* **bs:** seedpicker breathes on desktop (max-w-xl + p-9 on lg+) ([#272](https://github.com/arcade-cabinet/bioluminescent-sea/issues/272)) ([90c8694](https://github.com/arcade-cabinet/bioluminescent-sea/commit/90c86945d788fb7419c6fc031700629d61b199da))
+* **bs:** tighten landing title on mobile so carousel clears the fold ([#271](https://github.com/arcade-cabinet/bioluminescent-sea/issues/271)) ([769d30d](https://github.com/arcade-cabinet/bioluminescent-sea/commit/769d30d3f707f9ae6ab7ca8069c75fb1fa3b5d90))
+
+
+### Documentation
+
+* **bs:** refresh STATE.md to iteration-1-polish era + seed iteration-2 ([#264](https://github.com/arcade-cabinet/bioluminescent-sea/issues/264)) ([64bb25f](https://github.com/arcade-cabinet/bioluminescent-sea/commit/64bb25ffaf0a08a4b182e318fc2c65e5e4befff9))
+* **bs:** refresh STATE.md to reflect post-taxonomy era ([#237](https://github.com/arcade-cabinet/bioluminescent-sea/issues/237)) ([8fc909c](https://github.com/arcade-cabinet/bioluminescent-sea/commit/8fc909c16f9ac60f246bd010ef2c7851d4695bd2))
+
 ## [0.47.0](https://github.com/arcade-cabinet/bioluminescent-sea/compare/v0.46.0...v0.47.0) (2026-04-26)
 
 
